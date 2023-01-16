@@ -15,7 +15,7 @@ PAGEGRID is not free software. However, you can try PAGEGRID and the site profil
 2. Insert this URL: https://github.com/jploch/FieldtypePageGrid/archive/master.zip
 3. Go to “Modules > Refresh” in your admin
 
-#### More install options
+### More install options
 - [Module install guide](http://pgrid-website.test/docs/#/developer/installation)
 - [Site profile install guide](http://pgrid-website.test/docs/#/installation)
 
