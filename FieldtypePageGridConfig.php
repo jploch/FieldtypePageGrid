@@ -30,7 +30,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 			// bd('set defaults');
 			$data = $this->modules->getConfig('FieldtypePageGrid');
 			$dataOld = $data;
-			$data['interface'] = array('hideFieldTitle', 'hidePageHeadline', 'hideTitleField');
+			$data['interface'] = array('hideFieldTitle', 'hidePageHeadline', 'hideTitleField', 'hideTabs');
 			$data['interfaceDefault'] = 0;
 
 			if ($dataOld !== $data) {
@@ -83,6 +83,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 				'hideFieldTitle',
 				'hidePageHeadline',
 				'hideTitleField',
+				'hideTabs',
 			),
 			'customStyles' => '',
 			'fontColor' => '',
@@ -175,8 +176,9 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		// $f->addOption('setDefault', 'Default'); //set on first run to have default checked
 		$f->addClass('pg-table-auto', 'wrapClass');
 		$f->addOption('hideFieldTitle', 'Hide Field Title | [span.detail] Hide field title in page editor. [/span]');
-		$f->addOption('hidePageHeadline', 'Hide Page Headline | [span.detail] Hide page headline in page editor and add it to breadcrump. [/span]');
+		$f->addOption('hidePageHeadline', 'Hide Page Headline | [span.detail] Hide page headline in page editor and add it to breadcrumb. [/span]');
 		$f->addOption('hideTitleField', 'Hide Page Title Field | [span.detail] Hide page title field in page editor and add it to settings tab. [/span]');
+		$f->addOption('hideTabs', 'Hide Tabs | [span.detail] Hide tabs and add a settings icon to show them. [/span]');
 		// $f->val($this->interface);
 		// $f->attr('checked', 'checked');
 		$wrapper->append($f);
@@ -187,7 +189,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 				$data = $this->modules->getConfig('AdminThemeCanvas');
 				foreach ($this->interface as $interface) {
 					if ($interface == 'hidePageHeadline') {
-						$data['breadcrump'] = 'breadcrumb-with-title';
+						$data['breadcrumb'] = 'breadcrumb-with-title';
 					}
 					if ($interface == 'hideTitleField') {
 						$data['hide-title'] = 1;
@@ -275,7 +277,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		$f->attr('name', 'fontPrivacy');
 		$f->label = $this->_('Google Fonts');
 		$f->checkboxLabel = $this->_('Privacy friendly Google Fonts');
-		$f->description = $this->_("Check this option to request Google Fonts from BunnyCDN instead of the Google server. BunnyCDN has logging disabled, and will not logg any user information. [More information](https://github.com/coollabsio/fonts)");
+		$f->description = $this->_("Check this option to request Google Fonts from BunnyCDN instead of the Google server. BunnyCDN has logging disabled, and will not log any user information. [More information](https://github.com/coollabsio/fonts)");
 		$f->attr('value', $this->fontPrivacy);
 		$f->icon = 'google';
 		if ($this->fontPrivacy) {
