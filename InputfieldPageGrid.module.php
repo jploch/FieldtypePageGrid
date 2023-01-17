@@ -989,7 +989,7 @@ class InputfieldPageGrid extends Inputfield {
 
         //render defaults 
         if ($loadDefaults == 1) {
-            $defaults = include 'styleDefaults.php';;
+            $defaults = include 'styleDefaults.php';
         }
 
         //add parent container styles

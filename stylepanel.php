@@ -4,8 +4,7 @@ namespace ProcessWire;
 
 // ITEM STYLE SETTINGS
 // saved as JSON
-
-$tab = new InputfieldWrapper();
+// $tab = new InputfieldWrapper();
 
 $wrapper = new InputfieldWrapper();
 $wrapper->attr('name', 'gridStyleTab');
