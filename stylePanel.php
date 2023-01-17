@@ -2,9 +2,9 @@
 
 namespace ProcessWire;
 
-// ITEM STYLE SETTINGS
-// saved as JSON
-// $tab = new InputfieldWrapper();
+// STYLEPANEL saved as JSON
+
+$tab = new InputfieldWrapper();
 
 $wrapper = new InputfieldWrapper();
 $wrapper->attr('name', 'gridStyleTab');
