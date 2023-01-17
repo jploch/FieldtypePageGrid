@@ -35,7 +35,10 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
   }
 
   public function install() {
+    $this->createModule();
+  }
 
+  public function createModule() {
     $fs = wire('fields');
     $adminPageUrl = wire('config')->url('admin');
     $adminPage = wire('pages')->get($adminPageUrl);
@@ -93,8 +96,13 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
 
     //create editor role
 
-    //add permissions
-    $erole = $this->roles->add("pagegrid-editor");
+    //add role and permissions
+    if (!$this->roles->get('pagegrid-editor')->id) {
+      $erole = $this->roles->add("pagegrid-editor");
+    } else {
+      $erole = $this->roles->get('pagegrid-editor');
+    }
+   
     $erole->addPermission("page-view");
     $erole->addPermission("page-edit");
     // $erole->addPermission("page-sort");
@@ -150,7 +158,6 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     }
 
     //END create editor role
-
   }
 
   public function uninstall() {
@@ -197,6 +204,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
   }
 
   public function ready() {
+    $this->addHookAfter("Modules::refresh", $this, "createModule");
     $this->addHook('Field::styles', $this, "styles");
     $this->addHookBefore('Pages::cloned', $this, 'flagClone');
     $this->addHookAfter('Pages::cloneReady', $this, 'flagClone');
