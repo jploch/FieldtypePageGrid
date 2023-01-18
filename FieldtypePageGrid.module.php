@@ -25,7 +25,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
       'autoload' => 'template=admin',
       'permissions' => array(
         'pagegrid-process' => 'Allow PAGEGRID to process ajax calls',
-        'page-pagegrid-edit' => 'Edit PAGEGRID items in modal',
+        'page-pagegrid-edit' => 'Edit PAGEGRID items in modal (applies to all editable templates)',
         'pagegrid-drag' => 'Drag PAGEGRID items',
         'pagegrid-resize' => 'Resize PAGEGRID items',
         'pagegrid-style-panel' => 'Enable styling of PAGEGRID items',
