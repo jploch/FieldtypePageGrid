@@ -22,7 +22,7 @@ PAGEGRID is not free software. However, you can try PAGEGRID and the site profil
 ### Contribute
 
 **Found a bug?**  
-Please post all bug reports in our [issue tracker](https://github.com/PageGrid/issues).
+Please post all bug reports in our [issue tracker](https://github.com/jploch/PageGrid/issues/).
 
 **Suggest a feature**  
 If you have ideas for a feature or enhancement for PAGEGRID, please make a post on the [PAGEGRID forum](https://processwire.com/talk/forum/64-pagegrid/).
