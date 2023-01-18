@@ -912,7 +912,15 @@ class InputfieldPageGrid extends Inputfield {
 
     //helper methode to get fonts
     public function getFontPath() {
-        return $this->config->paths->templates . 'fonts/';
+        
+        $filePath = $this->config->paths->templates . 'fonts/';
+
+         //create font folder if not present
+         if (!file_exists($filePath)) {
+            mkdir($filePath, 0755, true);
+        }
+
+        return $filePath;
     }
 
     public function getFontNames() {
@@ -920,11 +928,6 @@ class InputfieldPageGrid extends Inputfield {
         $filePath = $this->getFontPath();
         $files = array_diff(scandir($filePath), array('.', '..', '.DS_Store'));
         $fontFiles = array();
-
-        //create font folder if not present
-        if (!file_exists($filePath)) {
-            mkdir($filePath, 0755, true);
-        }
 
         foreach ($files as $file) {
             $ext = pathinfo($filePath . $file, PATHINFO_EXTENSION);
