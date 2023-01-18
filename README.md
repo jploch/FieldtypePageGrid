@@ -16,8 +16,8 @@ PAGEGRID is not free software. However, you can try PAGEGRID and the site profil
 3. Go to “Modules > Refresh” in your admin
 
 ### More install options
-- [Module install guide](http://pgrid-website.test/docs/#/developer/installation)
-- [Site profile install guide](http://pgrid-website.test/docs/#/installation)
+- [Module install guide](https://page-grid.com/docs/#/developer/installation)
+- [Site profile install guide](https://page-grid.com/docs/#/installation)
 
 ### Contribute
 
