@@ -564,7 +564,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     }
 
     $post_data = array(
-      'product_id' => 'WFTD6dOx_CJ7iLdYyzYkQQ==',
+      'product_id' => '71jpQn0sTqdzpzhNPOG08g==',
       'license_key' => $lKey,
       'increment_uses_count' => ($validHost) ? 'false' : 'true'
     );
