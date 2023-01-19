@@ -12,7 +12,7 @@ PAGEGRID is not free software. However, you can try PAGEGRID and the site profil
 
 ### Installation
 1. Go to “Modules > Site > New” in your admin and click "Add Module From URL"
-2. Insert this URL: https://github.com/jploch/FieldtypePageGrid/archive/master.zip
+2. Insert this URL: https://github.com/jploch/FieldtypePageGrid/archive/master.zip and click "Download"
 3. Go to “Modules > Refresh” in your admin
 
 ### More install options
