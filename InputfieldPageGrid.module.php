@@ -120,13 +120,13 @@ class InputfieldPageGrid extends Inputfield {
 
         if (isset($oldEditID)) {
 
-            // // // bd('Old id found:' . $oldEditID);
-            // // // bd($editID);
+            // // // // bd('Old id found:' . $oldEditID);
+            // // // // bd($editID);
 
             if ($oldEditID != $editID) {
                 $itemsParentOld = $this->pages->get('pg-' . $oldEditID);
                 if ($itemsParentOld->id && $itemsParent->id == 0) {
-                    // // // bd('change name');
+                    // // // // bd('change name');
                     $itemsParentOld->name = 'pg-' . $editID;
                     $itemsParentOld->save();
                     $itemsParent = $itemsParentOld;
@@ -247,7 +247,7 @@ class InputfieldPageGrid extends Inputfield {
             $backend = 1;
         }
 
-        // // bd($backend);
+        // // // bd($backend);
 
         return $backend;
     }
@@ -355,7 +355,7 @@ class InputfieldPageGrid extends Inputfield {
         $parsedTemplate->pageGrid = array('backend' => $backend, 'tag' => $this->getTagName($p));
 
         // force init inline editor markup
-        // // // bd($p->parent()->meta()->pg_ajax);
+        // // // // bd($p->parent()->meta()->pg_ajax);
         if (($backend && $this->config->ajax) || ($backend && $p->parent()->meta()->pg_ajax)) {
             // hack: change name to reinit new children of groups after modal edit
             $oldName = $p->name;
@@ -421,7 +421,7 @@ class InputfieldPageGrid extends Inputfield {
 
                 if (isset($PageGridItem['attributes'])) {
                     $attributes = $PageGridItem['attributes'];
-                    // // // bd($attributes);
+                    // // // // bd($attributes);
                 }
                 if (isset($PageGridItem['children'])) {
                     $nestedClasses = 'pg pg-nested ';
@@ -608,7 +608,11 @@ class InputfieldPageGrid extends Inputfield {
             $tagName = 'div';
         }
 
-        // // // bd($tagName);
+        if ($tagName == 'p') {
+            $tagName = 'div';
+        }
+
+        // // // // bd($tagName);
 
         return $tagName;
     }
@@ -912,11 +916,11 @@ class InputfieldPageGrid extends Inputfield {
 
     //helper methode to get fonts
     public function getFontPath() {
-        
+
         $filePath = $this->config->paths->templates . 'fonts/';
 
-         //create font folder if not present
-         if (!file_exists($filePath)) {
+        //create font folder if not present
+        if (!file_exists($filePath)) {
             mkdir($filePath, 0755, true);
         }
 
@@ -936,14 +940,14 @@ class InputfieldPageGrid extends Inputfield {
             }
         }
 
-        // // bd($fontFiles);
+        // // // bd($fontFiles);
 
         return $fontFiles;
     }
 
     public function styles($mainPage, $loadDefaults = 1, $loadGlobalClasses = 1, $loadFiles = 1, $loadFonts = 1) {
 
-        // // // bd($mainPage);
+        // // // // bd($mainPage);
         $itemCss = '';
         $cssBackend = '';
         $backend = $this->isBackend();
@@ -1131,17 +1135,63 @@ class InputfieldPageGrid extends Inputfield {
                 $renderOptions = 'data-pg-children';
             }
 
+            if (isset($options["tags"]) && isset($options["page"])) {
+                $renderOptions .= ' data-pg-tags="' . $options["tags"] . '"';
+            }
+
             if (isset($options["tag"]) && isset($options["page"])) {
+                $item = $options["page"];
+                $itemData = $item->meta()->pg_styles;
+                $tag = $options["tag"];
 
-                if (isset(wire('config')->pgRef)) {
-                    $tag = $this->getTagName($options["page"]);
-                } else {
-                    $tag = $this->getTagName($options["page"]);
+                if($tag == 'p') {
+                    return; 
                 }
 
-                if ($tag == 'div' || $tag == 'DIV') {
-                    $renderOptions .= 'data-pg-tagName="h2" data-pg-tags="h1 h2 h3 h4 h5 h6 p"';
+                //new item to force tag
+                if (!isset($itemData)) {
+                    $renderOptions .= ' data-pg-tagName="' . $options["tag"] . '"';
                 }
+
+                if (isset($itemData)) {
+                    if (isset($itemData['pgitem'])) {
+
+                        if ($options["tag"] !== $itemData['pgitem']['tagName']) {
+                            $renderOptions .= ' data-pg-tagName="' . $options["tag"] . '"';
+
+                            if (isset($options['forceTag'])) {
+                                //save data for pages with same template
+                                $templateId = $item->template->id;
+                                $items = $this->pages->find("template=$templateId");
+
+                                // $itemData['pgitem']['tagName'] = $options["tag"];
+                                // $item->meta()->set('pg_styles', $itemData);
+
+                                foreach ($items as $p) {
+                                    $pData = $p->meta()->pg_styles;
+                                    if (isset($itemData)) {
+                                        if (isset($pData['pgitem'])) {
+                                            $pData['pgitem']['tagName'] = $options["tag"];
+                                            $p->meta()->set('pg_styles', $pData);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+
+                // if (isset(wire('config')->pgRef)) {
+                //     $tag = $this->getTagName($options["page"]);
+                // } else {
+                //     $tag = $this->getTagName($options["page"]);
+                // }
+
+                // if ($tag == 'div' || $tag == 'DIV') {
+                //     $renderOptions .= 'data-pg-tagName="'.$options["tag"].'" data-pg-tags="'.$options["tags"].'"';
+                // }
+
             }
             // needs span instead of div to work inside p tags
             echo '<span class="pg-data"' . $renderOptions . '></span>';

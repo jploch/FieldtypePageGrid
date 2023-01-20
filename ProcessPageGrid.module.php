@@ -45,12 +45,12 @@ class ProcessPageGrid extends Process
         if (!$this->config->ajax) {
             // $this->error("error non ajax!");
 
-            // // bd('Redirect to PAGEGRID settings');
+            // // // bd('Redirect to PAGEGRID settings');
             // $moduleSettingsLink = $this->modules->getModuleEditUrl('FieldtypePageGrid', true);
             $moduleSettingsLink = $this->config->urls->admin . 'module/edit?name=FieldtypePageGrid&collapse_info=1';
             $this->session->redirect($moduleSettingsLink, true);
 
-            // // bd($moduleSettingsLink);
+            // // // bd($moduleSettingsLink);
 
             return ("Request must be via AJAX");
         }
@@ -80,7 +80,7 @@ class ProcessPageGrid extends Process
             }
 
             if ($data == 1) {
-                // // // bd('totalLock');
+                // // // // bd('totalLock');
                 $settingsPage->addStatus(Page::statusLocked);
             } else {
                 $settingsPage->removeStatus(Page::statusLocked);
@@ -112,12 +112,12 @@ class ProcessPageGrid extends Process
                 $parentID = $settingsPage->id;
                 $settingsPage = $this->pages->findOne("name=$className, template=pg_container, include=all, has_parent=$parentID");
 
-                // // // bd($settingsPage->name);
+                // // // // bd($settingsPage->name);
 
                 if ($settingsPage->id) {
-                    // // // bd('class exists');
+                    // // // // bd('class exists');
                 } else {
-                    // // // bd('create new class');
+                    // // // // bd('create new class');
                     $settingsPage = new Page(); // create new page object
                     $settingsPage->template = 'pg_container'; // set template
                     $settingsPage->parent = 'pg-classes'; // set the parent
@@ -141,17 +141,17 @@ class ProcessPageGrid extends Process
             // $settingsPage->meta()->set('pg_field', $pgField);
             $settingsPage->meta()->set('pg_page', $mainPageId);
 
-            // // // bd($settingsPage);
+            // // // // bd($settingsPage);
 
-            // // // bd('save:');
-            // // // bd($settingsPage->meta()->pg_styles);
+            // // // // bd('save:');
+            // // // // bd($settingsPage->meta()->pg_styles);
         }
         // END save item settings
 
         //bind data
         if ($type === 'bind' && !empty($_POST['pageId'])) {
             $data = json_decode($data, true);
-            // // bd('bind: ' . $data);
+            // // // bd('bind: ' . $data);
             $p = $this->pages->get($_POST['pageId']);
             if ($p->id) {
                 $p->meta()->set('pg_bind', $data);
@@ -159,7 +159,7 @@ class ProcessPageGrid extends Process
                 foreach ($items as $item) {
                     $item->meta()->set('pg_bind', $data);
                     if ($data == 1) {
-                        // // bd('puplish');
+                        // // // bd('puplish');
                         $item->removeStatus(Page::statusUnpublished);
                         $item->save();
                     }
@@ -172,7 +172,7 @@ class ProcessPageGrid extends Process
         // change parent
         if (!empty($_POST['newParent'])) {
 
-            // // // bd('parent change');
+            // // // // bd('parent change');
 
             $p = $this->pages->get($_POST['pageId']);
             $newParent = $this->pages->get($_POST['newParent']);
@@ -288,7 +288,7 @@ class ProcessPageGrid extends Process
             $template =  $this->templates->get($templateId);
             $parent = $this->pages->get($parentId);
 
-            // // // bd($parent);
+            // // // // bd($parent);
 
             $p->template = $template->name;
             $p->parent = $parent;
@@ -408,7 +408,7 @@ class ProcessPageGrid extends Process
 
         if (count($_POST)) {
 
-            // // // bd($_POST);
+            // // // // bd($_POST);
 
             $this->pageId = (int) $this->input->post("id");
             $this->pageContext = $this->pages->get($this->pageId);
@@ -457,7 +457,7 @@ class ProcessPageGrid extends Process
 
                 $p->meta()->set('pg_ajax', false);
 
-                // // // bd($response);
+                // // // // bd($response);
 
                 return (json_encode($response));
             }

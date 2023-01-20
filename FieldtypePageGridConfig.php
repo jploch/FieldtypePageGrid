@@ -27,7 +27,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 	public function setDefaults(HookEvent $event) {
 		//set checkboxes to default
 		if ($this->modules->get('FieldtypePageGrid')->interfaceDefault) {
-			// bd('set defaults');
+			// // bd('set defaults');
 			$data = $this->modules->getConfig('FieldtypePageGrid');
 			$dataOld = $data;
 			$data['interface'] = array('hideFieldTitle', 'hidePageHeadline', 'hideTitleField', 'hideTabs');
@@ -367,8 +367,8 @@ class FieldtypePageGridConfig extends ModuleConfig {
 
 			foreach ($filesArray as $file) {
 				if (file_exists($filePath . $file)) {
-					// // bd('delete');
-					// // bd($filePath . $file);
+					// // // bd('delete');
+					// // // bd($filePath . $file);
 					unlink($filePath . $file);
 					$this->message($file . ' deleted');
 				}

@@ -16,7 +16,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID'),
       'summary' => __('Commercial page builder module that renders block templates and adds drag and drop functionality in admin.', __FILE__),
-      'version' => '0.0.93',
+      'version' => '0.0.94',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -277,7 +277,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
 
         foreach ($cloneItemsParent->find('') as $clone) {
           $newName = $clone->template->name . '-' . $clone->id;
-          // // // bd($newName);
+          // // // // bd($newName);
           $clone->setAndSave('name', $newName);
           $clone->setAndSave('title', $newName);
         }
@@ -347,7 +347,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     // COPY FROM TEMPLATE -------------------------------------------
 
     //if clone return
-    // // // bd($this->clonePage);
+    // // // // bd($this->clonePage);
 
     if ($this->clonePage) {
       return false;
@@ -384,7 +384,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
 
         // $pageTemplate = $page->closest('name=pg-template');
 
-        // // // bd($pageTemplate);
+        // // // // bd($pageTemplate);
 
         // return;
 
@@ -535,7 +535,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     // $data['lUrl'] = '';
     // $this->modules->saveConfig('FieldtypePageGrid', $data);
 
-    // // bd($this->lUrl);
+    // // // bd($this->lUrl);
 
     if ($host == $lUrl) {
       $validHost = true;
@@ -557,7 +557,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
       $valid = 2;
     }
 
-    // // bd($validHost);
+    // // // bd($validHost);
 
     if ($validHost) {
       return $valid;
