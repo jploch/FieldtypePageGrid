@@ -764,7 +764,7 @@ class InputfieldPageGrid extends Inputfield {
                 }
 
                 if ($breakpoint['name'] == 's' && $backend) {
-                    $css .= ' html .breakpoint-' . $breakpoint['name'] . ' ';
+                    $css .= ' html.breakpoint-' . $breakpoint['name'] . ' ';
                 }
 
                 if (isset($item['cssClass'])) {

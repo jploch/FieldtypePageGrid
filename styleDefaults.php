@@ -89,7 +89,7 @@ $defaultCss .= ' @media (max-width: 640px) {
               row-gap: 15px;
           }
           html .pg-item,
-          html .breakpoint-s .pg-item {
+          html.breakpoint-s .pg-item {
             grid-column: 1/-1;
             /* grid-row-end: span 1;*/
             grid-row: auto;
