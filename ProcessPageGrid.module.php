@@ -184,24 +184,28 @@ class ProcessPageGrid extends Process
         }
         // END change parent
 
-        // change sort order of groups, sort must be pipe seperated string
-        if (!empty($_POST['sort'])) {
+       // change sort order of groups, sort must be pipe seperated string
+       if (!empty($_POST['sort'])) {
 
-            $sort = $_POST['sort'];
-            $ids = explode('|', $sort);
-            $i = 0;
+        $sort = $_POST['sort'];
+        $ids = explode('|', $sort);
+        $i = 0;
 
-            foreach ($ids as $id) {
-                $i++;
-                $p = $this->pages->get($id);
-                $this->pages->sort($p->parent, true);
-                // re-build sort values for children of $page, removing duplicates and gaps
-                $this->pages->sort($p, $i);
-            }
-
-            return;
+        foreach ($ids as $id) {
+            $i++;
+            $p = $this->pages->get($id);
+            $this->pages->sort($p, $i);
         }
-        // END change sort order of groups
+
+        // re-build sort values for children of parent, removing duplicates and gaps needed?
+        $first = $this->pages->get($ids[0]);
+        if ($first->id) {
+            $this->pages->sort($first->parent, true);
+        }
+
+        return;
+    }
+    // END change sort order of groups
 
         if ($type === 'delete' && !empty($removeId)) {
             $p = $this->pages->get($removeId);
