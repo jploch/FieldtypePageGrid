@@ -200,7 +200,7 @@ class ProcessPageGrid extends Process
         // re-build sort values for children of parent, removing duplicates and gaps needed?
         $first = $this->pages->get($ids[0]);
         if ($first->id) {
-            $this->pages->sort($first->parent, true);
+            $this->pages->sort($first->parent(), true);
         }
 
         return;
