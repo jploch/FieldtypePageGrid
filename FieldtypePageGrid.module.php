@@ -16,7 +16,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID'),
       'summary' => __('Commercial page builder module that renders block templates and adds drag and drop functionality in admin.', __FILE__),
-      'version' => '0.0.98',
+      'version' => '0.0.99',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -376,18 +376,12 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
         $childPages = $page->parent()->children('include=all');
         $pageTemplate = $childPages->findOne('name=pg-template, include=all');
 
-        if ($pageTemplate->id) {
+        if ($pageTemplate && $pageTemplate->id) {
         } else {
           $pageTemplate = $pages->findOne('name=pg-template, include=all');
         }
 
-        // $pageTemplate = $page->closest('name=pg-template');
-
-        // // // // bd($pageTemplate);
-
-        // return;
-
-        if ($pageTemplate->id) {
+        if ($pageTemplate && $pageTemplate->id) {
 
           $page1ID = $pageTemplate->id;
           $page1 = $pageTemplate;

@@ -4,7 +4,7 @@ namespace ProcessWire;
 
 $backend = $this->isBackend();
 
-$defaultCss = '<style>';
+$defaultCss = '<style class="pg-style-defaults">';
 
 //inline editor fix
 if ($this->user->isLoggedin()) {
