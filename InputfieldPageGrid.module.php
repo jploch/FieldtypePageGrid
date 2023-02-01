@@ -624,6 +624,10 @@ class InputfieldPageGrid extends Inputfield {
         $lastItem = null;
         $jsFiles = "";
 
+        if($this->ft->lazysizes) {
+            $jsFiles .= '<script type="text/javascript" src="' . $this->config->urls->InputfieldPageGrid . 'lazysizes.js"></script>';
+        }
+
         if ($mainPage->id) {
         } else {
             return;

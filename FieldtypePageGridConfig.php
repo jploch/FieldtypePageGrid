@@ -46,13 +46,13 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		$configCore = $this->modules->getConfig('PageFrontEdit');
 		$config = $this->modules->getConfig('FieldtypePageGrid');
 
-		 if( isset($config['inlineEditFields']) == 0 ) {
+		if (isset($config['inlineEditFields']) == 0) {
 			$config['inlineEditFields'] = array();
-		 }
+		}
 
-		 if( isset($configCore['inlineEditFields']) == 0 ) {
+		if (isset($configCore['inlineEditFields']) == 0) {
 			$configCore['inlineEditFields'] = array();
-		 }
+		}
 
 		if ($config['inlineEditFields'] != $configCore['inlineEditFields']) {
 			if ($classname == 'PageFrontEdit') {
@@ -91,6 +91,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 			'fontPrivacy' => 1,
 			'fallbackFonts' => 'Helvetica, Arial, sans-serif',
 			'stylePanel' => 1,
+			'lazysizes' => 1,
 		);
 	}
 
@@ -198,6 +199,22 @@ class FieldtypePageGridConfig extends ModuleConfig {
 				}
 			}
 		}
+
+		//-------------------------------------------------------
+		// lazysizes
+		$f = $this('modules')->get('InputfieldCheckbox');
+		$f->attr('name', 'lazysizes');
+		$f->collapsed(in_array($f->name, $collapsed) ? 1 : 0);
+		$f->themeOffset = 1;
+		$f->icon = 'plug';
+		$f->label = 'Plugins';
+		$f->checkboxLabel = 'Automatically load [lazysizes lazyloader](https://github.com/aFarkas/lazysizes).';
+		$f->attr('value', $this->stylePanel);
+		if ($this->stylePanel) {
+			$f->attr('checked', 'checked');
+		}
+		$wrapper->append($f);
+
 		//-------------------------------------------------------
 		// Field settings for convenience
 		wire('modules')->get('JqueryUI')->use('modal');
@@ -250,7 +267,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		// $fieldset->themeOffset = 1;
 		$wrapper->add($fieldset);
 
-		// google font DVGO option
+		// enable/disable
 		$f = $this('modules')->get('InputfieldCheckbox');
 		$f->attr('name', 'stylePanel');
 		$f->label = ' ';
