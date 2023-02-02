@@ -201,21 +201,6 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		}
 
 		//-------------------------------------------------------
-		// lazysizes
-		$f = $this('modules')->get('InputfieldCheckbox');
-		$f->attr('name', 'lazysizes');
-		$f->collapsed(in_array($f->name, $collapsed) ? 1 : 0);
-		$f->themeOffset = 1;
-		$f->icon = 'plug';
-		$f->label = 'Plugins';
-		$f->checkboxLabel = 'Automatically load [lazysizes lazyloader](https://github.com/aFarkas/lazysizes).';
-		$f->attr('value', $this->stylePanel);
-		if ($this->stylePanel) {
-			$f->attr('checked', 'checked');
-		}
-		$wrapper->append($f);
-
-		//-------------------------------------------------------
 		// Field settings for convenience
 		wire('modules')->get('JqueryUI')->use('modal');
 
@@ -255,6 +240,22 @@ class FieldtypePageGridConfig extends ModuleConfig {
 
 		$f->value .= '</table>';
 		$wrapper->add($f);
+
+		//-------------------------------------------------------
+		// lazysizes
+		$f = $this('modules')->get('InputfieldCheckbox');
+		$f->attr('name', 'lazysizes');
+		$f->collapsed(in_array($f->name, $collapsed) ? 1 : 0);
+		$f->themeOffset = 1;
+		$f->icon = 'plug';
+		$f->label = 'Plugins';
+		$f->description = 'Vanilla javascript plugins you want to load when using PAGEGRID’s script function.';
+		$f->checkboxLabel = '[lazysizes](https://github.com/aFarkas/lazysizes) [span.detail] lazyloader for images and videos. [/span]';
+		$f->attr('value', $this->stylePanel);
+		if ($this->stylePanel) {
+			$f->attr('checked', 'checked');
+		}
+		$wrapper->append($f);
 
 		//-------------------------------------------------------
 
