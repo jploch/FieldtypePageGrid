@@ -173,6 +173,7 @@ class InputfieldPageGrid extends Inputfield {
         $moduleUrl = $this->config->urls->InputfieldPageGrid;
         $user = wire('user');
         $settings = '';
+        $topNav = '';
         $addItems = '';
 
         //make data available to js
@@ -189,7 +190,16 @@ class InputfieldPageGrid extends Inputfield {
 
         if ($user->hasPermission('pagegrid-style-panel') && $this->ft->stylePanel) {
             include 'stylePanel.php';
-            $settings = '<div class="pg-settings pg-settings-content">' . $settings . '</div>';
+            $settings = '<div class="pg-stylepanel pg-settings pg-settings-content">' . $settings . '</div>';
+            $topNav = '<div class="pg-topnav uk-navbar-center">
+        <i class="pg-item-list-button pg-topnav-margin-big fa fw fa-list-ul on" title="Item List"></i>
+        <i class="pg-undo fa fa-fw fa-reply" data-name="fa-reply" title="Undo" style="cursor: pointer;"></i><i class="pg-redo pg-topnav-margin fa fa-fw fa-share" data-name="fa-share" title="Redo" style="cursor: pointer;"></i>
+        <div id="breakpoints-nav">
+       <img src="' . $moduleUrl . '/img/phone-portrait-outline.svg" class="breakpoint-icon breakpoint-icon-s" value="@media (max-width: 640px)" breakpoint="s" title="Breakpoint Small">
+       <img src="' . $moduleUrl . '/img/phone-landscape-outline.svg" class="breakpoint-icon breakpoint-icon-m" value="@media (max-width: 960px)" breakpoint="m" title="Breakpoint Medium">
+       <img src="' . $moduleUrl . '/img/laptop-outline.svg" class="breakpoint-icon breakpoint-icon-base" value="@media (min-width: 640px)" breakpoint="base" title="Breakpoint Base">
+       <img src="' . $moduleUrl . '/img/desktop-outline.svg" class="breakpoint-icon breakpoint-icon-l" value="@media (min-width: 1600px)" breakpoint="l" title="Breakpoint Large">
+       </div></div>';
         }
 
         // render the 'Add New' buttons for each template
@@ -216,17 +226,7 @@ class InputfieldPageGrid extends Inputfield {
         }
         // END render the 'Add New' buttons for each template
 
-        $renderMarkup = '<div class="pg-topnav uk-navbar-center">
-        <i class="pg-item-list-button pg-topnav-margin-big fa fw fa-list-ul on" title="Item List"></i>
-        <i class="pg-undo fa fa-fw fa-reply" data-name="fa-reply" title="Undo" style="cursor: pointer;"></i><i class="pg-redo pg-topnav-margin fa fa-fw fa-share" data-name="fa-share" title="Redo" style="cursor: pointer;"></i>
-        <div id="breakpoints-nav">
-       <img src="' . $moduleUrl . '/img/phone-portrait-outline.svg" class="breakpoint-icon breakpoint-icon-s" value="@media (max-width: 640px)" breakpoint="s" title="Breakpoint Small">
-       <img src="' . $moduleUrl . '/img/phone-landscape-outline.svg" class="breakpoint-icon breakpoint-icon-m" value="@media (max-width: 960px)" breakpoint="m" title="Breakpoint Medium">
-       <img src="' . $moduleUrl . '/img/laptop-outline.svg" class="breakpoint-icon breakpoint-icon-base" value="@media (min-width: 640px)" breakpoint="base" title="Breakpoint Base">
-       <img src="' . $moduleUrl . '/img/desktop-outline.svg" class="breakpoint-icon breakpoint-icon-l" value="@media (min-width: 1600px)" breakpoint="l" title="Breakpoint Large">
-       </div></div>';
-
-        $renderMarkup .= $settings . '<div class="pg-container" data-id="' . $this->pages->get('pg-classes')->id . '" data-field="' . $this->name . '" data-admin-url="' . $this->page->rootParent->url() . 'setup/pagegrid/" data-fallbackfonts="' . $this->ft->fallbackFonts . '">' . $addItems . $dataGlobal;
+        $renderMarkup = $topNav . $settings . '<div class="pg-container" data-id="' . $this->pages->get('pg-classes')->id . '" data-field="' . $this->name . '" data-admin-url="' . $this->page->rootParent->url() . 'setup/pagegrid/" data-fallbackfonts="' . $this->ft->fallbackFonts . '">' . $addItems . $dataGlobal;
 
         //container for item header (item header will be moved here with js)
         $renderMarkup .= '<div id="pg-item-header"></div>';
@@ -624,7 +624,7 @@ class InputfieldPageGrid extends Inputfield {
         $lastItem = null;
         $jsFiles = "";
 
-        if($this->ft->lazysizes) {
+        if ($this->ft->lazysizes) {
             $jsFiles .= '<script type="text/javascript" src="' . $this->config->urls->InputfieldPageGrid . 'lazysizes.js"></script>';
         }
 
@@ -1148,8 +1148,8 @@ class InputfieldPageGrid extends Inputfield {
                 $itemData = $item->meta()->pg_styles;
                 $tag = $options["tag"];
 
-                if($tag == 'p') {
-                    return; 
+                if ($tag == 'p') {
+                    return;
                 }
 
                 //new item to force tag
