@@ -252,7 +252,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		$f->description = 'Vanilla javascript plugins you want to load when using PAGEGRID’s script function.';
 		$f->checkboxLabel = '[lazysizes](https://github.com/aFarkas/lazysizes) [span.detail] lazyloader for images and videos. [/span]';
 		$f->attr('value', $this->stylePanel);
-		if ($this->stylePanel) {
+		if ($this->lazysizes) {
 			$f->attr('checked', 'checked');
 		}
 		$wrapper->append($f);

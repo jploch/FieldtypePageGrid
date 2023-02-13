@@ -16,7 +16,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID'),
       'summary' => __('Commercial page builder module that renders block templates and adds drag and drop functionality in admin.', __FILE__),
-      'version' => '0.1.1',
+      'version' => '0.1.2',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -101,7 +101,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     } else {
       $erole = $this->roles->get('pagegrid-editor');
     }
-   
+
     $erole->addPermission("page-view");
     $erole->addPermission("page-edit");
     // $erole->addPermission("page-sort");
@@ -195,7 +195,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
   }
 
   public function init() {
-    //make pagegrid available to call functions from InputfieldPageGrid
+    //make $pagegrid available to call functions from InputfieldPageGrid
     $this->fuel->set('pagegrid', $this->modules->get('InputfieldPageGrid'));
 
     $this->addHook('Field::styles', $this, "styles");
@@ -214,6 +214,25 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     $this->addHookAfter('Pages::added', $this, 'copyFromTemplate');
     $this->addHookAfter("Pages::save", $this, 'autoPuplish');
     $this->addHookAfter("ProcessPageEdit::buildForm", $this, 'openChildren');
+
+    //hide setup page for non superusers
+    $pg = $this->pages->get('name=pagegrid, template=admin');
+    $user =  $this->user;
+
+    if ($pg->id) {
+      $hidden = $pg->hasStatus('hidden');
+
+      if ($user->isSuperuser() == 0 && $hidden == 0) {
+        $pg->addStatus(Page::statusHidden);
+        $pg->save();
+      }
+      if ($user->isSuperuser() && $hidden) {
+        $pg->removeStatus(Page::statusHidden);
+        $pg->save();
+      }
+    }
+    //END hide setup page for non superusers
+
   }
 
   //function gets called for $page->fieldname calls render function as alternative
@@ -592,7 +611,6 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
         if ($variant == '(10 Licenses)' && $uses > 10) {
           $valid = 3;
         }
-
       }
     } else {
       $valid = 0;
@@ -611,7 +629,6 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
 
     curl_close($curl);
     return $valid;
-
   }
 
 

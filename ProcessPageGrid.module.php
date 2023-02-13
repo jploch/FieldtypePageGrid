@@ -15,7 +15,6 @@ class ProcessPageGrid extends Process
         return [
             'title' => 'PageGrid Process',
             'summary' => 'Process Module for FieldtypePageGrid',
-            'href' => 'https://processwire.com/talk/topic/17709-how-to-create-custom-admin-pages-aka-processmodules-yes-its-that-simple/',
             'author' => 'Jan Ploch',
             'icon' => 'th',
             'requires' => array('FieldtypePageGrid'),
@@ -34,26 +33,18 @@ class ProcessPageGrid extends Process
         ];
     }
 
-    // all PW vars in modules must have $this-> before, example: $this->page or wire( 'page' )
 
     public function ___execute()
     {
 
-        //        $this->error( "processing ajax" );
-        $this->log->save("pagegrid", "processing ajax...");
-
         if (!$this->config->ajax) {
-            // $this->error("error non ajax!");
-
-            // // // bd('Redirect to PAGEGRID settings');
-            // $moduleSettingsLink = $this->modules->getModuleEditUrl('FieldtypePageGrid', true);
+           //redirect to module settings if setup link is visited
             $moduleSettingsLink = $this->config->urls->admin . 'module/edit?name=FieldtypePageGrid&collapse_info=1';
             $this->session->redirect($moduleSettingsLink, true);
-
-            // // // bd($moduleSettingsLink);
-
             return ("Request must be via AJAX");
         }
+
+        $this->log->save("pagegrid", "processing ajax...");
 
         $pageId = isset($_POST['pageId']) ? $this->sanitizer->int($_POST['pageId']) : '';
         $insertAfter = isset($_POST['insertAfter']) ? $this->sanitizer->int($_POST['insertAfter']) : '';
