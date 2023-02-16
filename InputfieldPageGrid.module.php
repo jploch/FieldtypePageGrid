@@ -62,13 +62,18 @@ class InputfieldPageGrid extends Inputfield {
         return $this->renderField();
     }
 
-    public function getData() {
+    public function ___getData($classPages = null) {
         //make data available to js
         $globalPage = $this->pages->get('pg-classes');
         $globalPageData = [];
         $globalPageData[$globalPage->id] = [];
 
-        foreach ($globalPage->find('') as $child) {
+        //get all classes if no arguments
+        if($classPages == null) {
+            $classPages = $globalPage->find('');
+        }
+
+        foreach ($classPages as $child) {
             $itemData = $child->meta()->pg_styles;
             if (isset($itemData)) {
                 foreach ($itemData as $childData) {
@@ -678,7 +683,7 @@ class InputfieldPageGrid extends Inputfield {
         echo $jsFiles;
     }
 
-    public function renderStyles($p, $id = 0) {
+    public function ___renderStyles($p, $id = 0) {
 
         $css = '';
         $items = $p->meta()->pg_styles;

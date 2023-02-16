@@ -100,6 +100,12 @@ class ProcessPageGrid extends Process
             if ($settingsPage->name == 'pg-classes') {
 
                 $className = $dataItem['cssClass'];
+
+                //on demo mode use user as namespace to have unique classnames
+                if ($this->modules->isInstalled('PageGridDemoMode')) {
+                    $className = $dataItem['cssClass'] . '-' . $this->user->name;
+                }
+
                 $parentID = $settingsPage->id;
                 $settingsPage = $this->pages->findOne("name=$className, template=pg_container, include=all, has_parent=$parentID");
 
