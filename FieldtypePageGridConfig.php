@@ -30,7 +30,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 			// // bd('set defaults');
 			$data = $this->modules->getConfig('FieldtypePageGrid');
 			$dataOld = $data;
-			$data['interface'] = array('hideFieldTitle', 'hidePageHeadline', 'hideTitleField', 'hideTabs');
+			$data['interface'] = array('hideFieldTitle', 'hidePageHeadline', 'hideTitleField', 'hideTabs', 'hideSaveButton');
 			$data['interfaceDefault'] = 0;
 
 			if ($dataOld !== $data) {
@@ -84,6 +84,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 				'hidePageHeadline',
 				'hideTitleField',
 				'hideTabs',
+				'hideSaveButton',
 			),
 			'customStyles' => '',
 			'fontColor' => '',
@@ -180,6 +181,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		$f->addOption('hidePageHeadline', 'Hide Page Headline | [span.detail] Hide page headline in page editor and add it to breadcrumb. [/span]');
 		$f->addOption('hideTitleField', 'Hide Page Title Field | [span.detail] Hide page title field in page editor and add it to settings tab. [/span]');
 		$f->addOption('hideTabs', 'Hide Tabs | [span.detail] Hide tabs and add a settings icon to show them. [/span]');
+		$f->addOption('hideSaveButton', 'Hide Save Button | [span.detail] Hide save button (and use automatic ajax save ) if there are no other fields than PAGEGRID on the content tab. [/span]');
 		// $f->val($this->interface);
 		// $f->attr('checked', 'checked');
 		$wrapper->append($f);

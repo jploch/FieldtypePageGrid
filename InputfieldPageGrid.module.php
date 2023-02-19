@@ -69,7 +69,7 @@ class InputfieldPageGrid extends Inputfield {
         $globalPageData[$globalPage->id] = [];
 
         //get all classes if no arguments
-        if($classPages == null) {
+        if ($classPages == null) {
             $classPages = $globalPage->find('');
         }
 
@@ -239,6 +239,15 @@ class InputfieldPageGrid extends Inputfield {
         $renderMarkup .= '<iframe id="pg-iframe-canvas" src="' . wire('pages')->get($parentPageId)->url . '?backend=1" frameBorder="0" scrolling="no" style="width:100%; max-height:100vh; border:0;"></iframe>';
 
         $renderMarkup .= '</div>';
+
+        //render delete button
+        if ($user->hasPermission('page-delete')) {
+            $button = $this->modules->get('InputfieldButton');
+            $button->value = 'Delete items';
+            $button->addClass('pg-button-delete-marked');
+            $button->icon('trash');
+            $renderMarkup .= '<div style="display:none;" class="pg-wraper-delete-marked">' . $button->render() . '</div>';
+        }
 
         $l = $this->ft->setup();
 
@@ -528,8 +537,10 @@ class InputfieldPageGrid extends Inputfield {
             $header .= '<span>' . $layoutTitle . '</span>';
             $header .= '<a class="pg-edit" title="' . $this->_('Edit') . '" data-url="./?id=' . $p->id . '&amp;modal=1" href="#"><i class="fa fa-pencil"></i></a>';
             $header .= '<a class="pg-clone" data-template="' . $p->template->name . '" data-parent="' . $p->parent()->id . '"><i class="fa fa-fw fa-clone" data-name="fa-clone" title="Clone"></i></a>';
-            if ($user->isSuperuser()) {
+            if ($user->hasPermission('page-lock', $p)) {
                 $header .= '<a class="pg-lock" href="#"><i class="fa fa-lock" title="' . $this->_('Unlock') . '"></i><i class="fa fa-unlock" title="' . $this->_('Lock') . '"></i></a>';
+            }
+            if($user->isSuperuser()) {
                 $header .= '<a class="pg-bind" title="' . $this->_('Bind data') . '" href="#"><i class="fa fa-database"></i></a>';
             }
             $header .= '<a class="pg-delete" title="' . $this->_('Mark for deletion') . '" href="#"><i class="fa fa-trash"></i></a>';
