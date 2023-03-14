@@ -299,6 +299,7 @@ class InputfieldPageGrid extends Inputfield {
 
                 foreach ($templates as $tId) {
                     $t = $this->templates->get($tId);
+                    if (isset($t) == 0) continue;
                     foreach ($t->fields as $f) {
                         if (in_array($f->id, $PageFrontEditFields)) {
                             $dummy = $this->pages->get("$f->id!=''");
