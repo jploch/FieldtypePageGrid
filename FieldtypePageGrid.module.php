@@ -137,6 +137,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     }
     $erole->addPermission($permission->name);
 
+    $erole->of(false);
     $erole->save();
 
     $grole = $this->roles->get('guest');
