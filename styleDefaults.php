@@ -22,7 +22,12 @@ if ($this->user->isLoggedin()) {
   $defaultCss .= '.pw-edit-buttons {z-index:999999!important;}';
 }
 
-if($this->user->admin_theme == 'AdminThemeCanvas') {
+if ($this->user->hasPermission('PageFrontEdit')) {
+  //change to inline to work with plain textarea inline elements
+  $defaultCss .= 'body .pw-edit-InputfieldTextarea, .pw-edit-InputfieldTextarea .pw-edit-orig, .pw-edit-InputfieldTextarea .pw-edit-copy {display:inline-block;}';
+}
+
+if ($this->user->admin_theme == 'AdminThemeCanvas') {
   $defaultCss .= '.pw-edit-buttons .ui-button {background-color:black!important; border:none!important;} .pw-edit-cancel {opacity:0.5!important;}';
 }
 
@@ -31,6 +36,10 @@ $defaultCss .= '*, *::before, *::after {
       -webkit-font-smoothing: antialiased;
       margin: 0;
       padding: 0;
+    } ';
+
+$defaultCss .= 'html, body {
+    width:100%;
     } ';
 
 $defaultCss .= 'p, h1, h2, h3, h4, h5, h6 {

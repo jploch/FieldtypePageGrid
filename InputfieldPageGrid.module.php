@@ -55,7 +55,6 @@ class InputfieldPageGrid extends Inputfield {
     }
 
     public function ___render() {
-
         $user = wire('user');
         $this->config->styles->add($this->config->urls->InputfieldPageGrid . "css/main.css");
         $this->config->scripts->add($this->config->urls->InputfieldPageGrid . "js/main.js'");
@@ -291,16 +290,34 @@ class InputfieldPageGrid extends Inputfield {
         if ($backend) {
 
             // trick inline editor to work for first items
-            $PageFrontEditData = wire('modules')->getConfig('PageFrontEdit');
+            $PageFrontEditData = $this->modules->getConfig('PageFrontEdit');
             $dummies = '';
 
             if (isset($PageFrontEditData['inlineEditFields'])) {
                 $PageFrontEditFields = $PageFrontEditData['inlineEditFields'];
-                foreach ($PageFrontEditFields as $fieldId) {
-                    $f = $this->fields->get($fieldId)->name;
-                    $dummy = $this->pages->get("$f!=''");
-                    if ($dummy->id) {
-                        $dummies .= $dummy->$f;
+                $templates = $this->fields->get('type=FieldtypePageGrid')->template_id;
+
+                foreach ($templates as $tId) {
+                    $t = $this->templates->get($tId);
+                    foreach ($t->fields as $f) {
+                        if (in_array($f->id, $PageFrontEditFields)) {
+                            $dummy = $this->pages->get("$f->id!=''");
+                            if (!$dummy->id) {
+                                $dummy = new Page(); // create new page object
+                                $dummy->template = $t->name; // set template
+                                $dummy->parent = 'pg-dummies'; // set the parent
+                                $dummy->name = 'pg-dummy-' . $f->anme; // give it a name used in the url for the page
+                                $dummy->title = 'pg-dummy-' . $f->name; // set page title (not neccessary but recommended)
+                                $dummy->$f = '<p>Edit</p>';
+                                $dummy->addStatus(Page::statusHidden);
+                                $dummy->save();
+                            }
+                            $edit = $this->modules->get('PageFrontEdit');
+                            $dummy->edit(true);
+                            $edit->ready();
+                            $this->ft->readyFrontEdit($dummy);
+                            $dummies .= $dummy->$f;
+                        }
                     }
                 }
             }
@@ -535,12 +552,12 @@ class InputfieldPageGrid extends Inputfield {
         if ($p->editable() && $user->hasPermission('page-pagegrid-edit', $p)) {
             $header .= '<span id="pg-item-header-' . $p->id . '" data-id="' . $p->id . '" class="pg-item-header' . $statusClass . '">';
             $header .= '<span>' . $layoutTitle . '</span>';
-            $header .= '<a class="pg-edit" title="' . $this->_('Edit') . '" data-url="./?id=' . $p->id . '&amp;modal=1" href="#"><i class="fa fa-pencil"></i></a>';
+            $header .= '<a class="pg-edit" title="' . $this->_('Edit') . '" data-url="./?id=' . $p->id . '&amp;modal=1&pgmodal=1" href="#"><i class="fa fa-pencil"></i></a>';
             $header .= '<a class="pg-clone" data-template="' . $p->template->name . '" data-parent="' . $p->parent()->id . '"><i class="fa fa-fw fa-clone" data-name="fa-clone" title="Clone"></i></a>';
             if ($user->hasPermission('page-lock', $p)) {
                 $header .= '<a class="pg-lock" href="#"><i class="fa fa-lock" title="' . $this->_('Unlock') . '"></i><i class="fa fa-unlock" title="' . $this->_('Lock') . '"></i></a>';
             }
-            if($user->isSuperuser()) {
+            if ($user->isSuperuser()) {
                 $header .= '<a class="pg-bind" title="' . $this->_('Bind data') . '" href="#"><i class="fa fa-database"></i></a>';
             }
             $header .= '<a class="pg-delete" title="' . $this->_('Mark for deletion') . '" href="#"><i class="fa fa-trash"></i></a>';
@@ -624,8 +641,9 @@ class InputfieldPageGrid extends Inputfield {
             $tagName = 'div';
         }
 
-        if ($tagName == 'p') {
-            $tagName = 'div';
+        // if p change to custom tag to prevent html wrapping break with inline editor divs
+        if ($tagName == 'p' && $this->user->isLoggedin()) {
+            $tagName = 'pg-ptag';
         }
 
         // // // // bd($tagName);
@@ -809,6 +827,12 @@ class InputfieldPageGrid extends Inputfield {
                     //END force parent class if class is not page name (subitem)
 
                     if ($item['cssClass'] == strtolower($item['tagName'])) {
+
+                        //style p custom tag the same as p (html nesting bug with inline editor)
+                        if ($item['tagName'] == 'p' && $this->user->isLoggedin()) {
+                            $css .= 'pg-ptag, ';
+                        }
+
                         $css .= strtolower($item['tagName']) . '{ ';
                     } else {
                         $css .= '.' . $item['cssClass'] . '{ ';
@@ -1164,9 +1188,9 @@ class InputfieldPageGrid extends Inputfield {
                 $itemData = $item->meta()->pg_styles;
                 $tag = $options["tag"];
 
-                if ($tag == 'p') {
-                    return;
-                }
+                // if ($tag == 'p') {
+                //     return;
+                // }
 
                 //new item to force tag
                 if (!isset($itemData)) {

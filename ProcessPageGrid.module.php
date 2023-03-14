@@ -7,11 +7,9 @@
  * THIS IS A COMMERCIAL MODULE - DO NOT DISTRIBUTE
  */
 
-class ProcessPageGrid extends Process
-{
+class ProcessPageGrid extends Process {
 
-    public static function getModuleinfo()
-    {
+    public static function getModuleinfo() {
         return [
             'title' => 'PageGrid Process',
             'summary' => 'Process Module for FieldtypePageGrid',
@@ -34,17 +32,16 @@ class ProcessPageGrid extends Process
     }
 
 
-    public function ___execute()
-    {
+    public function ___execute() {
 
         if (!$this->config->ajax) {
-           //redirect to module settings if setup link is visited
+            //redirect to module settings if setup link is visited
             $moduleSettingsLink = $this->config->urls->admin . 'module/edit?name=FieldtypePageGrid&collapse_info=1';
             $this->session->redirect($moduleSettingsLink, true);
             return ("Request must be via AJAX");
         }
 
-        $this->log->save("pagegrid", "processing ajax...");
+        // $this->log->save("pagegrid", "processing ajax...");
 
         $pageId = isset($_POST['pageId']) ? $this->sanitizer->int($_POST['pageId']) : '';
         $insertAfter = isset($_POST['insertAfter']) ? $this->sanitizer->int($_POST['insertAfter']) : '';
@@ -58,7 +55,7 @@ class ProcessPageGrid extends Process
         $data = isset($_POST['data']) ? $_POST['data'] : '';
         $type = isset($_POST['type']) ? $_POST['type'] : '';
 
-        $this->log->save("pagegrid", "type: " . $type);
+        // $this->log->save("pagegrid", "type: " . $type);
 
         // lock/unlock page
         if ($type === 'lock') {
@@ -181,28 +178,28 @@ class ProcessPageGrid extends Process
         }
         // END change parent
 
-       // change sort order of groups, sort must be pipe seperated string
-       if (!empty($_POST['sort'])) {
+        // change sort order of groups, sort must be pipe seperated string
+        if (!empty($_POST['sort'])) {
 
-        $sort = $_POST['sort'];
-        $ids = explode('|', $sort);
-        $i = 0;
+            $sort = $_POST['sort'];
+            $ids = explode('|', $sort);
+            $i = 0;
 
-        foreach ($ids as $id) {
-            $i++;
-            $p = $this->pages->get($id);
-            $this->pages->sort($p, $i);
+            foreach ($ids as $id) {
+                $i++;
+                $p = $this->pages->get($id);
+                $this->pages->sort($p, $i);
+            }
+
+            // re-build sort values for children of parent, removing duplicates and gaps needed?
+            $first = $this->pages->get($ids[0]);
+            if ($first->id) {
+                $this->pages->sort($first->parent(), true);
+            }
+
+            return;
         }
-
-        // re-build sort values for children of parent, removing duplicates and gaps needed?
-        $first = $this->pages->get($ids[0]);
-        if ($first->id) {
-            $this->pages->sort($first->parent(), true);
-        }
-
-        return;
-    }
-    // END change sort order of groups
+        // END change sort order of groups
 
         if ($type === 'delete' && !empty($removeId)) {
             $p = $this->pages->get($removeId);
@@ -404,8 +401,7 @@ class ProcessPageGrid extends Process
      *
      * @return json array with status of save with messages
      */
-    public function executeAjaxSave()
-    {
+    public function executeAjaxSave() {
 
         if (count($_POST)) {
 
@@ -414,13 +410,38 @@ class ProcessPageGrid extends Process
             $this->pageId = (int) $this->input->post("id");
             $this->pageContext = $this->pages->get($this->pageId);
             $this->pageContext->setTrackChanges(true); // not sure this is needed, what does it do? Leftover from AutoSave?
-
             $this->pageEdit = $this->modules->get("ProcessPageEdit");
-
             $form = $this->buildForm();
-            $this->processInput($form);
+            
+            //get old values before processing and save
+            $tNameOld = $this->pageContext->template->name;
+            $oldF = $this->pageContext->template->fields->get("inputfieldClass=InputfieldTinyMCE");
+            $oldFName = $oldF->name;
+            $oldValue = $this->pageContext->$oldFName;
+            //end get old values before processing and save
 
+            // save
+            $this->processInput($form);
             $this->pageContext->save();
+            // END save
+
+            //if template change keep old value
+            $tNameNew = $this->pageContext->template->name;
+            if ($tNameOld != $tNameNew) {
+                $newF = $this->pageContext->template->fields->get("inputfieldClass=InputfieldTinyMCE");
+                if ($newF && $newF->id && $oldValue) {
+                    $oldValue = strip_tags($oldValue,'<br></br><a>');
+                    $this->pageContext->setAndSave($newF->name, $oldValue);
+                }
+
+                //change tagname back to default
+                $itemData = $this->pageContext->meta()->pg_styles;
+                if (isset($itemData) && isset($itemData['pgitem'])) {
+                    $itemData['pgitem']['tagName'] = 'div';
+                    $this->pageContext->meta()->set('pg_styles', $itemData);
+                }
+            }
+            //END if template change keep old value
 
             if (count($form->getErrors())) $errors = true;
             else $errors = false;
@@ -475,8 +496,7 @@ class ProcessPageGrid extends Process
      * If field is wrapper, then iterates (this case only with full page save)
      *
      */
-    public function ___processInput(Inputfield $form, $level = 0)
-    {
+    public function ___processInput(Inputfield $form, $level = 0) {
 
         $form->setTrackChanges(true);
 
@@ -509,8 +529,7 @@ class ProcessPageGrid extends Process
      * build the form for saving
      * @return InputfieldWrapper the form with fields
      */
-    public function buildForm()
-    {
+    public function buildForm() {
         $form = $this->modules->get('InputfieldForm');
         $form = $this->pageEdit->buildForm($form);
         return $form;

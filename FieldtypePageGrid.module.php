@@ -16,7 +16,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID'),
       'summary' => __('Commercial page builder module that renders block templates and adds drag and drop functionality in admin.', __FILE__),
-      'version' => '0.1.9',
+      'version' => '0.2.0',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -39,17 +39,16 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
   }
 
   public function createModule() {
+
     $fs = wire('fields');
     $adminPage = wire('page')->rootParent;
 
     // create page to hold items
-    $p = wire('pages')->findOne("name=pg-items, template=pg_container, include=hidden");
+    $p = $this->pages->get("name=pg-items, template=pg_container");
+    $t = $this->templates->get('pg_container');
 
-    if ($p->id) {
-      // page already exists
-
-    } else {
-      // page needs to be created
+    if (!$t->id) {
+      //create template
       $titleField = $fs->get('title');
 
       // fieldgroup for template
@@ -65,7 +64,10 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
       $t->noParents = -1; //allow one more (2 pages can use this template)
       $t->icon = 'th';
       $t->save();
+    }
 
+    if (!$p->id) {
+      // page needs to be created
       $p = new Page(); // create new page object
       $p->template = 'pg_container'; // set template
       $p->parent = $adminPage; // set the parent
@@ -77,12 +79,9 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     // END create page to hold items  
 
     // create page to hold classes
-    $p = wire('pages')->findOne("name=pg-classes, template=pg_container, include=hidden");
+    $p = $this->pages->get("name=pg-classes, template=pg_container");
 
-    if ($p->id) {
-      // page already exists
-
-    } else {
+    if (!$p->id) {
       $p = new Page(); // create new page object
       $p->template = 'pg_container'; // set template
       $p->parent = $adminPage; // set the parent
@@ -93,8 +92,21 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     }
     // END create page to hold classes  
 
-    //create editor role
+    // create dummy container page to hold dummys for inline init
+    $p = $this->pages->get("name=pg-dummies, template=pg_container");
 
+    if (!$p->id) {
+      $p = new Page(); // create new page object
+      $p->template = 'pg_container'; // set template
+      $p->parent = $adminPage; // set the parent
+      $p->name = 'pg-dummies'; // give it a name used in the url for the page
+      $p->title = 'PageGrid Dummies'; // set page title (not neccessary but recommended)
+      $p->addStatus(Page::statusHidden);
+      $p->save();
+    }
+    // END create dummy container page to hold dummys for inline init
+
+    //create editor role
     //add role and permissions
     if (!$this->roles->get('pagegrid-editor')->id) {
       $erole = $this->roles->add("pagegrid-editor");
@@ -162,8 +174,10 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
   public function uninstall() {
     $t = $this->templates->get('pg_container');
     $fg = $this->fieldgroups->get('pg_container');
-    $p = wire('pages')->findOne("name=pg-items, include=hidden");
-    $p2 = wire('pages')->findOne("name=pg-classes, include=hidden");
+
+    $p = $this->pages->get("name=pg-items, template=pg_container");
+    $p2 = $this->pages->get("name=pg-classes, template=pg_container");
+    $p3 = $this->pages->get("name=pg-dummies, template=pg_container");
 
     if ($p->id && count($p->children()) == 0) {
       $p->delete();
@@ -171,6 +185,10 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
 
     if ($p2->id && count($p2->children()) == 0) {
       $p2->delete();
+    }
+
+    if ($p3->id) {
+      $p3->delete();
     }
 
     if ($t && $t->getNumPages() > 0) {
@@ -198,22 +216,32 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     //make $pagegrid available to call functions from InputfieldPageGrid
     $this->fuel->set('pagegrid', $this->modules->get('InputfieldPageGrid'));
 
-    $this->addHook('Field::styles', $this, "styles");
+    // $this->addHook('Field::styles', $this, "styles");
     $this->addHookAfter('AdminTheme::getExtraMarkup', $this, 'addBodyClasses');
+    $this->addHookBefore("PageFrontEdit::getPage", $this, "disableInlineEdit");
   }
 
   public function ready() {
+
+    //create container if it does not exists
+    $container = $this->pages->get("name=pg-items, template=pg_container");
+    if (!$container->id) {
+      $this->createModule();
+    }
+    //END create container if it does not exists
+
     $this->addHookAfter("Modules::refresh", $this, "createModule");
-    $this->addHook('Field::styles', $this, "styles");
-    $this->addHookBefore('Pages::cloned', $this, 'flagClone');
-    $this->addHookAfter('Pages::cloneReady', $this, 'flagClone');
-    $this->addHookAfter('Pages::cloned', $this, 'clone');
-    $this->addHookBefore('Page::changed(0:title)', $this, 'titleChanged');
-    $this->addHookAfter('Pages::delete', $this, 'delete');
-    $this->addHookAfter('Page(name=pg-template)::listable', $this, 'hideTemplatePage');
-    $this->addHookAfter('Pages::added', $this, 'copyFromTemplate');
-    $this->addHookAfter("Pages::save", $this, 'autoPuplish');
-    $this->addHookAfter("ProcessPageEdit::buildForm", $this, 'openChildren');
+    // $this->addHook('Field::styles', $this, "styles");
+    $this->addHookBefore('Pages::cloned', $this, "flagClone");
+    $this->addHookAfter('Pages::cloneReady', $this, "flagClone");
+    $this->addHookAfter('Pages::cloned', $this, "clone");
+    $this->addHookBefore('Page::changed(0:title)', $this, "titleChanged");
+    $this->addHookAfter('Pages::delete', $this, "delete");
+    $this->addHookAfter('Page(name=pg-template)::listable', $this, "hideTemplatePage");
+    $this->addHookAfter('ProcessPageList::find', $this, "hideDummies");
+    $this->addHookAfter('Pages::added', $this, "copyFromTemplate");
+    $this->addHookAfter("Pages::save", $this, "autoPuplish");
+    $this->addHookAfter("ProcessPageEdit::buildForm", $this, "modalEdit");
 
     //hide setup page for non superusers
     $pg = $this->pages->get('name=pagegrid, template=admin');
@@ -232,7 +260,16 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
       }
     }
     //END hide setup page for non superusers
+  }
 
+  //disable inline editor if settings checkbox inlineEditorFront is not checked
+  public function disableInlineEdit($event) {
+    if ($this->modules->get('InputfieldPageGrid')->isBackend() == 0 && !$this->inlineEditorFront && !$this->config->ajax) {
+      //select admin page to make frontend editor return false
+      $p = $this->pages->get('admin');
+      $event->return = $p;
+      $event->replace = true;
+    }
   }
 
   //function gets called for $page->fieldname calls render function as alternative
@@ -250,6 +287,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     $theme = $event->object;
     $user = $this->user;
     $theme->addBodyClass("template-{$this->pages->get((int) wire('input')->get('id'))->template}");
+
     foreach ($user->roles as $role) {
       $theme->addBodyClass("role-{$role->name}");
     }
@@ -347,6 +385,15 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
         }
       }
     }
+  }
+
+  //hide dummy pages for init inline editor
+  function hideDummies($event) {
+    $event->return->each(function ($p) use ($event) {
+      if ($p->template != 'pg_container') return;
+      if ($p->name != 'pg-dummies') return;
+      $event->return->remove($p);
+    });
   }
 
   // page template feature and auto publish
@@ -452,11 +499,17 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
   }
 
   // add function to load children inside modal when no other fields, function gets called from js when needed
-  public function openChildren($event) {
+  public function modalEdit($event) {
+
     if ($this->process != 'ProcessPageEdit') return;
+    if (isset($_GET['pgmodal']) == 0) return;
+
     $this->ppe = $event->object;
     $this->form = $event->return;
     $page = $this->ppe->getPage();
+
+    //add css to modal
+    $this->form->prependFile = $this->config->styles->add($this->config->urls->InputfieldPageGrid . "css/main.css");
 
     if (count($page->fields) > 1) return;
 
@@ -471,7 +524,8 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
 
   //reinit PageFrontEdit for ajax items
   public function readyFrontEdit($p) {
-    //hook PageFrontEdit to read ajax items for inline edit
+
+    //hook PageFrontEdit to ready ajax items for inline edit
     $this->addHookBefore('PageFrontEdit::getPage', function (HookEvent $event) use ($p) {
       $event->return = $p;
       $event->replace = true;

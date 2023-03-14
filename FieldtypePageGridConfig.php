@@ -78,6 +78,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 			'inlineEditFields' => $inlineEditFields, // core text fields that are inline-editable
 			'inlineEditFieldsUpload' => array(), // file fields that are inline-editable
 			'placeholderText' => 'Click twice to edit this text', // placeholder text
+			'inlineEditorFront' => 1,
 			'interfaceDefault' => 1,
 			'interface' => array(
 				'hideFieldTitle',
@@ -481,6 +482,17 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		$f->columnWidth('100');
 		$fieldset->append($f);
 		//END default text for new items
+
+		// enable/disable frontend
+		$f = $this('modules')->get('InputfieldCheckbox');
+		$f->attr('name', 'inlineEditorFront');
+		$f->label = ' ';
+		$f->checkboxLabel = 'Enable Inline Editor for the frontend';
+		$f->attr('value', $this->inlineEditorFront);
+		if ($this->inlineEditorFront) {
+			$f->attr('checked', 'checked');
+		}
+		$fieldset->append($f);
 
 		// ------------------------------------------------------------------------------
 
