@@ -603,7 +603,7 @@ $field->set('label', __('Font'));
 $field->set('name', __('font-family'));
 $field->addClass('label-left', 'wrapClass');
 $field->addClass('fonts');
-$field->addClass('pg-global');
+
 $field->attr('local-fonts', $fontNames);
 $field->columnWidth = 100;
 $fieldset->append($field);
@@ -641,7 +641,6 @@ $field->set('label', __('Size'));
 $field->set('name', __('font-size'));
 $field->addClass('hide-label', 'headerClass');
 $field->addClass('label-left', 'wrapClass');
-$field->addClass('pg-global');
 $field->columnWidth = 50;
 $fieldsetSub->append($field);
 
@@ -654,22 +653,32 @@ $field->inputType = "number";
 $field->set('label', __('Line Height'));
 $field->set('name', __('line-height'));
 $field->attr('step', '0.01');
+// $field->attr('unit', ' '); // empty unit for step fix
 $field->addClass('label-left', 'wrapClass');
-$field->addClass('pg-global');
 $field->columnWidth = 40;
 $fieldset->append($field);
 
 // letter-spacing
+$fieldsetSub = $this->modules->get('InputfieldFieldset');
+$fieldsetSub->label = 'Letter Spacing';
+$fieldsetSub->name = 'letter-spacing';
+$fieldsetSub->columnWidth = 100;
+$fieldsetSub->addClass('label-left', 'wrapClass');
+$fieldsetSub->addClass('combo-wrapper');
+$fieldset->append($fieldsetSub);
+
 $field = $this->modules->get('InputfieldInteger');
 $field->inputType = "number";
-$field->set('label', __('Letter Spacing'));
-$field->set('name', __('letter-spacing'));
-$field->addClass('label-left', 'wrapClass');
-$field->addClass('pg-global');
-$field->attr('unit', 'px');
+$field->label = 'Letter Spacing';
+$field->name = 'letter-spacing';
 $field->attr('step', '0.01');
-$field->columnWidth = 100;
-$fieldset->append($field);
+$field->addClass('hide-label', 'headerClass');
+$field->addClass('label-left', 'wrapClass');
+$field->columnWidth = 50;
+$fieldsetSub->append($field);
+
+$field = createUnit($field->name);
+$fieldsetSub->append($field);
 
 // text-align
 $field = $this->modules->get('InputfieldSelect');
