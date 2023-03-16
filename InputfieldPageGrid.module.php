@@ -56,6 +56,7 @@ class InputfieldPageGrid extends Inputfield {
 
     public function ___render() {
         $user = wire('user');
+        $this->ft->createDummies();
         $this->config->styles->add($this->config->urls->InputfieldPageGrid . "css/main.css");
         $this->config->scripts->add($this->config->urls->InputfieldPageGrid . "js/main.js'");
         return $this->renderField();
@@ -303,21 +304,10 @@ class InputfieldPageGrid extends Inputfield {
                     foreach ($t->fields as $f) {
                         if (in_array($f->id, $PageFrontEditFields)) {
                             $dummy = $this->pages->get("$f->id!=''");
-                            if (!$dummy->id) {
-                                $dummy = new Page(); // create new page object
-                                $dummy->template = $t->name; // set template
-                                $dummy->parent = 'pg-dummies'; // set the parent
-                                $dummy->name = 'pg-dummy-' . $f->anme; // give it a name used in the url for the page
-                                $dummy->title = 'pg-dummy-' . $f->name; // set page title (not neccessary but recommended)
-                                $dummy->$f = '<p>Edit</p>';
-                                $dummy->addStatus(Page::statusHidden);
-                                $dummy->save();
+                            if ($dummy->id) {
+                                $this->ft->readyFrontEdit($dummy);
+                                $dummies .= $dummy->$f;
                             }
-                            $edit = $this->modules->get('PageFrontEdit');
-                            $dummy->edit(true);
-                            $edit->ready();
-                            $this->ft->readyFrontEdit($dummy);
-                            $dummies .= $dummy->$f;
                         }
                     }
                 }

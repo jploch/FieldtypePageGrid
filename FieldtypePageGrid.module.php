@@ -16,7 +16,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID'),
       'summary' => __('Commercial page builder module that renders block templates and adds drag and drop functionality in admin.', __FILE__),
-      'version' => '0.2.0.6',
+      'version' => '0.2.0.7',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -91,20 +91,6 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
       $p->save();
     }
     // END create page to hold classes  
-
-    // create dummy container page to hold dummys for inline init
-    $p = $this->pages->get("name=pg-dummies, template=pg_container");
-
-    if (!$p->id) {
-      $p = new Page(); // create new page object
-      $p->template = 'pg_container'; // set template
-      $p->parent = $adminPage; // set the parent
-      $p->name = 'pg-dummies'; // give it a name used in the url for the page
-      $p->title = 'PageGrid Dummies'; // set page title (not neccessary but recommended)
-      $p->addStatus(Page::statusHidden);
-      $p->save();
-    }
-    // END create dummy container page to hold dummys for inline init
 
     //create editor role
     //add role and permissions
@@ -216,8 +202,6 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
   public function init() {
     //make $pagegrid available to call functions from InputfieldPageGrid
     $this->fuel->set('pagegrid', $this->modules->get('InputfieldPageGrid'));
-
-    // $this->addHook('Field::styles', $this, "styles");
     $this->addHookAfter('AdminTheme::getExtraMarkup', $this, 'addBodyClasses');
     $this->addHookBefore("PageFrontEdit::getPage", $this, "disableInlineEdit");
   }
@@ -232,7 +216,6 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     //END create container if it does not exists
 
     $this->addHookAfter("Modules::refresh", $this, "createModule");
-    // $this->addHook('Field::styles', $this, "styles");
     $this->addHookBefore('Pages::cloned', $this, "flagClone");
     $this->addHookAfter('Pages::cloneReady', $this, "flagClone");
     $this->addHookAfter('Pages::cloned', $this, "clone");
@@ -587,6 +570,57 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     $inputfields->add($f);
 
     return $inputfields;
+  }
+
+  //create dummies to trick inline editor to work for first items
+  protected function createDummies() {
+
+    //return if PageFrontEdit settings not found
+    if (!$this->modules->isInstalled('PageFrontEdit')) return;
+    if (!isset($this->modules->getConfig('PageFrontEdit')['inlineEditFields'])) return;
+    if(!$this->user->hasPermission('page-edit-front')) return;
+
+    // create dummy container page to hold dummys for inline init
+    $adminPage = wire('page')->rootParent;
+    $p = $this->pages->get("name=pg-dummies, template=pg_container");
+
+    if (!$p->id) {
+      $p = new Page(); // create new page object
+      $p->template = 'pg_container'; // set template
+      $p->parent = $adminPage; // set the parent
+      $p->name = 'pg-dummies'; // give it a name used in the url for the page
+      $p->title = 'PageGrid Dummies'; // set page title (not neccessary but recommended)
+      $p->addStatus(Page::statusHidden);
+      $p->addStatus(Page::statusUnpublished);
+      $p->save();
+    }
+    // END create dummy container page to hold dummys for inline init
+
+    // create dummies
+    $PageFrontEditData = $this->modules->getConfig('PageFrontEdit');
+    $PageFrontEditFields = $PageFrontEditData['inlineEditFields'];
+    $templates = $this->fields->get('type=FieldtypePageGrid')->template_id;
+
+    foreach ($templates as $tId) {
+      $t = $this->templates->get($tId);
+      if (isset($t) == 0) continue;
+      foreach ($t->fields as $f) {
+        if (in_array($f->id, $PageFrontEditFields)) {
+          $dummy = $this->pages->get("$f->id!=''");
+          if (!$dummy->id && !$this->pages->get('pg-dummy-' . $f->id)->id) {
+            $dummy = new Page(); // create new page object
+            $dummy->template = $t->name; // set template
+            $dummy->parent = 'pg-dummies'; // set the parent
+            $dummy->name = 'pg-dummy-' . $f->id; // give it a name used in the url for the page
+            $dummy->title = 'pg-dummy-' . $f->name; // set page title (not neccessary but recommended)
+            $dummy->$f = '<p>Edit</p>';
+            $dummy->addStatus(Page::statusHidden);
+            $dummy->addStatus(Page::statusUnpublished);
+            $dummy->save();
+          }
+        }
+      }
+    }
   }
 
   protected function setup() {
