@@ -593,7 +593,6 @@ class InputfieldPageGrid extends Inputfield {
             }
         }
 
-
         if (isset($itemData)) {
 
             if (isset($itemData['pgitem'])) {
@@ -601,6 +600,9 @@ class InputfieldPageGrid extends Inputfield {
                     $cssClasses = $itemData['pgitem']['cssClasses'] . ' ';
                     $cssClasses = preg_replace('/\s+/', ' ', $cssClasses);
                 }
+                // if($itemData['pgitem.loaded']['state'] == '.loaded') {
+                //     $cssClasses .= 'pg-load ';
+                // }
             }
         }
 
@@ -732,6 +734,11 @@ class InputfieldPageGrid extends Inputfield {
                 return;
             }
 
+            //if set to none remove value (fix for older version)
+            if ($item['state'] == 'none' || $item['state'] == ' ') {
+                $item['state'] = '';
+            }
+
             //to be able to replace style tag in backend
             if ($backend) {
 
@@ -739,13 +746,18 @@ class InputfieldPageGrid extends Inputfield {
 
                 // if pgitem allways use page name
                 // do not save page name in item to be able to change page name later
-                if ($item['id'] == 'pgitem') {
+                if (substr( $item['id'], 0, 6 ) == 'pgitem') {
                     $cssId = $p->name;
                     // $item['id'] = $p->name;
-                } elseif ($item['id'] == 'pgitem:hover') {
-                    $cssId = $p->name . ':hover';
                 } else {
                     $cssId = $p->name . $item['id'];
+                }
+
+                //remove . and : from state
+                if (isset($item['state']) && $item['state'] != 'none') {
+                    $state = str_replace(":","",$item['state']);
+                    $state = str_replace(".","",$state);
+                    $cssId = $cssId . $state;
                 }
 
                 $globalClass = '';
@@ -762,13 +774,8 @@ class InputfieldPageGrid extends Inputfield {
             // add hover only if device supports it
             if (isset($item['state'])) {
 
-                if ($item['state'] == 'hover') {
+                if ($item['state'] == 'hover' || $item['state'] == ':hover') {
                     $css .= '@media (hover: hover), (-ms-high-contrast:none) { ';
-                }
-
-                //if set to none remove value (fix for older version)
-                if ($item['state'] == 'none') {
-                    $item['state'] = '';
                 }
             }
 
@@ -803,12 +810,12 @@ class InputfieldPageGrid extends Inputfield {
                         $item['cssClass'] = $p->name;
                     }
 
-                    if ($item['id'] == 'pgitem:hover') {
-                        $item['cssClass'] = $p->name . ':hover';
-                    }
+                    // if ($item['id'] == 'pgitem:hover') {
+                    //     $item['cssClass'] = $p->name . ':hover';
+                    // }
 
                     //force parent class if class is not page name (subitem)
-                    if ($item['id'] !== 'pgitem' && $item['id'] !== 'pgitem:hover' && $rootEl == 0) {
+                    if (substr( $item['id'], 0, 6 ) !== 'pgitem' && $rootEl == 0) {
                         if ($item['id'] == strtolower($item['tagName']) || $item['id'] == strtolower($item['tagName']) . ':hover') {
                             $item['cssClass'] = $p->name . ' ' . $item['id'];
                         } else {
@@ -816,6 +823,10 @@ class InputfieldPageGrid extends Inputfield {
                         }
                     }
                     //END force parent class if class is not page name (subitem)
+
+                    if (isset($item['state']) && $item['state'] != 'none') {
+                        $item['cssClass'] = $item['cssClass'] . $item['state'];
+                    }
 
                     if ($item['cssClass'] == strtolower($item['tagName'])) {
 
@@ -849,7 +860,7 @@ class InputfieldPageGrid extends Inputfield {
             }
 
             if (isset($item['state'])) {
-                if ($item['state'] == 'hover') {
+                if ($item['state'] == 'hover' || $item['state'] == ':hover') {
                     $css .= ' } ';
                 }
             }

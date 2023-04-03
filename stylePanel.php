@@ -73,8 +73,11 @@ if (!$this->modules->get('InputfieldTextTags')) {
 $field = $this->modules->get('InputfieldSelect');
 $field->set('name', __('data-state'));
 $field->label = $this->_("State");
-$field->addOption("none", "none");
-$field->addOption("hover", "hover");
+$field->addOption(" ", "none");
+$field->addOption(":hover", "hover");
+// $field->addOption(".in-view", "in-view");
+// $field->addOption(".loaded", "loaded");
+// $field->addOption(".scrolling", "scrolling");
 $field->addClass('label-left', 'wrapClass');
 //$field->columnWidth = 100;
 $fieldset->append($field);
@@ -1361,9 +1364,9 @@ $field = $this->modules->get('InputfieldMarkup');
 $field->label = 'X';
 $field->set('name', __('transform'));
 $field->attr('name-add', __('translateX'));
-$field->attr('unit', __('%'));
+$field->attr('unit', __('vw'));
 $field->addClass('label-left', 'wrapClass');
-$field->value = '<div class="range-wrap"><output class="bubble"></output><input name="transform" name-add="translateX" unit="%" type="range" min="-100" max="100" step="1" value="50" class="range"></div>';
+$field->value = '<div class="range-wrap"><output class="bubble"></output><input name="transform" name-add="translateX" unit="vw" type="range" min="-100" max="100" step="1" value="50" class="range"></div>';
 $field->columnWidth = 100;
 $fieldset->append($field);
 
@@ -1372,9 +1375,9 @@ $field = $this->modules->get('InputfieldMarkup');
 $field->label = 'Y';
 $field->set('name', __('transform'));
 $field->attr('name-add', __('translateY'));
-$field->attr('unit', __('%'));
+$field->attr('unit', __('vh'));
 $field->addClass('label-left', 'wrapClass');
-$field->value = '<div class="range-wrap"><output class="bubble"></output><input name="transform" name-add="translateY" unit="%" type="range" min="-100" max="100" step="1" value="50" class="range"></div>';
+$field->value = '<div class="range-wrap"><output class="bubble"></output><input name="transform" name-add="translateY" unit="vh" type="range" min="-100" max="100" step="1" value="50" class="range"></div>';
 $field->columnWidth = 100;
 $fieldset->append($field);
 
