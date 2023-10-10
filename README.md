@@ -1,5 +1,8 @@
 [<img src="https://page-grid.com/github-assets/pagegrid-logo.png" width="300" />](https://page-grid.com)
 
+### Version 2 out now!
+Version 2 adds symbols, blueprints animations and more!
+
 ### PAGEGRID is a friendly pagebuilder for ProcessWire CMS.
 Design fully responsive websites (or parts of them) without writing any code. Rearrange and resize items in a visual way and quickly edit the content of your website. Use ProcessWire's native templates (and fields) to create your own blocks.
 
@@ -12,7 +15,7 @@ Checkout the [online demo](https://demo.page-grid.com/admin/?createUser).
 PAGEGRID is not free software. However, you can try PAGEGRID and the site profile on your local machine or on a test server as long as you need to make sure it is the right tool for your next project. … and when you’re convinced, [buy your license](https://page-grid.com/buy).
 
 ### Requirements
-- Process Wire 3.0.210 or greater
+- Process Wire 3.0.229 or greater
 
 ### Installation
 1. Go to “Modules > Site > Add New“ in your admin
