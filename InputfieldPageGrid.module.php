@@ -16,7 +16,7 @@ class InputfieldPageGrid extends Inputfield {
         return array(
             'title' => __('PageGrid Inputfield', __FILE__), // Module Title
             'summary' => __('Inputfield for FieldtypePageGrid', __FILE__), // Module Summary
-            'version' => '0.0.1',
+            'version' => '0.2.0',
             'author' => 'Jan Ploch',
             'icon' => 'th',
             'permanent' => false,
@@ -47,7 +47,7 @@ class InputfieldPageGrid extends Inputfield {
         $this->set('collapsed', '');
         $this->set('columnWidth', '');
         $this->set('sortfields', '-date');
-        $this->set('template_id', 0); // placeholder only 
+        $this->set('template_id', 0); // placeholder only
     }
 
     public function ___renderValue() {
@@ -57,14 +57,20 @@ class InputfieldPageGrid extends Inputfield {
     public function ___render() {
         $user = wire('user');
         $this->ft->createDummies();
-        $this->config->styles->add($this->config->urls->InputfieldPageGrid . "css/main.css");
-        $this->config->scripts->add($this->config->urls->InputfieldPageGrid . "js/main.js'");
+        $this->config->styles->add($this->config->urls->InputfieldPageGrid . "css/main.css?v=2");
+
+        //needs newest jquery ui version comming with newer PW version, some only with dev flag, load if needed
+        if (($this->config->debug !== 'dev' && $this->config->version() >= '3.0.221') || $this->config->version() <= '3.0.210') {
+            $this->config->scripts->add($this->config->urls->InputfieldPageGrid . "js/jqueryUi.js'");
+        }
+
+        $this->config->scripts->add($this->config->urls->InputfieldPageGrid . "js/main.js?v=2'");
         return $this->renderField();
     }
 
-    public function ___getData($classPages = null) {
+    public function ___getData($classPages = null, $animationPages = null) {
         //make data available to js
-        $globalPage = $this->pages->get('pg-classes');
+        $globalPage = $this->pages->get('name=pg-classes, template=pg_container');
         $globalPageData = [];
         $globalPageData[$globalPage->id] = [];
 
@@ -73,6 +79,7 @@ class InputfieldPageGrid extends Inputfield {
             $classPages = $globalPage->find('');
         }
 
+        //get classes data
         foreach ($classPages as $child) {
             $itemData = $child->meta()->pg_styles;
             if (isset($itemData)) {
@@ -84,25 +91,108 @@ class InputfieldPageGrid extends Inputfield {
             }
         }
 
-        //just get all data, this will work for nested items, as well as ref fields, performance?
+        //get animations data
+        $globalPage = $this->pages->get('name=pg-animations, template=pg_container');
+        $globalPageData[$globalPage->id] = [];
+        $animations = $animationPages;
+
+        //get all classes if no arguments
+        if ($animationPages == null) {
+            $animations = $globalPage->find('');
+        }
+
+        foreach ($animations as $child) {
+            $itemData = $child->meta()->pg_styles;
+
+            // rename animation if changed
+            // if (!isset($itemData[$child->name])) {
+            //     $this->renameItemData($child, $child->name);
+            //     $itemData = $child->meta()->pg_styles;
+            // }
+
+            if (isset($itemData)) {
+                foreach ($itemData as $childData) {
+                    if (isset($childData['id'])) {
+                        $globalPageData[$globalPage->id][$child->name][$childData['id']] = $childData;
+                    }
+                }
+            }
+        }
+
+        //item data
+        $itemsArray = new PageArray();
+        $pageItems = $this->pages->get('name=pg-items, template=pg_container');
+        $symbolsItems = $this->pages->get('name=pg-symbols, template=pg_container');
+
+        // get all grandchildren with getAncestors function ($page->find('') not returning all levels)
+        $itemsArray->add($this->getAncestors($pageItems));
+        $itemsArray->add($this->getAncestors($symbolsItems));
+
+        foreach ($itemsArray as $pageItem) {
+            $itemData = $pageItem->meta()->pg_styles;
+            if (isset($itemData)) {
+                //remove hover states from older pg versions
+                if (array_key_exists('pgitem:hover', $itemData)) {
+                    $pageItem->meta()->remove('pg_styles')['pgitem:hover'];
+                    continue;
+                }
+                $globalPageData[$pageItem->id] = $itemData;
+            }
+        }
+
+        return json_encode($globalPageData);
+    }
+
+    public function renameItemData($item, $newName) {
+
+        //currently only used to rename animation if page name changes
+        //could be addapted to all items?
+        $itemData = $item->meta()->pg_styles;
+        $oldId = '';
+
+        foreach ($itemData as $childData) {
+            if (isset($childData['animation-event'])) {
+                $oldId = $childData['id'];
+                $childData['id'] = $newName;
+                $childData['cssClass'] = $newName;
+                $itemData[$newName] = $childData;
+                //remove data with oldid
+                unset($itemData[$oldId]);
+                $this->notices->message('rename animation to: ' . $newName);
+            }
+        }
+        //save animation
+        $item->meta()->set('pg_styles', $itemData);
+
+        //rename all animation names
         $pageItems = $this->pages->get('pg-items');
         $itemsArray = new PageArray();
-
+        //build array with all pages
         foreach ($pageItems->children() as $child) {
             $itemsArray->add($child);
             foreach ($child->find('') as $c) {
                 $itemsArray->add($c);
             }
         }
-
-        foreach ($itemsArray as $child) {
-            $itemData = $child->meta()->pg_styles;
-            if (isset($itemData)) {
-                $globalPageData[$child->id] = $itemData;
+        //rename animation names on items
+        foreach ($itemsArray as $pageItem) {
+            $pageItemData = $pageItem->meta()->pg_styles;
+            if (isset($pageItemData['pgitem']['breakpoints'])) {
+                foreach ($pageItemData['pgitem']['breakpoints'] as $breakpoint) {
+                    if (isset($pageItemData['pgitem']['breakpoints'][$breakpoint['name']]['css']['--pg-animation'])) {
+                        $animations = $pageItemData['pgitem']['breakpoints'][$breakpoint['name']]['css']['--pg-animation'];
+                        if ($animations && strpos($animations, $oldId) !== false) {
+                            $animations = str_replace($oldId, $newName, $animations);
+                            $pageItemData['pgitem']['breakpoints'][$breakpoint['name']]['css']['--pg-animation'] = $animations;
+                            //save item
+                            $pageItem->meta()->set('pg_styles', $pageItemData);
+                        }
+                    }
+                }
             }
         }
+        //END rename all animation names
 
-        return json_encode($globalPageData);
     }
 
     public function ___renderField() {
@@ -125,13 +215,9 @@ class InputfieldPageGrid extends Inputfield {
 
         if (isset($oldEditID)) {
 
-            // // // // bd('Old id found:' . $oldEditID);
-            // // // // bd($editID);
-
             if ($oldEditID != $editID) {
                 $itemsParentOld = $this->pages->get('pg-' . $oldEditID);
                 if ($itemsParentOld->id && $itemsParent->id == 0) {
-                    // // // // bd('change name');
                     $itemsParentOld->name = 'pg-' . $editID;
                     $itemsParentOld->save();
                     $itemsParent = $itemsParentOld;
@@ -152,26 +238,6 @@ class InputfieldPageGrid extends Inputfield {
             $itemsParent->title = $this->pages->get($editID)->title . ' items'; // set page title (not neccessary but recommended)
             $itemsParent->save();
         }
-
-        // set field name to item meta, not needed, but convinient?
-        // $pagesToRender = $itemsParent->find('');
-        // $itemsParent->meta()->set('pg_field', $this->name);
-
-        // foreach ($pagesToRender as $pgItem) {
-        //     $pgItem->meta()->set('pg_field', $this->name);
-        // }
-        // END set field name to item meta, not needed, but convinient?
-
-        //import old data
-        // $pagesToRenderOld = $this->attr('value');
-
-        // if ($pagesToRenderOld) {
-        //     foreach ($pagesToRenderOld as $item) {
-        //         $item->parent = $itemsParent;
-        //         $item->save();
-        //     }
-        // }
-        //import old data
 
         //END new pages to render based on items parent
 
@@ -195,7 +261,7 @@ class InputfieldPageGrid extends Inputfield {
 
         if ($user->hasPermission('pagegrid-style-panel') && $this->ft->stylePanel) {
             include 'stylePanel.php';
-            $settings = '<div class="pg-stylepanel pg-settings pg-settings-content">' . $settings . '</div>';
+            $settings = '<div class="ui-dialog pg-settings-container pg-stylepanel"><div class="pg-settings pg-stylepanel pg-settings-content">' . $settings . '</div></div>';
             $topNav = '<div class="pg-topnav uk-navbar-center">
         <i class="pg-item-list-button pg-topnav-margin-big fa fw fa-list-ul on" title="Item List"></i>
         <i class="pg-undo fa fa-fw fa-reply" data-name="fa-reply" title="Undo" style="cursor: pointer;"></i><i class="pg-redo pg-topnav-margin fa fa-fw fa-share" data-name="fa-share" title="Redo" style="cursor: pointer;"></i>
@@ -207,11 +273,57 @@ class InputfieldPageGrid extends Inputfield {
        </div></div>';
         }
 
+        $addItems = $this->renderAddItemBar();
+
+        //add blueprint select
+        $blueprintPages = $this->pages->get('name=pg-blueprints, template=pg_container')->children();
+        $blueprintSelect = '';
+        if (count($blueprintPages)) {
+            $blueprintSelect = $this->modules->get('InputfieldSelect');
+            $blueprintSelect->name = 'pg-blueprint-select';
+            $blueprintSelect->label = 'Select blueprint';
+            //add options
+            foreach ($blueprintPages as $blueprint) {
+                $blueprintSelect->addOption($blueprint->name);
+            }
+            $blueprintSelect = $blueprintSelect->render();
+        }
+        //END add blueprint select
+
+        $renderMarkup = $topNav . $settings . '<div class="pg-container" data-page-title="' . $mainPage->title . '" data-page="' . $editID . '" data-id="' . $this->pages->get('pg-classes')->id . '" data-animations-id="' . $this->pages->get('pg-animations')->id . '" data-field="' . $this->name . '" data-admin-url="' . $this->page->rootParent->url() . 'setup/pagegrid/" data-fallbackfonts="' . $this->ft->fallbackFonts . '">' . $addItems . $dataGlobal . $blueprintSelect;
+        //loading animation
+        $renderMarkup .= '<div class="pg-loading"><div class="fa fa-spin fa-spinner fa-fw"></div></div>';
+        //container for item header (item header will be moved here with js)
+        $renderMarkup .= '<div id="pg-item-header"></div>';
+        $renderMarkup .= '<iframe id="pg-iframe-canvas" src="' . wire('pages')->get($parentPageId)->url . '?backend=1" frameBorder="0" scrolling="no" style="width:100%; max-height:100vh; border:0;"></iframe>';
+        $renderMarkup .= '</div>';
+
+        //render delete button
+        if ($user->hasPermission('page-delete')) {
+            $button = $this->modules->get('InputfieldButton');
+            $button->value = 'Delete items';
+            $button->addClass('pg-button-delete-marked');
+            $button->icon('trash');
+            $renderMarkup .= '<div style="display:none;" class="pg-wraper-delete-marked">' . $button->render() . '</div>';
+        }
+
+        //init setup
+        $l = $this->ft->setup();
+
+        return $renderMarkup;
+    }
+
+    public function renderAddItemBar($getSymbolsOnly = 0) {
+
         // render the 'Add New' buttons for each template
-        if ($user->hasPermission('pagegrid-add') && $user->hasPermission('pagegrid-drag')) {
-            $editID = (int) $this->wire('input')->get('id');
-            if (!$editID && $this->wire('process') instanceof WirePageEditor) $editID = $this->wire('process')->getPage()->id;
-            $parentID = $itemsParent->id;
+        if (!$this->user->hasPermission('pagegrid-add') || !$this->user->hasPermission('pagegrid-drag')) return;
+
+        // $editID = (int) $this->wire('input')->get('id');
+        // if (!$editID && $this->wire('process') instanceof WirePageEditor) $editID = $this->wire('process')->getPage()->id;
+        // $parentID = $itemsParent->id;
+        $addItems = '';
+
+        if (!$getSymbolsOnly) {
             $addItems = '<div class="pg-add-container"><div class="pg-add-content">';
             foreach ($this->rowTemplates as $template) {
                 /** @var Template $template */
@@ -225,43 +337,53 @@ class InputfieldPageGrid extends Inputfield {
                     $tIcon = wireIconMarkup($template->icon);
                 }
 
-                $addItems .= '<div class="pg-add ' . $template->name . '" data-parent-id="' . $parentID . '" data-template-id="' . $template->id . '" template="' . $template->name . '">' . $tIcon . '<span class="ui-button-text">' . $template->getLabel() . '</span></div>';
+                $addItems .= '<div class="pg-add ' . $template->name . '" data-template-id="' . $template->id . '" template="' . $template->name . '">' . $tIcon . '<span class="ui-button-text">' . $template->getLabel() . '</span></div>';
             }
+        }
+
+        //add symbols
+        $addItems .= '<div class="pg-add-symbol-container">';
+        $symbolParent = $this->pages->get("name=pg-symbols, template=pg_container");
+        $symbols = $symbolParent->children('sort=created');
+        $linkedPages = $this->database->query("SELECT source_id FROM pages_meta WHERE name = 'pg_symbol'");
+        $linkedPages = implode("|", $linkedPages->fetchAll(\PDO::FETCH_COLUMN, 0));
+        $linkedPages = $this->pages->getByIDs($linkedPages);
+
+        foreach ($symbols as $symbol) {
+            if ($symbol->template->icon == '') {
+                $tIcon = '<div class="pg-iconletter">' . substr($symbol->title, 0, 1) . '</div>';
+            } else {
+                $tIcon = wireIconMarkup($symbol->template->icon);
+            }
+
+            $linkedPagesCount = 0;
+            foreach ($linkedPages as $lp) {
+                if ($lp->meta()->pg_symbol !== null && $lp->meta()->pg_symbol == $symbol->id && $lp->parent->name !== 'trash') {
+                    $linkedPagesCount++;
+                }
+            }
+
+            $addItems .= '<div class="pg-add pg-add-symbol" data-id="' . $symbol->id . '" data-template-id="' . $symbol->template->id . '" template="' . $symbol->template->name . '">' . $tIcon . '<span class="ui-button-text"><span class="pg-symbol-title">' . $symbol->title . '</span><span class="pg-symbol-number">' . $linkedPagesCount . '</span></span></div>';
+        }
+
+        $addItems .= '</div>';
+        //END add symbols
+
+        if (!$getSymbolsOnly) {
             $addItems .= '</div></div>';
         }
-        // END render the 'Add New' buttons for each template
-
-        $renderMarkup = $topNav . $settings . '<div class="pg-container" data-id="' . $this->pages->get('pg-classes')->id . '" data-field="' . $this->name . '" data-admin-url="' . $this->page->rootParent->url() . 'setup/pagegrid/" data-fallbackfonts="' . $this->ft->fallbackFonts . '">' . $addItems . $dataGlobal;
-
-        //container for item header (item header will be moved here with js)
-        $renderMarkup .= '<div id="pg-item-header"></div>';
-
-        $renderMarkup .= '<iframe id="pg-iframe-canvas" src="' . wire('pages')->get($parentPageId)->url . '?backend=1" frameBorder="0" scrolling="no" style="width:100%; max-height:100vh; border:0;"></iframe>';
-
-        $renderMarkup .= '</div>';
-
-        //render delete button
-        if ($user->hasPermission('page-delete')) {
-            $button = $this->modules->get('InputfieldButton');
-            $button->value = 'Delete items';
-            $button->addClass('pg-button-delete-marked');
-            $button->icon('trash');
-            $renderMarkup .= '<div style="display:none;" class="pg-wraper-delete-marked">' . $button->render() . '</div>';
-        }
-
-        $l = $this->ft->setup();
-
-        return $renderMarkup;
+        return $addItems;
     }
 
     public function isBackend() {
         $backend = 0;
 
+        if (!wire('page') || !wire('page')->id || !$this->user->isLoggedin()) return 0;
+        if (wire('page')->template->name === 'pg_blueprint' && !isset($_GET['backend'])) return 0;
+
         if ($this->user->isLoggedin() && (strpos(wire('page')->url, wire('config')->urls->admin) === 0 || isset($_GET['backend']))) {
             $backend = 1;
         }
-
-        // // // bd($backend);
 
         return $backend;
     }
@@ -297,16 +419,17 @@ class InputfieldPageGrid extends Inputfield {
             if (isset($PageFrontEditData['inlineEditFields'])) {
                 $PageFrontEditFields = $PageFrontEditData['inlineEditFields'];
                 $templates = $this->fields->get('type=FieldtypePageGrid')->template_id;
-
-                foreach ($templates as $tId) {
-                    $t = $this->templates->get($tId);
-                    if (isset($t) == 0) continue;
-                    foreach ($t->fields as $f) {
-                        if (in_array($f->id, $PageFrontEditFields)) {
-                            $dummy = $this->pages->get("$f->id!=''");
-                            if ($dummy->id) {
-                                $this->ft->readyFrontEdit($dummy);
-                                $dummies .= $dummy->$f;
+                if ($templates !== null && count($templates)) {
+                    foreach ($templates as $tId) {
+                        $t = $this->templates->get($tId);
+                        if (isset($t) == 0) continue;
+                        foreach ($t->fields as $f) {
+                            if (in_array($f->id, $PageFrontEditFields)) {
+                                $dummy = $this->pages->get("$f->id!=''");
+                                if ($dummy->id) {
+                                    $this->ft->readyFrontEdit($dummy);
+                                    $dummies .= $dummy->$f;
+                                }
                             }
                         }
                     }
@@ -320,7 +443,7 @@ class InputfieldPageGrid extends Inputfield {
                 $statusClass .= 'pg-sortable';
             }
 
-            $out = '<div id="' . $itemsParent->name . '" class="pg-wrapper pg-main pg-drop pg ' . $this->getCssClasses($itemsParent) . ' ' . $statusClass . '" data-id="' . $itemsParent->id . '" data-field="' . $pg->name . '">' . $layout . '</div>';
+            $out = '<div id="' . $itemsParent->name . '" class="pg-wrapper pg-item pg-main pg-droppable pg ' . $this->getCssClasses($itemsParent) . ' ' . $statusClass . '" data-id="' . $itemsParent->id . '" data-field="' . $pg->name . '">' . $layout . '</div>';
             $out .= '<div class="pg-dummies" style="display:none!important;">' . $dummies . '</div>';
         } else {
             $out = '<div class="pg-wrapper pg pg-main ' . $this->getCssClasses($itemsParent) . '">' . $layout . '</div>';
@@ -330,7 +453,20 @@ class InputfieldPageGrid extends Inputfield {
     }
 
     public function renderItem($p) {
-        $user = wire('user');
+
+        //check if symbol page was found
+        $pOriginal = $p; // set original as data attribute later to be able to convert back
+        if ($p->meta('pg_symbol') !== null && $p->meta('pg_symbol')) {
+            $symbolId = $p->meta('pg_symbol');
+            $symbol = $this->pages->get($symbolId);
+            if ($symbol && $symbol->id && $symbol->parent->name === 'pg-symbols') {
+                $p = $symbol;
+            } else {
+                //if no symbol page found remove reference
+                $p->meta()->remove('pg_symbol');
+            }
+        }
+        //END check if symbol page was found
 
         //force autonaming/puplishing for all children if only one template selected
         if (count($p->template->childTemplates) == 1) {
@@ -347,6 +483,7 @@ class InputfieldPageGrid extends Inputfield {
         $p->template->noPrependTemplateFile = 1;
         $p->template->appendFile = "";
         $p->template->prependFile = "";
+        $p->template->tags = 'pagegrid';
         $p->template->save();
         //END automatic prepending/appending of template file
 
@@ -377,7 +514,6 @@ class InputfieldPageGrid extends Inputfield {
         $parsedTemplate->pageGrid = array('backend' => $backend, 'tag' => $this->getTagName($p));
 
         // force init inline editor markup
-        // // // // bd($p->parent()->meta()->pg_ajax);
         if (($backend && $this->config->ajax) || ($backend && $p->parent()->meta()->pg_ajax)) {
             // hack: change name to reinit new children of groups after modal edit
             $oldName = $p->name;
@@ -388,52 +524,42 @@ class InputfieldPageGrid extends Inputfield {
         }
         // END force init inline editor markup
 
-        $imageUpload = '';
-        $imageUploadEmpty = '';
+        //add placeholder to text fields
+        // prefil inline fields with dummy content (without saving value)
+        $PageFrontEditData = wire('modules')->getConfig('PageFrontEdit');
+        $FieldtypePageGridData = wire('modules')->getConfig('FieldtypePageGrid');
 
-        // insert uploader based on module PageGridEdit settings
-        $inlineEditFieldsUpload = $this->ft->inlineEditFieldsUpload;
-
-        if (isset($inlineEditFieldsUpload)) {
-
-            foreach ($inlineEditFieldsUpload as $fieldId) {
-
+        if (isset($PageFrontEditData['inlineEditFields'])) {
+            $PageFrontEditFields = $PageFrontEditData['inlineEditFields'];
+            foreach ($PageFrontEditFields as $fieldId) {
                 $field = wire('fields')->get($fieldId);
                 if ($p->template->hasField($field)) {
+                    if (!array_key_exists("placeholderText_$field->id", $FieldtypePageGridData)) continue;
 
-                    if ($p->$field) {
-                        $imageUploadEmpty = ' upload-notEmpty';
+                    $fieldName = $field->name;
+                    $placeholder = $FieldtypePageGridData["placeholderText_$field->id"];
+
+                    //need to check for unformated value because frontEdit module already populated markup
+                    $value = $p->getUnformatted($fieldName);
+                    $value = strip_tags($value);
+
+                    //continue if not empty
+                    if ($value) continue;
+                    if (!$placeholder) continue;
+
+                    if ($field->inputfieldClass == 'InputfieldCKEditor' || $field->inputfieldClass == 'InputfieldTinyMCE') {
+                        $p->$fieldName = '<p>' . $placeholder . '</p>';
                     } else {
-                        $imageUploadEmpty = ' upload-empty';
+                        $p->$fieldName = $placeholder;
                     }
-
-                    if ($p->$field == '') {
-                        $imageUploadEmpty = ' upload-empty';
-                    }
-
-                    $imageUpload = '
-                        <div class="setting pg-file-picker pg-file-picker-' . $field . ' pg-style-panel">
-                          <div class="settings_wrap">
-                            <div class="drop_target">
-                              <div class="input_button"></div>
-                                <input class="inputFile" type="file" data-field="' . $field . '" data-id="' . $p->id . '" data-type="upload"/>
-                                </div>
-                            </div>
-                        </div>
-                        ';
                 }
             }
         }
-
-        //END insert uploader based on module PageGridEdit settings
+        //END prefil inline fields with dummy content
 
         //Read item Settings
         $attributes = '';
         $nestedClasses = '';
-
-        // foreach ($p->meta()->pg_styles as $item) {
-        //     $item['state'] = '';
-        // }
 
         $itemData = $p->meta()->pg_styles;
 
@@ -443,13 +569,12 @@ class InputfieldPageGrid extends Inputfield {
 
                 if (isset($PageGridItem['attributes'])) {
                     $attributes = $PageGridItem['attributes'];
-                    // // // // bd($attributes);
                 }
                 if (isset($PageGridItem['children'])) {
-                    $nestedClasses = 'pg pg-nested ';
+                    $nestedClasses = 'pg pg-nested pg-droppable ';
 
                     if ($this->user->hasPermission('pagegrid-drag')) {
-                        $nestedClasses .= 'pg-sortable ';
+                        // $nestedClasses .= 'pg-sortable ';
                     }
                 }
             }
@@ -457,115 +582,158 @@ class InputfieldPageGrid extends Inputfield {
 
         //end Read item Settings
 
-        // add class for reffield
-        $refPages = $this->getRef($p);
-
-        foreach ($refPages as $refPage) {
-            if ($refPage->id) {
-                $refStyle = $refPage->meta()->pg_styles;
-                if (isset($refStyle)) {
-                    $nestedClasses .= 'pg-ref ';
-                }
-            }
-        }
-        // END add class for reffield
 
         // END insert uploader
+        $header = $this->renderItemHeader($p, $p->template->label, $pOriginal);
+        $statusClass = $this->getStatusClasses($p);
+
+        //make sure outpuformatting is on before render
         $p->of(true);
 
-        // status classes
-        $statusClass = "";
-
-        if ($p->editable() == 0) {
-            $statusClass .= " pg-no-edit";
-        }
-
-        if ($user->hasPermission('page-pagegrid-edit', $p) == 0) {
-            $statusClass .= " pg-no-edit";
-        }
-
-        if ($p->is(Page::statusUnpublished))
-            $statusClass .= " pg-unpublished";
-        if ($p->is(Page::statusHidden))
-            $statusClass .= " pg-hidden";
-        if ($p->is(Page::statusLocked))
-            $statusClass .= " pg-locked";
-
-        // add class for permisssions
-        if (!($this->user->hasPermission('page-edit', $p))) {
-            $statusClass .= " pg-locked";
-        }
-
-        if ($this->user->hasPermission('pagegrid-drag')) {
-
-            $statusClass .= " pg-item-draggable";
-        }
-
-        if ($this->user->hasPermission('pagegrid-resize')) {
-
-            $statusClass .= " pg-item-resizable";
-        }
-
-        // create header
-        $header = "";
-        $layoutTitle = $p->template->label ? $p->template->label : $p->template->name;
-
-        if ($user->hasPermission('page-add', $p)) {
-            $statusClass .= " pg-permission-add";
-        }
-
-        if ($user->hasPermission('page-create', $p)) {
-            $statusClass .= " pg-permission-create";
-        }
-
-        if ($user->hasPermission('page-delete', $p)) {
-            $statusClass .= " pg-permission-delete";
-        }
-
-        if ($user->hasPermission('page-clone', $p) && $user->hasPermission('page-create', $p)) {
-            $statusClass .= " pg-permission-clone";
-        }
-
-        if ($p->is(Page::statusUnpublished))
-            $statusClass .= " pg-unpublished";
-        if ($p->is(Page::statusHidden))
-            $statusClass .= " pg-hidden";
-        if ($p->is(Page::statusLocked))
-            $statusClass .= " pg-locked";
-
-        //set bind class 
-        if (null !== $p->meta('pg_bind')) {
-            if ($p->meta('pg_bind'))
-                $statusClass .= " pg-binded";
-        }
-        //END set bind class
-
-        if ($p->editable() && $user->hasPermission('page-pagegrid-edit', $p)) {
-            $header .= '<span id="pg-item-header-' . $p->id . '" data-id="' . $p->id . '" class="pg-item-header' . $statusClass . '">';
-            $header .= '<span>' . $layoutTitle . '</span>';
-            $header .= '<a class="pg-edit" title="' . $this->_('Edit') . '" data-url="./?id=' . $p->id . '&amp;modal=1&pgmodal=1" href="#"><i class="fa fa-pencil"></i></a>';
-            $header .= '<a class="pg-clone" data-template="' . $p->template->name . '" data-parent="' . $p->parent()->id . '"><i class="fa fa-fw fa-clone" data-name="fa-clone" title="Clone"></i></a>';
-            if ($user->hasPermission('page-lock', $p)) {
-                $header .= '<a class="pg-lock" href="#"><i class="fa fa-lock" title="' . $this->_('Unlock') . '"></i><i class="fa fa-unlock" title="' . $this->_('Lock') . '"></i></a>';
-            }
-            if ($user->isSuperuser()) {
-                $header .= '<a class="pg-bind" title="' . $this->_('Bind data') . '" href="#"><i class="fa fa-database"></i></a>';
-            }
-            $header .= '<a class="pg-delete" title="' . $this->_('Mark for deletion') . '" href="#"><i class="fa fa-trash"></i></a>';
-            $header .= '</span>';
-        }
-        // END create header
+        // parse template markup and inssert file uploader
+        $templateRender = $parsedTemplate->render();
+        $templateRender = $this->ft->enableInlineEditFile($templateRender);
 
         if ($backend) {
-            $layout .= '<' . $this->getTagName($p) . ' id="' . $p->name . '" data-id="' . $p->id . '" class="' . $this->getCssClasses($p) . ' ' . $nestedClasses . $statusClass . $imageUploadEmpty . '" data-template="' . $p->template->name . '" data-field="' . $this->name . '" data-name="' . $p->name . '" ' . $attributes . '>';
+            $layout .= '<' . $this->getTagName($p) . ' id="' . $p->name . '" data-id="' . $p->id . '" data-id-original="' . $pOriginal->id . '" class="' . $this->getCssClasses($p) . ' ' . $nestedClasses . $statusClass . '" data-template="' . $p->template->name . '" data-field="' . $this->name . '" data-name="' . $p->name . '" ' . $attributes . '>';
+            $layout .= '<pg-icon>' . wireIconMarkup($p->template->icon) . '</pg-icon>';
             $layout .= $header;
-            $layout .= $parsedTemplate->render() . $imageUpload;
+            $layout .= $templateRender;
             $layout .= '</' . $this->getTagName($p) . '>';
         } else {
-            $layout = '<' . $this->getTagName($p) . ' class="' . $nestedClasses . $this->getCssClasses($p) . '" ' . $attributes . '>' . $parsedTemplate->render() . '</' . $this->getTagName($p) . '>';
+            $layout = '<' . $this->getTagName($p) . ' class="' . $nestedClasses . $this->getCssClasses($p) . '" ' . $attributes . '>' .  $templateRender . '</' . $this->getTagName($p) . '>';
         }
 
         return $layout;
+    }
+
+    //function to render file uploader
+    // @param Page $p
+    // @param Field Name or Field Id $f
+    public function renderFileUploader($p, $fName) {
+
+        if (!$this->isBackend()) return;
+        if (!$p && !$p->id) return;
+
+        $f = wire('fields')->get($fName);
+        $imageUpload = '';
+        $imageUploadEmpty = '';
+
+        if ($p->template->hasField($f)) {
+
+            $p->of(true);
+
+            if (!$p->$fName) {
+                $imageUploadEmpty = ' pg-file-picker-empty';
+
+                if ($f->type instanceof FieldtypeImage) {
+                    $imageUpload = '<img class="pg-fileupload" src="">';
+                } else {
+                    $imageUpload = '<video muted loop class="pg-fileupload">';
+                    $imageUpload .= '<source src="" type="video/mp4">';
+                    $imageUpload .= '</video>';
+                }
+            }
+
+            $imageUpload .= '
+                        <pg-uploader class="setting pg-file-picker pg-file-picker-' . $f->name . $imageUploadEmpty . '">
+                          <pg-uploader class="settings_wrap">
+                            <pg-uploader class="drop_target">
+                              <pg-uploader class="input_button"></pg-uploader>
+                                <input class="inputFile" type="file" data-field="' . $f->name . '" data-id="' . $p->id . '" data-type="upload"/>
+                                </pg-uploader>
+                            </pg-uploader>
+                        </pg-uploader>
+                        ';
+        }
+
+        return $imageUpload;
+    }
+
+    //function to render item header
+    public function renderItemHeader($p, $title = '', $pOriginal = 0) {
+
+        $header = "";
+        $user = $this->user;
+        $layoutTitle = $p->template->label ? $p->template->label : $p->template->name;
+        $layoutTitle = $title ? $title : $layoutTitle;
+        $statusClass = $this->getStatusClasses($p);
+        $isPgPage = $p->parents('template=pg_container')->first();
+
+        //if frontend return empty string
+        if (!$this->isBackend()) return $header;
+
+        //make sure outpuformatting is on before render
+        $p->of(true);
+
+        //for normal pages $pOriginal and $p are the same ($pOriginal is needed for symbols)
+        if (!$pOriginal) {
+            $pOriginal = $p;
+        }
+
+        if ($pOriginal->meta('pg_symbol') !== null && $pOriginal->meta('pg_symbol')) {
+            $statusClass .= " pg-symbol pg-ref";
+            $layoutTitle = $p->title ? $p->title : $p->name;
+        }
+
+        // use custom html element for header, to be able to nest inside "<a>"
+        if ($p->editable() && $user->hasPermission('page-pagegrid-edit', $p)) {
+            $header .= '<span id="pg-item-header-' . $pOriginal->id . '" data-id="' . $p->id . '" data-id-original="' . $pOriginal->id . '" class="pg-item-header' . $statusClass . '">';
+            $header .= '<span>' . $layoutTitle . '</span>';
+
+            //edit
+            $header .= '<pg-item-header-button class="pg-edit" title="' . $this->_('Edit') . '" data-url="./?id=' . $p->id . '&amp;modal=1&pgmodal=1" href="#"><i class="fa fa-pencil"></i></pg-item-header-button>';
+
+            if ($isPgPage) {
+                //clone
+                $header .= '<pg-item-header-button class="pg-clone" data-template="' . $p->template->name . '" data-parent="' . $p->parent()->id . '"><i class="fa fa-fw fa-clone" data-name="fa-clone" title="Clone"></i></pg-item-header-button>';
+            }
+            if ($user->hasPermission('page-lock', $p) && $isPgPage) {
+                //lock
+                $header .= '<pg-item-header-button class="pg-lock" href="#"><i class="fa fa-lock" title="' . $this->_('Unlock') . '"></i><i class="fa fa-unlock" title="' . $this->_('Lock') . '"></i></pg-item-header-button>';
+            }
+            if ($user->isSuperuser() && $isPgPage && !$this->modules->isInstalled('PageGridDemoMode')) {
+                //symbol
+                $header .= '<pg-item-header-button class="pg-symbol" title="' . $this->_('Create Symbol') . '" href="#"><i class="fa fw fa-cube"></i></pg-item-header-button>';
+            }
+            if ($isPgPage) {
+                //delete
+                $header .= '<pg-item-header-button class="pg-delete" title="' . $this->_('Mark for deletion') . '" href="#"><i class="fa fa-trash"></i></pg-item-header-button>';
+            }
+            $header .= '</span>';
+        }
+        return $header;
+    }
+
+    //function to get status classes for permissions 
+    public function getStatusClasses($p) {
+        $user = $this->user;
+        $statusClass = "";
+
+        //if frontend return empty string
+        if (!$this->isBackend()) return $statusClass;
+
+        //set css classes
+        if ($p->editable() == 0) $statusClass .= " pg-no-edit";
+        if ($user->hasPermission('page-pagegrid-edit', $p) == 0) $statusClass .= " pg-no-edit";
+        if ($p->is(Page::statusUnpublished)) $statusClass .= " pg-unpublished";
+        if ($p->is(Page::statusHidden)) $statusClass .= " pg-hidden";
+        if ($p->is(Page::statusLocked)) $statusClass .= " pg-locked";
+        if (!($this->user->hasPermission('page-edit', $p))) $statusClass .= " pg-locked";
+        if ($this->user->hasPermission('pagegrid-drag')) $statusClass .= " pg-item-draggable";
+        if ($this->user->hasPermission('pagegrid-resize')) $statusClass .= " pg-item-resizable";
+        if ($user->hasPermission('page-add', $p)) $statusClass .= " pg-permission-add";
+        if ($user->hasPermission('page-create', $p)) $statusClass .= " pg-permission-create";
+        if ($user->hasPermission('page-delete', $p)) $statusClass .= " pg-permission-delete";
+        if ($user->hasPermission('page-clone', $p) && $user->hasPermission('page-create', $p)) $statusClass .= " pg-permission-clone";
+        if ($p->is(Page::statusUnpublished)) $statusClass .= " pg-unpublished";
+        if ($p->is(Page::statusHidden)) $statusClass .= " pg-hidden";
+        if ($p->is(Page::statusLocked)) $statusClass .= " pg-locked";
+
+        if ($p->parent->name === 'pg-symbols' && $p->parent->template->name === 'pg_container') $statusClass .= " pg-symbol pg-ref";
+        //END set symbol class
+
+        return $statusClass;
     }
 
     public function ___getConfigInputfields() {
@@ -577,47 +745,100 @@ class InputfieldPageGrid extends Inputfield {
     // Methodes returns classnames and tagnames for rendering items in frontend + backend
     // get classes
 
-    public function getCssClasses($item, $options = null) {
+    public function getCssClasses($item, $options = null, $itemId = 'pgitem') {
 
         $itemData = $item->meta()->pg_styles;
-        $defaultClasses = 'pg-item ' . $item->name . ' ' . $item->template;
+        $templateName = str_replace('_', '-', $item->template->name);
+        $defaultClasses = $item->name . ' ' . $templateName . ' pg-item';
         $cssClasses = '';
         $backend = $this->isBackend();
 
         if ($options == 'parentClasses') {
 
-            $defaultClasses = ' pg ' . $item->name . ' ' . $item->template;
+            $defaultClasses = ' pg ' . $item->name . ' ' . $templateName;
 
             if ($backend) {
-                $defaultClasses .= ' ui-droppable';
+                $defaultClasses .= ' pg-droppable ';
             }
+        }
+
+        if ($itemId !== 'pgitem') {
+            $defaultClasses = '';
         }
 
         if (isset($itemData)) {
 
-            if (isset($itemData['pgitem'])) {
-                if (!(empty($itemData['pgitem']['cssClasses']))) {
-                    $cssClasses = $itemData['pgitem']['cssClasses'] . ' ';
+            if (isset($itemData[$itemId])) {
+                if (!(empty($itemData[$itemId]['cssClasses']))) {
+                    $cssClasses = $itemData[$itemId]['cssClasses'] . ' ';
                     $cssClasses = preg_replace('/\s+/', ' ', $cssClasses);
                 }
-                // if($itemData['pgitem.loaded']['state'] == '.loaded') {
-                //     $cssClasses .= 'pg-load ';
-                // }
+
+                // add animation classes 
+                // aaaa
+                $animations = '';
+
+                //look for all breakpoints
+                if (isset($itemData[$itemId]['breakpoints'])) {
+                    foreach ($itemData[$itemId]['breakpoints'] as $breakpoint) {
+                        $animations .= isset($itemData[$itemId]['breakpoints'][$breakpoint['name']]['css']['--pg-animation']) ? $itemData[$itemId]['breakpoints'][$breakpoint['name']]['css']['--pg-animation'] . ',' : '';
+                    }
+                }
+
+                //look if gloabl classes have animations set
+                $cssClassesArray = explode(' ', $cssClasses);
+                $cssClassesParentId = $this->pages->findOne('name=pg-classes, template=pg_container, include=all')->id;
+                foreach ($cssClassesArray as $cssClassName) {
+                    $animation = $this->pages->findOne("name=$cssClassName, template=pg_container, include=all, has_parent=$cssClassesParentId");
+                    if ($animation->id) {
+                        $itemData = $animation->meta()->pg_styles;
+                        if (isset($itemData[$itemId]['breakpoints'])) {
+                            foreach ($itemData[$itemId]['breakpoints'] as $breakpoint) {
+                                $animations .= isset($itemData[$itemId]['breakpoints'][$breakpoint['name']]['css']['--pg-animation']) ? $itemData[$itemId]['breakpoints'][$breakpoint['name']]['css']['--pg-animation'] . ',' : '';
+                            }
+                        }
+                    }
+                }
+
+                $animationsArray = explode(',', $animations);
+                $animationsArray = array_unique($animationsArray);
+
+                foreach ($animationsArray as $animationName) {
+                    $animationParentId = $this->pages->findOne('name=pg-animations, template=pg_container, include=all')->id;
+                    $animation = $this->pages->findOne("name=$animationName, template=pg_container, include=all, has_parent=$animationParentId");
+                    if ($animation->id) {
+                        $animationData = $animation->meta()->pg_styles;
+                        $event = isset($animationData[$animation->name]['animation-event']) ? $animationData[$animation->name]['animation-event'] : 'load';
+                        $eventClass = 'pg-event-' . $event;
+                        //add prfex pg-animation- to animation classes
+                        $cssClasses .= ' ' . $eventClass . ' pg-animation-' . $animationName . ' ';
+
+                        //add keyframe class if event is load to start from first frame
+                        if (($event === 'load' || $event === 'scroll' || $event === 'inview') && !$backend) {
+                            foreach ($animationData as $aData) {
+                                if (isset($aData['keyframe']) && $aData['keyframe'] === '0') {
+                                    $cssClasses .= ' ' . $aData['id'];
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
-
 
         if ($options == 'addedClasses') {
             $Classes = $cssClasses;
         } else {
-            $Classes = $cssClasses . $defaultClasses;
+            $Classes = $defaultClasses . ' ' . $cssClasses;
         }
+
+        //remove last empty space
+        $Classes = rtrim($Classes);
 
         return $Classes;
     }
 
     //get tag name
-
     public function getTagName($item) {
 
         $tagName = 'div';
@@ -629,17 +850,10 @@ class InputfieldPageGrid extends Inputfield {
             }
         }
 
-        // fix for groups changing tagname
-        if ($item->template->name == 'pg_group') {
-            $tagName = 'div';
-        }
-
         // if p change to custom tag to prevent html wrapping break with inline editor divs
         if ($tagName == 'p' && $this->user->isLoggedin()) {
             $tagName = 'pg-ptag';
         }
-
-        // // // // bd($tagName);
 
         return $tagName;
     }
@@ -650,9 +864,12 @@ class InputfieldPageGrid extends Inputfield {
     public function scripts($mainPage) {
         $lastItem = null;
         $jsFiles = "";
+        $jsAnimationData = "";
+        $backend = $this->isBackend();
 
-        if ($this->ft->lazysizes) {
-            $jsFiles .= '<script type="text/javascript" src="' . $this->config->urls->InputfieldPageGrid . 'lazysizes.js"></script>';
+        //load js plugins
+        foreach ($this->ft->plugins as $pluginName) {
+            $jsFiles .= '<script type="text/javascript" src="' . $this->config->urls->InputfieldPageGrid . 'js/' . $pluginName . '.js"></script>';
         }
 
         if ($mainPage->id) {
@@ -660,28 +877,29 @@ class InputfieldPageGrid extends Inputfield {
             return;
         }
 
+        $items = new PageArray();
         $itemsParent = $this->pages->get('pg-' . $mainPage->id);
 
         if ($itemsParent->id) {
-            // mainPage has pg field and items
-            $items = $itemsParent->find('');
+            //getAncestors returns parent and grandchildren. needed because of bug. $page->find('') is not returning all pages
+            $items->add($this->getAncestors($itemsParent));
         } else {
-            // mainPage has no pg field
-            $items = $mainPage->find('');
-            $items->add($mainPage);
+            //getAncestors returns parent and grandchildren. needed because of bug. $page->find('') is not returning all pages
+            $items->add($this->getAncestors($mainPage));
         }
 
-        // handle reference fields
-        $itemsArray = new PageArray();
-
+        $classNames = '';
         foreach ($items as $item) {
-            $refPages = $this->getRef($item);
-            $itemsArray->add($refPages);
-        }
-        $items->add($itemsArray);
-        // END handle reference fields
 
-        foreach ($items as $item) {
+            //build classes array to check for animations
+            $itemData = $item->meta()->pg_styles;
+            if (isset($itemData)) {
+                foreach ($itemData as $data) {
+                    if (isset($data['cssClasses'])) $classNames .= $data['cssClasses'];
+                }
+            }
+            //END build classes array to check for animations
+
             $filename = wire('config')->paths->templates . 'blocks/' . $item->template->name . '.js';
             $filenameUrl = wire('config')->urls->templates . 'blocks/' . $item->template->name . '.js';
 
@@ -702,176 +920,80 @@ class InputfieldPageGrid extends Inputfield {
             }
         }
 
-        echo $jsFiles;
-    }
+        //aaaa
+        //animation data to access with js on frontend if animation found
+        $animationsSelectors = [];
+        $animationsParent = $this->pages->get('name=pg-animations, template=pg_container');
 
-    public function ___renderStyles($p, $id = 0) {
+        if (!$backend && $animationsParent->findOne('')) {
+            $cssClassesParent = $this->pages->get('name=pg-classes, template=pg_container');
+            $classNames = preg_replace('/\s+/', '|', $classNames);
+            $animationItems = new PageArray();
+            $animationItems->add($cssClassesParent->find("name=$classNames"));
+            $animationItems->add($items);
 
-        $css = '';
-        $items = $p->meta()->pg_styles;
-        $backend = $this->isBackend();
+            //get items to init animations for
+            foreach ($animationItems as $item) {
+                //check if animation exists on page
+                //look for all breakpoints
+                $itemData = $item->meta()->pg_styles;
+                if (isset($itemData)) {
+                    foreach ($itemData as $childData) {
+                        if (isset($childData['id']) && isset($childData['breakpoints'])) {
+                            foreach ($childData['breakpoints'] as $breakpoint) {
+                                if (!isset($childData['breakpoints'][$breakpoint['name']]['css']['--pg-animation'])) continue;
 
-        if ($id) {
-            $items = [];
-            $items[$id] = $p->meta()->pg_styles[$id];
-        }
+                                $selector = '.';
+                                $selector2 = '.';
+                                if (isset($childData['tagName']) && $childData['tagName'] === $item->name) {
+                                    //we have a tag so we remove "."
+                                    $selector = '';
+                                }
 
-        if (isset($items) == 0) {
-            return;
-        }
+                                if (isset($childData['tagName']) && $childData['tagName'] === $childData['id']) {
+                                    $selector2 = '';
+                                }
 
-        //if page is item container skip parent selector
-        $rootEl = 0;
-        if ($p->template->name == 'pg_container' && $p->parent()->name !== 'pg-classes') {
-            $rootEl = 1;
-        }
-        //END if page is item container skip parent selector
-
-        foreach ($items as $item) {
-
-
-            if (isset($item['breakpoints']) == 0) {
-                return;
-            }
-
-            //if set to none remove value (fix for older version)
-            if ($item['state'] == 'none' || $item['state'] == ' ') {
-                $item['state'] = '';
-            }
-
-            //to be able to replace style tag in backend
-            if ($backend) {
-
-                $cssId = $item['id'];
-
-                // if pgitem allways use page name
-                // do not save page name in item to be able to change page name later
-                if (substr( $item['id'], 0, 6 ) == 'pgitem') {
-                    $cssId = $p->name;
-                    // $item['id'] = $p->name;
-                } else {
-                    $cssId = $p->name . $item['id'];
-                }
-
-                //remove . and : from state
-                if (isset($item['state']) && $item['state'] != 'none') {
-                    $state = str_replace(":","",$item['state']);
-                    $state = str_replace(".","",$state);
-                    $cssId = $cssId . $state;
-                }
-
-                $globalClass = '';
-                if ($p->parent()->name == 'pg-classes') {
-                    $globalClass = 'pg-global';
-                    //add g- prfix for global classes to make unique id
-                    $cssId = 'g-' . $cssId;
-                }
-
-                $css .= '<style class="pg-style pg-style-id-' . $cssId . ' ' . $globalClass . '">';
-            }
-
-
-            // add hover only if device supports it
-            if (isset($item['state'])) {
-
-                if ($item['state'] == 'hover' || $item['state'] == ':hover') {
-                    $css .= '@media (hover: hover), (-ms-high-contrast:none) { ';
-                }
-            }
-
-            foreach ($item['breakpoints'] as $breakpoint) {
-
-                //if no css continue to next
-                if (empty($breakpoint['css'])) {
-                    continue;
-                }
-
-                if (!($breakpoint['name'] == 'base') && !($breakpoint['name'] == 's') && $backend == 0) {
-                    $css .= $breakpoint['size'] . '{ ';
-                }
-
-                if (!($breakpoint['name'] == 'base') && !($breakpoint['name'] == 's') && $backend) {
-                    $css .= '.breakpoint-' . $breakpoint['name'] . ' ';
-                }
-
-                // breakpoint s is more specific
-                if ($breakpoint['name'] == 's' && $backend == 0) {
-                    $css .= $breakpoint['size'] . '{ html ';
-                }
-
-                if ($breakpoint['name'] == 's' && $backend) {
-                    $css .= ' html.breakpoint-' . $breakpoint['name'] . ' ';
-                }
-
-                if (isset($item['cssClass'])) {
-
-                    //if no cssClass use page name
-                    if ($item['cssClass'] == '') {
-                        $item['cssClass'] = $p->name;
-                    }
-
-                    // if ($item['id'] == 'pgitem:hover') {
-                    //     $item['cssClass'] = $p->name . ':hover';
-                    // }
-
-                    //force parent class if class is not page name (subitem)
-                    if (substr( $item['id'], 0, 6 ) !== 'pgitem' && $rootEl == 0) {
-                        if ($item['id'] == strtolower($item['tagName']) || $item['id'] == strtolower($item['tagName']) . ':hover') {
-                            $item['cssClass'] = $p->name . ' ' . $item['id'];
-                        } else {
-                            $item['cssClass'] = $p->name . ' .' . $item['id'];
+                                if ($childData['id'] === 'pgitem') {
+                                    $animationsSelectors[] = $selector . $item->name;
+                                } else {
+                                    $animationsSelectors[] = $selector . $item->name . ' ' . $selector2 . $childData['id'];
+                                }
+                            }
                         }
                     }
-                    //END force parent class if class is not page name (subitem)
+                }
+            }
 
-                    if (isset($item['state']) && $item['state'] != 'none') {
-                        $item['cssClass'] = $item['cssClass'] . $item['state'];
-                    }
+            if (count($animationsSelectors)) {
 
-                    if ($item['cssClass'] == strtolower($item['tagName'])) {
+                $animationsSelectors = array_unique($animationsSelectors);
+                $animationData = [];
 
-                        //style p custom tag the same as p (html nesting bug with inline editor)
-                        if ($item['tagName'] == 'p' && $this->user->isLoggedin()) {
-                            $css .= 'pg-ptag, ';
+                foreach ($animationsParent->find('') as $animationPage) {
+                    $itemData = $animationPage->meta()->pg_styles;
+                    if (isset($itemData)) {
+                        foreach ($itemData as $childData) {
+                            if (isset($childData['id'])) {
+                                if (isset($childData['keyframe'])) {
+                                    $animationData[$animationPage->name]['keyframes'][$childData['keyframe']] = $childData;
+                                } else {
+                                    $animationData[$animationPage->name][$childData['id']] = $childData;
+                                }
+                            }
                         }
-
-                        $css .= strtolower($item['tagName']) . '{ ';
-                    } else {
-                        $css .= '.' . $item['cssClass'] . '{ ';
                     }
                 }
-
-                foreach ($breakpoint['css'] as $style => $val) {
-
-                    $fallbackFonts = $this->ft->fallbackFonts;
-
-                    if ($style == 'font-family' && $fallbackFonts) {
-                        $val = $val . ', ' . $this->ft->fallbackFonts;
-                    }
-
-                    $css .= $style . ': ' . $val . '; ';
-                }
-
-                $css .= ' } ';
-
-                if (!($breakpoint['name'] == 'base') && $backend == 0) {
-                    $css .= ' } ';
-                }
-            }
-
-            if (isset($item['state'])) {
-                if ($item['state'] == 'hover' || $item['state'] == ':hover') {
-                    $css .= ' } ';
-                }
-            }
-
-            //to be able to replace style tag in backend
-            if ($backend) {
-                $css .= '</style>';
+                //add js var to access data
+                $dataJson = json_encode($animationData);
+                $dataJsonSelectors = json_encode($animationsSelectors);
+                $jsAnimationData = '<script>var pgAnimations = ' . $dataJson . '; var pgAnimationsSelectors = ' . $dataJsonSelectors . ';</script>';
+                //add animation js file
+                $jsFiles .= '<script type="text/javascript" src="' . $this->config->urls->InputfieldPageGrid . 'js/pg-animations.js"></script>';
             }
         }
 
-        return $css;
+        echo $jsAnimationData . $jsFiles;
     }
 
     public function fonts($p) {
@@ -903,17 +1025,16 @@ class InputfieldPageGrid extends Inputfield {
                             continue;
                         }
 
-                        $fontWeight = '';
-                        $fontStyle = '';
+                        $fontStyle = '0,';
+                        $fontWeight = '400;';
 
                         foreach ($breakpoint->css as $style2 => $fvariant) {
-                            if ($style2 == 'font-weight') {
-                                $fontWeight = ':wght@' . $fvariant;
-                            } else {
-                                $fontWeight = ':wght@400';
+
+                            if ($style2 == 'font-style' && $fvariant === 'italic') {
+                                $fontStyle .= '1,';
                             }
-                            if ($style2 == 'font-style') {
-                                $fontStyle = $fvariant;
+                            if ($style2 == 'font-weight') {
+                                $fontWeight .= $fvariant . ';';
                             }
                         }
 
@@ -936,7 +1057,7 @@ class InputfieldPageGrid extends Inputfield {
                         $fontName = str_replace('"', "", $fontName);
 
                         if ($fontName !== '') {
-                            $font = $fontName . $fontWeight . $fontStyle;
+                            $font = $fontName . ':ital,wght@' . $fontStyle . $fontWeight;
                         }
 
                         foreach ($systemFonts as $systemFont) {
@@ -986,14 +1107,218 @@ class InputfieldPageGrid extends Inputfield {
             }
         }
 
-        // // // bd($fontFiles);
-
         return $fontFiles;
+    }
+
+    public function ___renderStyles($p, $id = 0, $keyframeClass = 0) {
+
+        if (!$p || !$p->id) return;
+
+        //check if symbol page was found
+        if ($p->meta('pg_symbol') !== null && $p->meta('pg_symbol')) {
+            $symbolId = $p->meta('pg_symbol');
+            $symbol = $this->pages->get($symbolId);
+            if ($symbol && $symbol->id && $symbol->parent->name === 'pg-symbols') {
+                $p = $symbol;
+            } else {
+                //if no symbol page found remove reference
+                $p->meta()->remove('pg_symbol');
+            }
+        }
+        //END check if symbol page was found
+
+        $css = '';
+        $cssSelector = '';
+        $items = $p->meta()->pg_styles;
+        $backend = $this->isBackend();
+
+        if ($id) {
+            $items = [];
+            if (!isset($p->meta()->pg_styles[$id])) {
+                return;
+            }
+            $items[$id] = $p->meta()->pg_styles[$id];
+        }
+
+        if (isset($items) == 0) {
+            return;
+        }
+
+        //if page is item container skip parent selector
+        $rootEl = 0;
+        if ($p->template->name == 'pg_container' && $p->parent()->name !== 'pg-classes') {
+            $rootEl = 1;
+        }
+        //END if page is item container skip parent selector
+
+        foreach ($items as $item) {
+
+
+            if (isset($item['breakpoints']) == 0) {
+                return;
+            }
+
+            //to be able to replace style tag in backend
+            if ($backend) {
+
+                $cssId = $item['id'];
+
+                // if pgitem allways use page name
+                // do not save page name in item to be able to change page name later
+                if (substr($item['id'], 0, 6) == 'pgitem') {
+                    $cssId = $p->name;
+                    // $item['id'] = $p->name;
+                } else {
+                    $cssId = $p->name . $item['id'];
+                }
+
+                $globalClass = '';
+                if ($p->parent()->name == 'pg-classes') {
+                    $globalClass = 'pg-global';
+                    //add g- prfix for global classes to make unique id
+                    $cssId = 'g-' . $cssId;
+                }
+
+                if ($p->parent()->name === 'pg-animations') {
+                    $cssId = $item['id'];
+                }
+
+                $css .= '<style class="pg-style pg-style-id-' . $cssId . ' ' . $globalClass . '">';
+            }
+
+
+            if ($p->parent()->name === 'pg-animations' && isset($item['animation-event']) && $p->name !== 'unset') {
+
+                // add hover only if device supports it
+                if ($item['animation-event'] === 'hover') {
+                    $css .= '@media (hover: hover), (-ms-high-contrast:none) { ';
+                }
+
+                $css .= '.pg-animation-' . $p->name . '.pg-event-trigger-' . $item['animation-event'] . '{ animation-name:' . $p->name . '; }';
+
+                if ($item['animation-event'] === 'hover') {
+                    $css .= '} ';
+                }
+            }
+
+            foreach ($item['breakpoints'] as $breakpoint) {
+
+                //if no css continue to next
+                if (empty($breakpoint['css'])) {
+                    continue;
+                }
+
+                if (!($breakpoint['name'] == 'base') && !($breakpoint['name'] == 's') && $backend == 0) {
+                    $css .= $breakpoint['size'] . '{ ';
+                }
+
+                if (!($breakpoint['name'] == 'base') && !($breakpoint['name'] == 's') && $backend) {
+                    $css .= '.breakpoint-' . $breakpoint['name'] . ' ';
+                }
+
+                // breakpoint s is more specific
+                if ($breakpoint['name'] == 's' && $backend == 0) {
+                    $css .= $breakpoint['size'] . '{ html ';
+                }
+
+                if ($breakpoint['name'] == 's' && $backend) {
+                    $css .= ' html.breakpoint-' . $breakpoint['name'] . ' ';
+                }
+
+                //set selector
+                //set class or tagname as selector
+                $cssSelector = '';
+
+                if (isset($item['cssClass'])) {
+
+                    //if no cssClass use page name
+                    if ($item['cssClass'] == '') {
+                        $item['cssClass'] = $p->name;
+                    }
+
+                    //for animations and classes there is no tagname so set it to empty
+                    if (!isset($item['tagName'])) {
+                        $item['tagName'] = '';
+                    }
+
+                    // if ($item['id'] == 'pgitem:hover') {
+                    //     $item['cssClass'] = $p->name . ':hover';
+                    // }
+
+                    //force parent class if class is not page name (subitem)
+                    if (substr($item['id'], 0, 6) !== 'pgitem' && $rootEl == 0) {
+                        if ($item['id'] == strtolower($item['tagName']) || $item['id'] == strtolower($item['tagName']) . ':hover') {
+                            $item['cssClass'] = $p->name . ' ' . $item['id'];
+                        } else {
+                            $item['cssClass'] = $p->name . ' .' . $item['id'];
+                        }
+                    }
+                    //END force parent class if class is not page name (subitem)
+
+                    if ($item['cssClass'] == strtolower($item['tagName'])) {
+
+                        $cssSelector = '';
+                        //style p custom tag the same as p (html nesting bug with inline editor)
+                        if ($item['tagName'] == 'p' && $this->user->isLoggedin()) {
+                            $cssSelector = 'pg-ptag, ';
+                        }
+
+                        $cssSelector .= strtolower($item['tagName']);
+                    } else {
+                        $cssSelector = '.' . $item['cssClass'];
+                    }
+
+                    //if animations use prefix and pagename as classname
+                    if ($p->parent()->name === 'pg-animations') {
+                        $cssSelector = '.pg-animation-' . $p->name;
+                    }
+                    //if animations keyframe use keyframe as classname
+                    if ($p->parent()->name === 'pg-animations' && isset($item['keyframe'])) {
+
+                        //if backend set keyframe as class (animation will be generated with js)
+                        if ($keyframeClass) {
+                            $cssSelector = '.' . $item['id'];
+                        } else {
+                            $cssSelector = $item['keyframe'] . '%';
+                        }
+                    }
+
+                    $css .= $cssSelector . '{ ';
+                }
+
+                foreach ($breakpoint['css'] as $style => $val) {
+
+                    $fallbackFonts = $this->ft->fallbackFonts;
+
+                    if ($style === 'font-family' && $fallbackFonts) {
+                        $val = $val . ', ' . $this->ft->fallbackFonts;
+                    }
+
+                    if ($style === '--pg-animation' && $val === 'unset') {
+                        $css .= 'animation-name:unset!important;';
+                    }
+
+                    $css .= $style . ': ' . $val . '; ';
+                }
+
+                $css .= ' } ';
+
+                if (!($breakpoint['name'] == 'base') && $backend == 0) {
+                    $css .= ' } ';
+                }
+            }
+
+            //to be able to replace style tag in backend
+            if ($backend) {
+                $css .= '</style>';
+            }
+        }
+
+        return $css;
     }
 
     public function styles($mainPage, $loadDefaults = 1, $loadGlobalClasses = 1, $loadFiles = 1, $loadFonts = 1) {
 
-        // // // // bd($mainPage);
         $itemCss = '';
         $cssBackend = '';
         $backend = $this->isBackend();
@@ -1003,6 +1328,7 @@ class InputfieldPageGrid extends Inputfield {
         $fonts = '';
         $cssMainPage = '';
         $customCss = '';
+        $animations = '';
 
         // page array to hold items to load files
         $itemsArray = new PageArray();
@@ -1013,14 +1339,6 @@ class InputfieldPageGrid extends Inputfield {
         }
 
         $itemsParent = $this->pages->get('pg-' . $mainPage->id);
-
-        if ($itemsParent->id) {
-            // mainPage has pg field and items
-            $items = $itemsParent->find('');
-        } else {
-            // mainPage has no field and items
-            $items = $mainPage->find('');
-        }
 
         //load backend css only if rendering page with pg field
         if ($backend && $itemsParent->id) {
@@ -1037,33 +1355,42 @@ class InputfieldPageGrid extends Inputfield {
             }
         }
 
+        //get items
+        if ($itemsParent->id) {
+            //getAncestors returns parent and grandchildren. needed because of bug. $page->find('') is not returning all pages
+            $pageItems = $this->getAncestors($itemsParent);
+            $itemsArray->add($pageItems);
+            //add symbol children, fix
+            foreach ($pageItems as $pageItem) {
+                if ($pageItem->meta('pg_symbol') !== null && $pageItem->meta('pg_symbol')) {
+                    $symbolId = $pageItem->meta('pg_symbol');
+                    $symbol = $this->pages->get($symbolId);
+                    if ($symbol && $symbol->id && $symbol->hasChildren()) {
+                        $itemsArray->add($this->getAncestors($symbol));
+                    }
+                }
+            }
+        } else {
+            //look for styles on main page
+            //might be good to be able to use regular pages to save stuff?
+            //getAncestors returns parent and grandchildren. needed because of bug. $page->find('') is not returning all pages
+            $itemsArray->add($this->getAncestors($mainPage));
+        }
+        //END get items
+
+        //in backend get all symbol css
+        if ($backend) {
+            $symbolParent = $this->pages->get("name=pg-symbols, template=pg_container");
+            $itemsArray->add($this->getAncestors($symbolParent));
+        }
+        //end in backend get all symbol css
+
         // render wrapper styles 
         $cssMainPage = $this->renderStyles($mainPage);
 
         //render defaults 
         if ($loadDefaults == 1) {
             $defaults = include 'styleDefaults.php';
-        }
-
-        //add parent container styles
-        if ($itemsParent->id) {
-            $itemsArray->add($itemsParent);
-        } else {
-            $itemsArray->add($mainPage);
-        }
-
-        foreach ($items as $item) {
-            $itemsArray->add($item);
-
-            // handle reference fields
-            $refPages = $this->getRef($item);
-            $itemsArray->add($refPages);
-            foreach ($refPages as $refChild) {
-                $refPages = $this->getRef($refChild);
-                $itemsArray->add($refPages);
-            }
-            // END handle reference fields
-
         }
 
         foreach ($itemsArray as $item) {
@@ -1100,10 +1427,62 @@ class InputfieldPageGrid extends Inputfield {
             if ($loadFonts && $font) {
                 $fonts .= '&family=' . $font;
             }
+
+            //load animations
+            // aaaa
+            $itemData = $item->meta()->pg_styles;
+            if (isset($itemData)) {
+                foreach ($itemData as $childData) {
+                    if (isset($childData['id']) && isset($childData['breakpoints'])) {
+                        foreach ($childData['breakpoints'] as $breakpoint) {
+                            $animations .= isset($childData['breakpoints'][$breakpoint['name']]['css']['--pg-animation']) ? $childData['breakpoints'][$breakpoint['name']]['css']['--pg-animation'] . ',' : '';
+                        }
+                    }
+                }
+            }
         }
 
+        //render animations css if they exists on page
+        //aaaa
+        $animationsCss = '';
+        $animationsParent = $this->pages->get('pg-animations');
+
+        if ($loadGlobalClasses && $animationsParent->id) {
+
+            // if backend get all animation css
+            if ($backend) {
+                foreach ($animationsParent->find('') as $animationPage) {
+                    $animationsCss .= $this->getAnimationCss($animationPage);
+                }
+            }
+
+            //if demo get all user data (only demo code in this file)
+            if (!$backend && $this->modules->isInstalled('PageGridDemoMode') && $this->user->hasRole('pagegrid-demo')) {
+                $user = $this->user;
+                $parentIDAnimations = $this->pages->get('name=pg-animations, template=pg_container')->id;
+                $uPages = $this->pages->find("created_users_id=$user, parent=$parentIDAnimations");
+                foreach ($uPages as $animationPage) {
+                    $animationsCss .= $this->getAnimationCss($animationPage);
+                }
+            }
+            //END if demo get all user data (only demo code in this file)
+
+            // if frontend get just the animation for the page
+            if (!$backend && $animations) {
+                $animationsArray = explode(',', $animations);
+                $animationsArray = array_unique($animationsArray);
+                foreach ($animationsArray as $animationName) {
+                    $animationPage = $this->pages->findOne("name=$animationName, template=pg_container, has_parent=$animationsParent->id");
+                    if ($animationPage->id) {
+                        $animationsCss .= $this->getAnimationCss($animationPage);
+                    }
+                }
+            }
+        }
+        //END render animations
+
         //load google fonts
-        if ($fonts !== '') {
+        if ($fonts) {
             if ($this->ft->fontPrivacy) {
                 $preconnect = '<link rel="preconnect" href="https://api.fonts.coollabs.io" crossorigin>';
                 $fonts = $preconnect . '<link rel="stylesheet" type="text/css" href="https://api.fonts.coollabs.io/css2?' . $fonts . '">'; // display swap not working for multiple fonts
@@ -1116,60 +1495,59 @@ class InputfieldPageGrid extends Inputfield {
 
         //backend already returns multiple style tags for easy replacement
         if (!$backend) {
-            $itemCss = '<style class="pg-style pg-style-items">' . $cssMainPage . $itemCss . '</style>';
+            $itemCss = '<style class="pg-style pg-style-items">' . $cssMainPage . $itemCss . $animationsCss . '</style>';
         } else {
-            $itemCss = $cssMainPage . $itemCss;
+            $itemCss = $cssMainPage . $itemCss . $animationsCss;
         }
 
         return $cssTemplates . $cssBackend . $defaults . $fonts . $itemCss . $customCss;
     }
 
-    public function getRef($item) {
-        // handle reference fields
-        // page array to hold items to load files
-        $itemsArray = new PageArray();
-        $refFields  = array();
+    public function getAnimationCss($animationPage) {
+        if (!$animationPage->id) return '';
 
-        foreach ($item->fields as $field) {
-            if ($field->type instanceof FieldtypePage) {
-                $refFields[$field->name] = $field->name;
-            }
-        }
+        $backend = $this->isBackend();
+        $animationsCss = '';
 
-        foreach ($refFields as $refField) {
+        //render animation class
+        $aniCss = $this->renderStyles($animationPage, $animationPage->name);
 
-            if ($refField) {
-                // get ref page
-                $refPages = $item->$refField;
+        //render animation keyframes
+        $keyframesData = $animationPage->meta()->pg_styles;
+        $keyframesCss = '';
 
-                if ($refPages) {
+        if (!isset($keyframesData)) return '';
 
-                    // set to array if single object
-                    if (!is_array($refPages)) $refPages = array($refPages);
+        foreach ($keyframesData as $keyframeData) {
+            //first item is not a keyframe, but animation so skip it
 
-                    if (count($refPages)) {
-                        foreach ($refPages as $refPage) {
-                            if ($refPage->id) {
+            if (isset($keyframeData['keyframe'])) {
+                //set 3. parameter to get classes or % for keyframe
+                $keyframesCss .= $this->renderStyles($animationPage, $keyframeData['id'], $backend);
 
-                                //check if ref is a pagegrid page
-                                $pgContainer = $refPage->parents('template=pg_container')->first();
+                //add first keyframe css 
+                if ($keyframeData['keyframe'] === '0' && !$backend) {
+                    $aniCss .= $this->renderStyles($animationPage, $keyframeData['id'], true);
+                }
 
-                                if (isset($pgContainer->id)) {
-
-                                    $itemsArray->add($refPage);
-                                    foreach ($refPage->find('') as $refChild) {
-                                        $itemsArray->add($refChild);
-                                    }
-                                }
-                            }
-                        }
-                    }
+                //add last keyframe css to preserve states
+                //last keyframe class needs more specific selector to overrite subitem selectors
+                if ($keyframeData['keyframe'] === '100' && !$backend) {
+                    $aniCss .= 'html .pg-main ' . $this->renderStyles($animationPage, $keyframeData['id'], true);
                 }
             }
         }
-        // END handle reference fields
-        return $itemsArray;
+
+        //if backend get keyframes as classes for steps and build animation with js
+        if ($backend) {
+            $animationsCss .= $aniCss . $keyframesCss;
+        } else {
+            $animationsCss .= $aniCss . ' @keyframes ' . $animationPage->name . ' {' . $keyframesCss . '} ';
+        }
+
+        return $animationsCss;
     }
+
 
     public function renderOptions($options = null) {
         $renderOptions = '';
@@ -1190,10 +1568,6 @@ class InputfieldPageGrid extends Inputfield {
                 $itemData = $item->meta()->pg_styles;
                 $tag = $options["tag"];
 
-                // if ($tag == 'p') {
-                //     return;
-                // }
-
                 //new item to force tag
                 if (!isset($itemData)) {
                     $renderOptions .= ' data-pg-tagName="' . $options["tag"] . '"';
@@ -1210,9 +1584,6 @@ class InputfieldPageGrid extends Inputfield {
                                 $templateId = $item->template->id;
                                 $items = $this->pages->find("template=$templateId");
 
-                                // $itemData['pgitem']['tagName'] = $options["tag"];
-                                // $item->meta()->set('pg_styles', $itemData);
-
                                 foreach ($items as $p) {
                                     $pData = $p->meta()->pg_styles;
                                     if (isset($itemData)) {
@@ -1226,24 +1597,25 @@ class InputfieldPageGrid extends Inputfield {
                         }
                     }
                 }
-
-
-                // if (isset(wire('config')->pgRef)) {
-                //     $tag = $this->getTagName($options["page"]);
-                // } else {
-                //     $tag = $this->getTagName($options["page"]);
-                // }
-
-                // if ($tag == 'div' || $tag == 'DIV') {
-                //     $renderOptions .= 'data-pg-tagName="'.$options["tag"].'" data-pg-tags="'.$options["tags"].'"';
-                // }
-
             }
-            // needs span instead of div to work inside p tags
-            echo '<span class="pg-data"' . $renderOptions . '></span>';
+            // tag well be processed by js and hidden with css
+            echo '<pg-data class="pg-data"' . $renderOptions . '></pg-data>';
         }
     }
 
+    //returns grandchildren. needed because of bug. $page->find('') is not returning all pages
+    public function getAncestors($p, $level = 20) {
+        $retPages = (new PageArray())->add($p);
+        if ($level > 0) {
+            foreach ($p->children as $child)
+                $retPages->add($this->getAncestors($child, $level - 1));
+        }
+
+        // $p->parents()->rebuildAll();
+        // $retPages->add($p->find(''));
+
+        return $retPages;
+    }
 
     /**
      * Set a property to this Inputfield

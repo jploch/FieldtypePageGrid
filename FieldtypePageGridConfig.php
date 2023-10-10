@@ -20,18 +20,26 @@ class FieldtypePageGridConfig extends ModuleConfig {
 
 	public function sanitizeValue(HookEvent $event) {
 		$input = $event->arguments(0);
-		$input->customStyles = strip_tags($input->customStyles, '');
+		if ($input->customStyles) $input->customStyles = strip_tags($input->customStyles, '');
 		$event->arguments(0, $input);
 	}
 
 	public function setDefaults(HookEvent $event) {
+		$data = $this->modules->getConfig('FieldtypePageGrid');
+		$dataOld = $data;
+
 		//set checkboxes to default
 		if ($this->modules->get('FieldtypePageGrid')->interfaceDefault) {
-			// // bd('set defaults');
-			$data = $this->modules->getConfig('FieldtypePageGrid');
-			$dataOld = $data;
 			$data['interface'] = array('hideFieldTitle', 'hidePageHeadline', 'hideTitleField', 'hideTabs', 'hideSaveButton');
 			$data['interfaceDefault'] = 0;
+
+			if ($dataOld !== $data) {
+				$this->modules->saveConfig('FieldtypePageGrid', $data);
+			}
+		}
+		if ($this->modules->get('FieldtypePageGrid')->pluginsDefault) {
+			$data['plugins'] = array('lazysizes');
+			$data['pluginsDefault'] = 0;
 
 			if ($dataOld !== $data) {
 				$this->modules->saveConfig('FieldtypePageGrid', $data);
@@ -76,9 +84,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 			'lKey' => '',
 			'lUrl' => '',
 			'inlineEditFields' => $inlineEditFields, // core text fields that are inline-editable
-			'inlineEditFieldsUpload' => array(), // file fields that are inline-editable
-			'placeholderText' => 'Click twice to edit this text', // placeholder text
-			'inlineEditorFront' => 1,
+			'inlineEditorFrontDisable' => 1,
 			'interfaceDefault' => 1,
 			'interface' => array(
 				'hideFieldTitle',
@@ -87,20 +93,23 @@ class FieldtypePageGridConfig extends ModuleConfig {
 				'hideTabs',
 				'hideSaveButton',
 			),
+			'pluginsDefault' => 1,
+			'plugins' => array(
+				'lazysizes',
+			),
 			'customStyles' => '',
 			'fontColor' => '',
 			'bgColor' => '',
 			'fontPrivacy' => 1,
 			'fallbackFonts' => 'Helvetica, Arial, sans-serif',
 			'stylePanel' => 1,
-			'lazysizes' => 1,
 		);
 	}
 
 	public function getInputfields() {
 
 		//add js for font uploader and to save collapsed states
-		$this->config->scripts->add($this->config->urls->FieldtypePageGrid . "FieldtypePageGridConfig.js'");
+		$this->config->scripts->add($this->config->urls->FieldtypePageGrid . "js/FieldtypePageGridConfig.js'");
 
 		$wrapper = new InputfieldWrapper();
 		$valid = $this->modules->get('FieldtypePageGrid')->setup();
@@ -244,23 +253,35 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		$f->value .= '</table>';
 		$wrapper->add($f);
 
+
 		//-------------------------------------------------------
-		// lazysizes
+		//pluins
+		// checkbox to set defaults
 		$f = $this('modules')->get('InputfieldCheckbox');
-		$f->attr('name', 'lazysizes');
-		$f->collapsed(in_array($f->name, $collapsed) ? 1 : 0);
-		$f->themeOffset = 1;
-		$f->icon = 'plug';
-		$f->label = 'Plugins';
-		$f->description = 'Vanilla javascript plugins you want to load when using PAGEGRID’s script function.';
-		$f->checkboxLabel = '[lazysizes](https://github.com/aFarkas/lazysizes) [span.detail] lazyloader for images and videos. [/span]';
-		$f->attr('value', $this->stylePanel);
-		if ($this->lazysizes) {
+		$f->collapsed = 4; //set to hidden
+		$f->attr('name', 'pluginsDefault');
+		$f->label = ' ';
+		$f->checkboxLabel = 'Defaults';
+		$f->attr('value', $this->pluginsDefault);
+		if ($this->pluginsDefault) {
 			$f->attr('checked', 'checked');
 		}
 		$wrapper->append($f);
 
-		//-------------------------------------------------------
+		// will load files with the same name as option automatically
+		$f = $this->modules->get('InputfieldCheckboxes');
+		$f->name = 'plugins';
+		$f->icon = 'plug';
+		$f->label = $this->_('Plugins');
+		$f->table = true;
+		$f->collapsed(in_array($f->name, $collapsed) ? 1 : 0);
+		$f->themeOffset = 1;
+		$f->textFormat = Inputfield::textFormatBasic;
+		$f->description = 'Vanilla javascript plugins you want to load when using PAGEGRID’s script function.';
+		// $f->addOption('setDefault', 'Default'); //set on first run to have default checked
+		$f->addClass('pg-table-auto', 'wrapClass');
+		$f->addOption('lazysizes', 'lazysizes | [span.detail] Lazyloader for images and videos. [learn more](https://github.com/aFarkas/lazysizes) [/span]');
+		$wrapper->append($f);
 
 		//STYLE PANEL
 		$fieldset = $this->modules->get('InputfieldFieldset');
@@ -451,45 +472,47 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		$coreInputfields->description = '';
 		$fieldset->add($coreInputfields);
 
-		//image upload fields
-		$fields = array();
+		//NEW placeholder text per field
+		$PageFrontEditFields = $this->modules->getConfig('PageFrontEdit')['inlineEditFields'];
+		if ($PageFrontEditFields && count($PageFrontEditFields)) {
+			$fieldsetSub = $this->wire('modules')->get('InputfieldFieldset');
+			$fieldsetSub->label = $this->_('Placeholder text for empty text fields');
+			$fieldsetSub->description = 'Without a placeholder empty text fields will not be visible';
+			$fieldsetSub->attr('id+name', 'placeholderTextWrapper');
+			$fieldsetSub->collapsed = 3;
+			$fieldset->add($fieldsetSub);
 
-		foreach ($this->wire('fields') as $field) {
-			if (!$field->type instanceof FieldtypeFile) continue;
-			$fields[$field->name] = $field;
+			foreach ($PageFrontEditFields as $fId) {
+				$PageFrontEditField = $this->fields->get($fId);
+				$f = $this('modules')->get('InputfieldText');
+				$f->attr('name', 'placeholderText_' . $fId);
+				$f->label = $PageFrontEditField->name;
+				$f->columnWidth('33');
+				$fieldsetSub->append($f);
+			}
 		}
 
-		$f = $this->wire('modules')->get('InputfieldCheckboxes');
-		$f->name = 'inlineEditFieldsUpload';
-		$f->icon = 'image';
+		//file fields API call help
+		$preStyle = " style='padding:10px;border:1px dashed #ccc'";
+		$sanitizer = $this->wire('sanitizer');
+		$f = $this->modules->get('InputfieldMarkup');
 		$f->label = $this->_('File fields');
-		$f->optionColumns = 3;
-		foreach ($fields as $field) {
-			$label = $field->name;
-			if ($label == 'title') $label .= ' ' . $this->_('(not recommended)');
-			$f->addOption($field->id, $label);
-		}
-
-		$fieldset->add($f);
-
-		//END image upload fields
-
-		//default text for new items
-		$f = $this('modules')->get('InputfieldText');
-		$f->attr('name', 'placeholderText');
-		$f->label = $this->_('Placeholder text for text fields');
-		$f->description = 'Without a placeholder empty text fields will not work (default: "Click twice to edit this text")';
-		$f->columnWidth('100');
+		$f->icon = 'image';
+		$f->description = 'For the default blocks the inline file uploader is enabled by default. To enable the uploader for your templates, place an image or video inside a <pg-edit> tag.';
+		$f->description .= " [More information](https://page-grid.com/docs/)";
+		$f->notes = 'Only single value image/file fields are supported.';
+		$f->value = "<pre$preStyle>" . $sanitizer->entities(
+			"<pg-edit page='2145' field='image'>\n <img src='url/example.jpg'>\n</pg-edit>"
+		) . "</pre>";
 		$fieldset->append($f);
-		//END default text for new items
 
 		// enable/disable frontend
 		$f = $this('modules')->get('InputfieldCheckbox');
-		$f->attr('name', 'inlineEditorFront');
+		$f->attr('name', 'inlineEditorFrontDisable');
 		$f->label = ' ';
-		$f->checkboxLabel = 'Enable Inline Editor for the frontend';
-		$f->attr('value', $this->inlineEditorFront);
-		if ($this->inlineEditorFront) {
+		$f->checkboxLabel = 'Disable inline editor for the frontend';
+		$f->attr('value', $this->inlineEditorFrontDisable);
+		if ($this->inlineEditorFrontDisable) {
 			$f->attr('checked', 'checked');
 		}
 		$fieldset->append($f);

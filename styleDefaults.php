@@ -10,7 +10,11 @@ $defaultCss = '<style class="pg-style-defaults">';
 if ($this->user->isLoggedin()) {
   $defaultCss .= '.tox.tox-tinymce-inline {z-index:99999!important;}';
   $defaultCss .= '.tox-tinymce-aux {z-index: 999999!important;}';
-  $defaultCss .= '.ui-dialog, .ui-widget-overlay {position:fixed!important; z-index: 999999!important;}';
+  $defaultCss .= '.ui-dialog {position:fixed!important; z-index: 999999!important;}';
+  $defaultCss .= '.ui-dialog iframe {max-height: calc(100vh - 150px) !important;}';
+  $defaultCss .= '.pw-AdminThemeCanvas .ui-dialog {filter: grayscale(100%);}';
+  $defaultCss .= '.pw-AdminThemeCanvas .ui-button.ui-state-default, .pw-AdminThemeCanvas .ui-dialog .ui-dialog-titlebar {background-color:black;}';
+  $defaultCss .= '.ui-widget-overlay {position:fixed!important; z-index: 999998!important;}';
   $defaultCss .= '.tox .tox-collection__item-label {line-height:1!important;}';
   $defaultCss .= '.tox .tox-collection__item-label * {color:#000!important; font-size:16px!important; line-height: 1.3!important; mix-blend-mode:unset!important;}';
   $defaultCss .= '.tox .tox-collection__item-label h1 {font-size:30px!important;}';
@@ -20,6 +24,11 @@ if ($this->user->isLoggedin()) {
   $defaultCss .= '.tox .tox-collection__item-label h5 {font-size:18px!important;}';
   $defaultCss .= '.tox .tox-collection__item-label h6 {font-size:15px!important;}';
   $defaultCss .= '.pw-edit-buttons {z-index:999999!important;}';
+  $defaultCss .= '.pw-edit:has(.pw-edit-orig > br[data-mce-bogus]) {display: none;}'; // hide empty edit tags without placeholder
+}
+
+if($backend) {
+  $defaultCss .= 'pg-icon {display:none!important;}';
 }
 
 if ($this->user->hasPermission('PageFrontEdit')) {
@@ -56,7 +65,7 @@ $defaultCss .= 'input, button, textarea, select {
       font: inherit;
     } ';
 
-$defaultCss .= '.pg-main, .pg_group {
+$defaultCss .= '.pg-main, .pg-group {
       display: grid;
       margin: 0 auto;
       list-style: none;
@@ -75,12 +84,16 @@ $defaultCss .= '.pg-main, .pg_group {
       word-break: break-word;
     } ';
 
-$defaultCss .= '.pg-item {
-      grid-column-end: -1;
-      grid-column-start: 1;
+$defaultCss .= '.pg {
+     grid-column-end: -1;
+     grid-column-start: 1;
     } ';
 
-// $defaultCss .= '.pg_image, .pg_video {
+$defaultCss .= '.pg-item {
+      animation-fill-mode: forwards!important;
+    } ';
+
+// $defaultCss .= '.pg-image, .pg-video {
 //     overflow: hidden;
 //   } ';
 
@@ -90,10 +103,17 @@ $defaultCss .= '.pg img, .pg picture, .pg video, .pg audio, .pg canvas, .pg svg,
       max-width: 100%;
     } ';
 
+$defaultCss .= '.pg-state-click {cursor:pointer;} ';
+
+//make css var default to initial to stop inheritance
+$defaultCss .= '* {--pg-animation: initial;}';
+
+$defaultCss .= '.pg-event-inview {transition: all 600ms ease ;} ';
+
 // Small devices default ( landscape phones, 576px and up )
 $defaultCss .= ' @media (max-width: 640px) {
         html .pg-main,
-        html .pg_group {
+        html .pg-group {
               column-gap: 15px;
               row-gap: 15px;
           }
