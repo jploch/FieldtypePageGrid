@@ -1485,7 +1485,7 @@ class InputfieldPageGrid extends Inputfield {
         if ($fonts) {
             if ($this->ft->fontPrivacy) {
                 $preconnect = '<link rel="preconnect" href="https://api.fonts.coollabs.io" crossorigin>';
-                $fonts = $preconnect . '<link rel="stylesheet" type="text/css" href="https://api.fonts.coollabs.io/css2?' . $fonts . '">'; // display swap not working for multiple fonts
+                $fonts = $preconnect . '<link rel="stylesheet" type="text/css" href="https://api.fonts.coollabs.io/css2?' . $fonts . '&display=swap">'; 
             } else {
                 $preconnect = '<link rel="preconnect" href="https://fonts.googleapis.com">';
                 $preconnect .= '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>';
