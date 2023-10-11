@@ -311,6 +311,8 @@ class ProcessPageGrid extends Process {
 
             if (!$p || !$p->id) return;
 
+            if ($this->modules->isInstalled('PageGridDemoMode') && $this->user->hasRole('pagegrid-demo') && $p->created_users_id !== $this->user->id) return;
+
             $p->removeStatus(Page::statusLocked);
             $p->save();
 
