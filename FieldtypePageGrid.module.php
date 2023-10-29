@@ -16,7 +16,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID'),
       'summary' => __('Commercial page builder module that renders block templates and adds drag and drop functionality in admin.', __FILE__),
-      'version' => '2.0.0.5',
+      'version' => '2.0.0.6',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -524,7 +524,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     if (count($tags) === 0) return $out;
     if (count($oldUploader) !== 0) return $out;
 
-    if ($backend && $this->user->hasPermission('PageFrontEdit')) {
+    if ($backend && $this->user->hasPermission('page-edit-front')) {
       // For Backend add uploader
       foreach ($tags as $tag) {
         $pId = $tag->getAttribute('page');
