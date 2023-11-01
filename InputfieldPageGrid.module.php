@@ -548,7 +548,29 @@ class InputfieldPageGrid extends Inputfield {
                     if (!$placeholder) continue;
 
                     if ($field->inputfieldClass == 'InputfieldCKEditor' || $field->inputfieldClass == 'InputfieldTinyMCE') {
-                        $p->$fieldName = '<p>' . $placeholder . '</p>';
+                        $rtWrapTag = '<p>';
+                        $rtWrapTagClose = '</p>';
+
+                        //change wrap tag based on InputfieldTinyMCE JSON settings
+                        if ($field->inputfieldClass == 'InputfieldTinyMCE' && $field->settingsJSON) {
+                            $rtOptions = json_decode($field->settingsJSON);
+                            if (isset($rtOptions) && isset($rtOptions->forced_root_block) && $rtOptions->forced_root_block) {
+                                $rtWrapTag = '<' . $rtOptions->forced_root_block . '>';
+                                $rtWrapTagClose = '</' . $rtOptions->forced_root_block . '>';
+
+                                //combine "valid_elements" without allowing the "forced_root_block" element, to be able to have plain textfields with linebreaks
+                                if (isset($rtOptions->valid_elements)) {
+                                    $validElements = explode(',', $rtOptions->valid_elements);
+                                    if (!in_array($rtOptions->forced_root_block, $validElements)) {
+                                        $rtWrapTag = '';
+                                        $rtWrapTagClose = '';
+                                    }
+                                }
+                            }
+                        }
+                        //END change wrap tag based on InputfieldTinyMCE JSON settings
+
+                        $p->$fieldName = $rtWrapTag . $placeholder . $rtWrapTagClose;
                     } else {
                         $p->$fieldName = $placeholder;
                     }
@@ -1485,7 +1507,7 @@ class InputfieldPageGrid extends Inputfield {
         if ($fonts) {
             if ($this->ft->fontPrivacy) {
                 $preconnect = '<link rel="preconnect" href="https://api.fonts.coollabs.io" crossorigin>';
-                $fonts = $preconnect . '<link rel="stylesheet" type="text/css" href="https://api.fonts.coollabs.io/css2?' . $fonts . '&display=swap">'; 
+                $fonts = $preconnect . '<link rel="stylesheet" type="text/css" href="https://api.fonts.coollabs.io/css2?' . $fonts . '&display=swap">';
             } else {
                 $preconnect = '<link rel="preconnect" href="https://fonts.googleapis.com">';
                 $preconnect .= '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>';
