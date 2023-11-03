@@ -1047,18 +1047,33 @@ class InputfieldPageGrid extends Inputfield {
                             continue;
                         }
 
-                        $fontStyle = '0,';
-                        $fontWeight = '400;';
+                        $fontVariants = [];
+                        $fontVariantPrefix = '';
+                        $fontStyle = '';
+                        $fontWeight = '';
+
+                        //get variants for this font as array
+                        if (array_key_exists('variants', $googleFontsList[$val])) $fontVariants = explode(",", $googleFontsList[$val]['variants']);
 
                         foreach ($breakpoint->css as $style2 => $fvariant) {
 
+                            if (!in_array($fvariant, $fontVariants)) continue;
+
                             if ($style2 == 'font-style' && $fvariant === 'italic') {
-                                $fontStyle .= '1,';
+                                if ($fontStyle) $fontStyle .= ',';
+                                $fontStyle .= '1';
                             }
                             if ($style2 == 'font-weight') {
-                                $fontWeight .= $fvariant . ';';
+                                if ($fontWeight || $fontStyle) $fontWeight .= ',';
+                                $fontWeight .= $fvariant;
                             }
                         }
+
+                        //add prefix if variant is set
+                        if ($fontStyle || $fontWeight) $fontVariantPrefix = ':';
+                        if ($fontStyle) $fontVariantPrefix .= 'ital';
+                        if ($fontStyle && $fontWeight) $fontVariantPrefix .= ',';
+                        if ($fontWeight) $fontVariantPrefix .= 'wght@';
 
                         // skip font loading for local fonts
                         $localFontNamesArray = $this->getFontNames();
@@ -1079,7 +1094,7 @@ class InputfieldPageGrid extends Inputfield {
                         $fontName = str_replace('"', "", $fontName);
 
                         if ($fontName !== '') {
-                            $font = $fontName . ':ital,wght@' . $fontStyle . $fontWeight;
+                            $font = $fontName . $fontVariantPrefix . $fontStyle . $fontWeight;
                         }
 
                         foreach ($systemFonts as $systemFont) {
@@ -1507,7 +1522,7 @@ class InputfieldPageGrid extends Inputfield {
         if ($fonts) {
             if ($this->ft->fontPrivacy) {
                 $preconnect = '<link rel="preconnect" href="https://api.fonts.coollabs.io" crossorigin>';
-                $fonts = $preconnect . '<link rel="stylesheet" type="text/css" href="https://api.fonts.coollabs.io/css2?' . $fonts . '&display=swap">';
+                $fonts = $preconnect . '<link rel="stylesheet" type="text/css" href="https://api.fonts.coollabs.io/css2?' . $fonts . '">';
             } else {
                 $preconnect = '<link rel="preconnect" href="https://fonts.googleapis.com">';
                 $preconnect .= '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>';
