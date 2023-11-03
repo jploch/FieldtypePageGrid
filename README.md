@@ -10,7 +10,7 @@ Design fully responsive websites (or parts of them) without writing any code. Re
 
 ### Try PAGEGRID for free  
 
-Checkout the [online demo](https://demo.page-grid.com/admin/?createUser).
+Checkout the [online demo](https://page-grid.com) (Click the edit button).
 
 PAGEGRID is not free software. However, you can try PAGEGRID and the site profile on your local machine or on a test server as long as you need to make sure it is the right tool for your next project. … and when you’re convinced, [buy your license](https://page-grid.com/buy).
 
