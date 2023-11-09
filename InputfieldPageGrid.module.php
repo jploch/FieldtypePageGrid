@@ -946,10 +946,11 @@ class InputfieldPageGrid extends Inputfield {
         //animation data to access with js on frontend if animation found
         $animationsSelectors = [];
         $animationsParent = $this->pages->get('name=pg-animations, template=pg_container');
+        $classNames = trim($classNames);
+        $classNames = str_replace(' ', '|', $classNames);
 
-        if (!$backend && $animationsParent->findOne('')) {
+        if (!$backend && $classNames && $animationsParent->findOne('')) {
             $cssClassesParent = $this->pages->get('name=pg-classes, template=pg_container');
-            $classNames = preg_replace('/\s+/', '|', $classNames);
             $animationItems = new PageArray();
             $animationItems->add($cssClassesParent->find("name=$classNames"));
             $animationItems->add($items);
