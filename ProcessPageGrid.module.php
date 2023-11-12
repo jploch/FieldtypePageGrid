@@ -493,6 +493,9 @@ class ProcessPageGrid extends Process {
             if (!$p || !$p->id) return;
             $parent = $this->pages->get($parentId);
             if (!$parent || !$parent->id) return;
+            
+            //return if parent is symbol to prevent nested symbols
+            if (count($parent->parents('name=pg-symbols, template=pg_container'))) return;
 
             $clone = $this->pages->clone($p);
             $clone->name = $p->template->name . '-' . $clone->id; //generate unique name to support multiple symbold on same page
