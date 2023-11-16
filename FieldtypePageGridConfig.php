@@ -464,6 +464,17 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		$fieldset->themeOffset = 1;
 		$wrapper->add($fieldset);
 
+		// enable/disable frontend
+		$f = $this('modules')->get('InputfieldCheckbox');
+		$f->attr('name', 'inlineEditorFrontDisable');
+		$f->label = ' ';
+		$f->checkboxLabel = 'Disable inline editor for the frontend';
+		$f->attr('value', $this->inlineEditorFrontDisable);
+		if ($this->inlineEditorFrontDisable) {
+			$f->attr('checked', 'checked');
+		}
+		$fieldset->append($f);
+
 		//get core front end edit config for text fields
 		$coreInputfields = $this->modules->getModuleConfigInputfields('PageFrontEdit');
 		$coreInputfields = $coreInputfields->inlineEditFields;
@@ -496,6 +507,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		$preStyle = " style='padding:10px;border:1px dashed #ccc'";
 		$sanitizer = $this->wire('sanitizer');
 		$f = $this->modules->get('InputfieldMarkup');
+		$f->collapsed = true;
 		$f->label = $this->_('File fields');
 		$f->icon = 'image';
 		$f->description = 'For the default blocks the inline file uploader is enabled by default. To enable the uploader for your templates, place an image or video inside a <pg-edit> tag.';
@@ -504,17 +516,6 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		$f->value = "<pre$preStyle>" . $sanitizer->entities(
 			"<pg-edit page='2145' field='image'>\n <img src='url/example.jpg'>\n</pg-edit>"
 		) . "</pre>";
-		$fieldset->append($f);
-
-		// enable/disable frontend
-		$f = $this('modules')->get('InputfieldCheckbox');
-		$f->attr('name', 'inlineEditorFrontDisable');
-		$f->label = ' ';
-		$f->checkboxLabel = 'Disable inline editor for the frontend';
-		$f->attr('value', $this->inlineEditorFrontDisable);
-		if ($this->inlineEditorFrontDisable) {
-			$f->attr('checked', 'checked');
-		}
 		$fieldset->append($f);
 
 		// ------------------------------------------------------------------------------
