@@ -16,7 +16,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID'),
       'summary' => __('Commercial page builder module that renders block templates and adds drag and drop functionality in admin.', __FILE__),
-      'version' => '2.0.9',
+      'version' => '2.0.10',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -347,6 +347,11 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     $this->addHookAfter('ProcessPageAdd::buildForm', $this, "pageAddForm");
     $this->addHookBefore('ProcessPageEdit::execute', $this, 'blueprintReady');
 
+    $this->addHookAfter('ProcessTemplate::executeAdd', $this, "addTemplate");
+    $this->addHookBefore('ProcessTemplate::buildEditForm', $this, "setTemplateFile");
+    $this->addHookBefore('ProcessTemplate::getListTableRow', $this, "setTemplateFile");
+
+    
     //hide setup page for non superusers
     $pg = $this->pages->get('name=pagegrid, template=admin');
     $user =  $this->user;
@@ -364,6 +369,67 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
       }
     }
     //END hide setup page for non superusers
+  }
+
+  //list block templates when creating new pages
+  public function addTemplate($event) {
+    $templateFiles = array();
+    $ext = "." . $this->config->templateExtension;
+    $prependTemplateFile = $this->config->prependTemplateFile;
+    $appendTemplateFile = $this->config->appendTemplateFile;
+    $ignoreRegex = $this->config->ignoreTemplateFileRegex;
+    $templatePath = $this->config->paths->templates;
+    $dir = new \DirectoryIterator($templatePath);
+    $dirBlocks = new \DirectoryIterator($templatePath . 'blocks/');
+    $folders = [$dir, $dirBlocks];
+
+    foreach ($folders as $folder) {
+      foreach ($folder as $file) {
+        if ($file->isDir() || $file->isDot()) continue;
+        $filename = $file->getFilename();
+        if ($filename == $prependTemplateFile || $filename == $appendTemplateFile) continue; // skip over prepend/append files
+        if (substr($filename, -1 * strlen($ext)) != $ext) continue;
+        if ($ignoreRegex && preg_match($ignoreRegex, $filename)) continue;
+        $basename = basename($file->getFilename(), $ext);
+        if ($this->sanitizer->name($basename) !== $basename) continue;
+        if (ctype_digit($basename)) continue;
+        // if(count($templates->find("name=$basename"))) continue; 
+        if ($this->templates->get($basename)) continue;
+        if ($file->getPath() === $templatePath . 'blocks') {
+        }
+        $templateFiles[] = $basename;
+      }
+    }
+
+    $this->input->post('test');
+
+    $form = $this->modules->get('Processtemplate')->buildAddForm($templateFiles);
+    $event->return = $form->render();
+    $event->replace = true;
+  }
+
+  //hide template not found warning for block templates 
+  public function setTemplateFile($event) {
+    $template = $event->arguments[0];
+    $ext = "." . $this->config->templateExtension;
+    $template_name = $template->altFilename ? basename($template->altFilename, $ext) : $template->name;
+    $templateFilename = $this->config->paths->templates . $template_name . $ext;
+
+    //if no template file found look inside blocks folder
+    if (file_exists($templateFilename) == 0) {
+      //look inside module block folder
+      $templateFilename = $this->config->paths->templates . 'blocks/' . $template_name . $ext;
+    }
+
+    //if no template file found look inside module folder
+    if (file_exists($templateFilename) == 0) {
+      //look inside module block folder
+      $templateFilename = $this->config->paths->siteModules . 'PageGridBlocks/blocks/' . $template_name . $ext;
+    }
+
+    if (file_exists($templateFilename)) {
+      $template->filename = $templateFilename;
+    }
   }
 
   public function blueprintReady($event) {
