@@ -452,6 +452,17 @@ class InputfieldPageGrid extends Inputfield {
         return $out;
     }
 
+    //disable automatic prepending/appending of template file
+    public function noAppendFile($p) {
+        if (!$p->template->noAppendTemplateFile) {
+            $p->template->noAppendTemplateFile = 1;
+            $p->template->noPrependTemplateFile = 1;
+            $p->template->appendFile = "";
+            $p->template->prependFile = "";
+            $p->template->save();
+        }
+    }
+
     public function renderItem($p) {
 
         //check if symbol page was found
@@ -479,13 +490,12 @@ class InputfieldPageGrid extends Inputfield {
         //END force autonaming for all children if only one template selected
 
         //disable automatic prepending/appending of template file
-        $p->template->noAppendTemplateFile = 1;
-        $p->template->noPrependTemplateFile = 1;
-        $p->template->appendFile = "";
-        $p->template->prependFile = "";
-        $p->template->tags = 'pagegrid';
-        $p->template->save();
-        //END automatic prepending/appending of template file
+        $this->noAppendFile($p);
+
+        if ($p->template->tags !== 'Blocks') {
+            $p->template->tags = 'Blocks';
+            $p->template->save();
+        }
 
         $backend = $this->isBackend();
 

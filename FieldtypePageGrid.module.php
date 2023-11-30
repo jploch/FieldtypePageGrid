@@ -16,13 +16,13 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID'),
       'summary' => __('Commercial page builder module that renders block templates and adds drag and drop functionality in admin.', __FILE__),
-      'version' => '2.0.11',
+      'version' => '2.0.12',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
       'installs' => array('InputfieldPageGrid', 'ProcessPageGrid', 'PageFrontEdit', 'ProcessPageClone'),
       'requires' => array('ProcessWire>=3.0.210', 'PHP>=5.4.0'),
-      'autoload' => 'template=admin',
+      'autoload' => true,
       'permissions' => array(
         'pagegrid-process' => 'Allow PAGEGRID to process ajax calls',
         'page-pagegrid-edit' => 'Edit PAGEGRID items in modal (applies to all editable templates)',
@@ -44,6 +44,12 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     $adminPage = wire('pages')->get('name=pagegrid, template=admin');
     if (!$adminPage || !$adminPage->id) return;
 
+    //create block folder if it does not exist
+    $blockFolder = $this->config->paths->templates . 'blocks/';
+    if (!file_exists($blockFolder) && !is_dir($blockFolder)) {
+      mkdir($blockFolder);
+    }
+
     // create template for pg container
     $t = $this->templates->get('pg_container');
 
@@ -63,8 +69,49 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
       // $t->flags = 8; // system template, to prevent use in backend, but also hides contaier permissions :(
       $t->noParents = -1; //allow one more (2 pages can use this template)
       $t->icon = 'th';
-      $t->tags = 'pagegrid';
+      $t->tags = 'PageGrid';
       $t->save();
+    }
+
+    // create starter template for site/templates
+    $t = $this->templates->get("pagegrid-page");
+    if (!$t || !$t->id) {
+      //create container template
+      $titleField = $fields->get('title');
+
+      // fieldgroup for template
+      $fg = new Fieldgroup();
+      $fg->name = 'pagegrid-page';
+      $fg->add($titleField);
+      $fg->save();
+
+      $t = new Template();
+      $t->name = 'pagegrid-page';
+      $t->fieldgroup = $fg; // add the field group
+      // $t->flags = 8; // system template, to prevent use in backend, but also hides contaier permissions :(
+      // $t->noParents = -1; //allow one more (2 pages can use this template)
+      $t->icon = 'th';
+      // $t->tags = 'PageGrid'; do not set tag so template is shown on add new page screen
+      $t->save();
+
+      // copy blueprint template file to template folder and rename
+      $blueprintFile =  $this->config->paths->siteModules . $this->className() . '/pg_blueprint.php';
+      $templateFolder = $this->config->paths->templates . 'pagegrid-page.php';
+      copy($blueprintFile, $templateFolder);
+
+      //add pg field to starter
+      //create field already
+      $f = $this->fields->get("PageGrid");
+      if (!$f || !$f->id) {
+        $f = new Field;
+        $f->label = 'pagegrid';
+        $f->name = 'PageGrid';
+        $f->type = $this->modules->get('FieldtypePageGrid');
+        $f->tags = 'PageGrid';
+        $f->save();
+      }
+      $t->fieldgroup->add($f);
+      $t->fieldgroup->save();
     }
 
     // create template for blueprints
@@ -86,7 +133,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
       // $t->flags = 8; // system template, to prevent use in backend, but also hides contaier permissions :(
       // $t->noParents = -1; //allow one more (2 pages can use this template)
       $t->icon = 'th';
-      $t->tags = 'pagegrid';
+      $t->tags = 'PageGrid';
       $t->save();
     }
 
@@ -261,21 +308,34 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
 
   public function uninstall() {
 
+    //remove block modules, causes error so uncomment for now
+    // $path = wire('config')->paths->siteModules . 'PageGridBlocks/blocks/';
+    // $files = glob($path . '*.php');
+
+    // foreach ($files as $file) {
+    //   $fileName = str_replace($path, '', $file);
+    //   $templateName = str_replace('.php', '', $fileName);
+    //   $className = str_replace('pg_', '', $templateName);
+    //   $className = str_replace('_', '', ucwords($className, '_'));
+    //   $className = 'Blocks' . $className;
+    //   $moduleExists = $this->modules->get($className);
+    //   $installedBlock = $this->modules->isInstalled($className);
+
+    //   //check if modules are installed
+    //   if ($moduleExists && $installedBlock) $this->modules->uninstall($className);
+    // }
+
     //first empty trash to prevent bug when process page already in trash
     $int = $this->pages->emptyTrash();
 
     $t = $this->templates->get('pg_container');
     $t2 = $this->templates->get('pg_blueprint');
+    $t3 = $this->templates->get('pagegrid-page');
     // $fg = $this->fieldgroups->get('pg_container');
 
-    $pgTemplates = array($t->id, $t2->id);
-    $pgDummies = $this->pages->get("name=pg-dummies, template=pg_container");
+    $pgTemplates = array($t->id, $t2->id, $t3->id);
+    $pgPages = $this->pages->find("template=$t|$t2|$t3, include=all");
 
-    if ($pgDummies && $pgDummies->id) {
-      $pgDummies->delete(true);
-    }
-
-    $pgPages = $this->pages->find('template=pg_container, include=all');
     foreach ($pgPages as $p) {
       if ($p && $p->id && !count($p->children())) {
         $p->delete(true);
@@ -302,6 +362,10 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
       }
     }
 
+    //remove blueprint parent field
+    $f = $this->fields->get('pg_blueprint_parent');
+    if ($f && $f->id) $this->fields->delete($f);
+
     //delete role
     if ($this->roles->get('pagegrid-editor')->id) {
       $this->roles->delete($this->roles->get('pagegrid-editor'));
@@ -319,7 +383,6 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
   }
 
   public function ready() {
-
     //create pages und templates if they don't exist
     $container = $this->pages->get("name=pg-items, template=pg_container");
     if (!$container->id) $this->createModule();
@@ -336,6 +399,9 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     $container = $this->pages->get("name=pg-symbols, template=pg_container");
     if (!$container->id) $this->createModule();
 
+    $gridTemplate = $this->templates->get("pagegrid-page");
+    if (!$gridTemplate || !$gridTemplate->id) $this->createModule();
+
     $this->addHookAfter("Modules::refresh", $this, "createModule");
     $this->addHookAfter('Pages::cloned', $this, "clone");
     $this->addHookBefore('Page::changed(0:title)', $this, "titleChanged");
@@ -351,6 +417,10 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     $this->addHookBefore('ProcessTemplate::buildEditForm', $this, "setTemplateFile");
     $this->addHookBefore('ProcessTemplate::getListTableRow', $this, "setTemplateFile");
 
+    //this is needed to keep module and field settings in sync
+    $this->addHookAfter('ProcessField::fieldSaved', $this, "updateFieldSettings");
+    $this->addHookAfter('ProcessTemplate::fieldAdded', $this, "updateTemplateSettings");
+    $this->addHookAfter('ProcessTemplate::fieldRemoved', $this, "updateTemplateSettings");
 
     //hide setup page for non superusers
     $pg = $this->pages->get('name=pagegrid, template=admin');
@@ -369,6 +439,30 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
       }
     }
     //END hide setup page for non superusers
+  }
+
+  public function updateTemplateSettings($event) {
+    $f = $event->arguments[0];
+    $t = $event->arguments[1];
+    if (!$f->type instanceof FieldtypePageGrid) return;
+    $data = $this->modules->getConfig('FieldtypePageGrid');
+    if ($event->method === 'fieldAdded') $data['addTemplate_' . $f->id][] = $t->id;
+    if ($event->method === 'fieldRemoved') {
+      if (($key = array_search($t->id, $data['addTemplate_' . $f->id])) !== false) unset($data['addTemplate_' . $f->id][$key]);
+    }
+
+    $this->modules->saveConfig('FieldtypePageGrid', $data);
+  }
+
+  public function updateFieldSettings($event) {
+    $f = $event->arguments(0);
+    if (!$f->type instanceof FieldtypePageGrid) return;
+    //get module config
+    $data = $this->modules->getConfig('FieldtypePageGrid');
+    if ($data['template_id_' . $f->id] == $f->template_id) return;
+    if ($f->template_id == null || !$f->template_id) return;
+    $data['template_id_' . $f->id] = $f->template_id;
+    $this->modules->saveConfig('FieldtypePageGrid', $data);
   }
 
   //list block templates when creating new pages
@@ -401,7 +495,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
       }
     }
 
-    $this->input->post('test');
+    // $this->input->post('test');
 
     $form = $this->modules->get('Processtemplate')->buildAddForm($templateFiles);
     $event->return = $form->render();
@@ -508,16 +602,25 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
 
       foreach ($templates as $key => $value) {
         $t = $this->templates->get($key);
+        $file = $this->config->paths->templates . 'blocks/' .  $t->name . '.php';
+        $fileModule = $this->config->paths->siteModules . 'PageGridBlocks/blocks/' . $t->name . '.php';
+        $isBlock = 0;
 
+        if (file_exists($file)) $isBlock = 1;
+        if (file_exists($fileModule)) $isBlock = 1;
+
+        //for normal pages hide block templates
+        if (!$isPageGrid && $isBlock) unset($templates[$key]);
+
+        //remove templates with tagname PageGrid (auto set via module)
         if ($t && $t->id && $t->tags) {
-          //normal page
-          // remove templates with tagname pagegrid (auto set via module)
+          if (!$isPageGrid && (strpos($t->tags, 'PageGrid') !== false)) unset($templates[$key]);
           if (!$isPageGrid && (strpos($t->tags, 'pagegrid') !== false)) unset($templates[$key]);
         }
 
         //pagegrid page
-        //remove templates without tagname pagegrid
-        if ($isPageGrid && (!$t->tags || (strpos($t->tags, 'pagegrid') === false))) unset($templates[$key]);
+        //only show block templates
+        if ($isPageGrid && !$isBlock) unset($templates[$key]);
       }
 
       //for blueprint set blueprint template, and hide inputfield
@@ -916,35 +1019,18 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return $inputfield;
   }
 
-
   public function ___getConfigInputfields(Field $field) {
 
     $inputfields = parent::___getConfigInputfields($field);
-
-    /** @var InputfieldAsmSelect $f */
-    $f = $this->wire('modules')->get('InputfieldAsmSelect');
-    $f->attr('name', 'template_id');
-    $f->label = $this->_('Select one or more templates for items');
-    $f->icon = 'th';
-    foreach ($this->wire('templates') as $template) {
-      if ($template->flags & Template::flagSystem) continue;
-      $filename = wire('config')->paths->templates . 'blocks/' . $template->name . '.php';
-      if (file_exists($filename)) {
-        $f->addOption($template->id, $template->name);
-      } else {
-        $filename = wire('config')->paths->siteModules . 'PageGridBlocks/blocks/' . $template->name .  '.php';
-        if (file_exists($filename)) {
-          $f->addOption($template->id, $template->name);
-        }
-      }
-    }
-    $value = $field->get('template_id');
-    if (!is_array($value)) $value = $value ? array($value) : array();
-    $f->attr('value', $value);
-    $f->required = true;
-    $f->description = $this->_('The template files must be placed in site/templates/blocks/ folder before you can select them here. These are the templates that will be used by pages managed from this field'); // Templates selection description
-    // $f->notes = $this->_('Please hit Save after selecting a template and the remaining configuration on the Input tab will contain more context.'); // Templates selection notes 
+    $f = $this->modules->get('FieldtypePageGridConfig')->getBlockSettings($field);
     $inputfields->add($f);
+
+    if (!$f->value) {
+      // $this->message("Select a block template on the details tab.");
+      // $this->notices->message("You can select a block template on the details tab.", Notice::allowMarkup);
+    }
+
+    $this->config->scripts->add($this->config->urls->InputfieldPageGrid . "js/FieldtypePageGridConfig.js'");
 
     return $inputfields;
   }
@@ -1010,33 +1096,21 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     $validHost = false;
     $valid = false;
 
-    // $data = $this->modules->getConfig($this->className);
-    // $data['lUrl'] = '';
-    // $this->modules->saveConfig('FieldtypePageGrid', $data);
-
-    // // // bd($this->lUrl);
-
     if ($host == $lUrl) {
       $validHost = true;
       $valid = 1;
     }
 
-    if (substr($host, 0, 9) == 'localhost') {
+    $whitelist = array(
+      '127.0.0.1',
+      '::1'
+    );
+
+    //localhost
+    if (in_array($_SERVER['REMOTE_ADDR'], $whitelist)) {
       $validHost = true;
       $valid = 2;
     }
-
-    if ($host_e == 'test') {
-      $validHost = true;
-      $valid = 2;
-    }
-
-    if ($host_e == 'dev') {
-      $validHost = true;
-      $valid = 2;
-    }
-
-    // // // bd($validHost);
 
     if ($validHost) {
       return $valid;

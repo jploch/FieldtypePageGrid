@@ -1,6 +1,7 @@
-<?php
-
-namespace ProcessWire;
+<?php namespace ProcessWire;
+// deactivate automatic append/prepend of file "_init.php" and "_main.php" for this template
+// to deactivate it globally uncomment the lines $config->prependTemplateFile and $config->appendTemplateFile inside your config.php file
+$pagegrid->noAppendFile($page);
 ?>
 
 <!DOCTYPE html>
@@ -11,16 +12,16 @@ namespace ProcessWire;
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title><?= $page->title ?></title>
 
-  <!--function to render PAGEGRID styles-->
+  <!-- function to render PAGEGRID styles -->
   <?= $pagegrid->styles($page); ?>
 </head>
 
 <body>
- 
-  <!--function to render PAGEGRID markup-->
+
+  <!-- function to render PAGEGRID markup -->
   <?= $pagegrid->renderGrid($page); ?>
 
-  <!--function to render PAGEGRID scripts-->
+  <!-- function to render PAGEGRID scripts -->
   <?= $pagegrid->scripts($page); ?>
 </body>
 

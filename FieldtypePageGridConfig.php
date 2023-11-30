@@ -17,7 +17,6 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		$this->addHookBefore('InputfieldTextarea::processInput', $this, 'sanitizeValue');
 	}
 
-
 	public function sanitizeValue(HookEvent $event) {
 		$input = $event->arguments(0);
 		if ($input->customStyles) $input->customStyles = strip_tags($input->customStyles, '');
@@ -43,6 +42,33 @@ class FieldtypePageGridConfig extends ModuleConfig {
 
 			if ($dataOld !== $data) {
 				$this->modules->saveConfig('FieldtypePageGrid', $data);
+			}
+		}
+
+		//allways add pagegrid-page
+		$pgT = $this->templates->get('pagegrid-page');
+		$pgf = $this->fields->get('PageGrid');
+		$data = $this->modules->getConfig('FieldtypePageGrid');
+		if ($pgf && $pgf->id && $pgT->id && isset($data['addTemplate_' . $pgf->id]) && array_search($pgT->id, $data['addTemplate_' . $pgf->id]) === false) {
+			$data['addTemplate_' . $pgf->id][] = $pgT->id;
+			$this->modules->saveConfig('FieldtypePageGrid', $data);
+		}
+
+		//custom uninstall: delete field if option was checked
+		if (isset($data['deleteFields']) && $data['deleteFields']) {
+			foreach ($this->fields->find('type=FieldtypePageGrid') as $f) {
+				//unset this option
+				unset($data['deleteFields']);
+				$this->modules->saveConfig('FieldtypePageGrid', $data);
+				//remove field from all templates first
+				foreach ($this->templates as $t) {
+					if (!$t->hasField($f)) continue;
+					$t->fields->remove($f);
+					$t->fields->save();
+					$t->fieldgroup->remove($f);
+					$t->fieldgroup->save();
+				}
+				$this->fields->delete($f);
 			}
 		}
 	}
@@ -144,6 +170,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		$f->addClass($statusClass, 'wrapClass');
 		$f->icon = 'key';
 		$f->columnWidth('100');
+		if (count($this->fields->find('type=FieldtypePageGrid'))) $f->themeOffset = 1;
 		$f->collapsed = $collapsed;
 
 		// don't show lkey in modal context
@@ -153,7 +180,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 
 		//-------------------------------------------------------
 		//hidden field to store collapsed states as comma seperated string
-		$collapsedString = $this->collapsedState ? $this->collapsedState : 'interface,stylePanelSettings,inlineSettings,customStyles';
+		$collapsedString = $this->collapsedState ? $this->collapsedState : 'plugins,interface,stylePanelSettings,inlineSettings,customStyles';
 		$collapsed = explode(',', $collapsedString);
 
 		$f = $this('modules')->get('InputfieldHidden');
@@ -161,6 +188,93 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		$f->columnWidth('100');
 		$f->attr('value', $this->collapsedState); // set value back to empty
 		$wrapper->append($f);
+
+		//-------------------------------------------------------
+		// Field settings for convenience
+		wire('modules')->get('JqueryUI')->use('modal');
+
+		//create field if none is found and get var is set
+		if (isset($_GET['createField']) && !$this->fields->get('name=PageGrid')) {
+			$fpg = new Field;
+			$fpg->label = 'pagegrid';
+			$fpg->name = 'PageGrid';
+			$fpg->type = $this->modules->get('FieldtypePageGrid');
+			$fpg->tags = 'PageGrid';
+			$fpg->save();
+		}
+
+		// return early and hide other settings if no field created
+		if (!count($this->fields->find('type=FieldtypePageGrid'))) {
+			$fLink = $this->config->urls->admin . 'module/edit?name=FieldtypePageGrid&collapse_info=1&createField';
+			$f = $this->modules->get('InputfieldMarkup');
+			$f->attr('id+name', 'fieldSettings');
+			$f->label = 'Field Settings';
+			$f->collapsed = 0;
+			$f->themeOffset = 1;
+			$f->value = "<p class='description'><i class='fa fw fa-bell-o'></i> Looks like you haven't created a field yet.</p>";
+			$f->value .= '<a href="' . $fLink . '" href="' . $fLink . '">Create field</a><br>';
+			$wrapper->add($f);
+			return $wrapper;
+		}
+
+
+		//render field settings for convinience
+		foreach ($this->fields as $pgf) {
+			if (!$pgf->type instanceof FieldtypePageGrid) continue;
+
+			//see it field is added to template
+			$pgfId = $pgf->id;
+			$pgfName = $pgf->name;
+			$fieldTemplates = $this['addTemplate_' . $pgfId] ? $this['addTemplate_' . $pgfId] : [];
+
+			$fieldset = $this->modules->get('InputfieldFieldset');
+			$fieldset->attr('id+name', 'fieldSettings_' . $pgfId);
+			$fieldset->label = $this->_('Field Settings (' . $pgfName . ')');
+			$fieldset->collapsed(in_array($fieldset->name, $collapsed) ? 1 : 0);
+			$fieldset->icon = 'cog';
+			$wrapper->add($fieldset);
+
+			//blocks setting
+			$f = $this->getBlockSettings($this->fields->get('type=FieldtypePageGrid'));
+			$f->name = 'template_id_' . $pgfId;
+			$f->label = 'Blocks';
+			// $f->columnWidth('50');
+			$value = $this['template_id_' . $pgfId] ? $this['template_id_' . $pgfId] : [];
+
+			//save field value
+			$pgf->template_id = $value;
+			$pgf->save();
+			$fieldset->add($f);
+
+			//add template to field
+			$f = $this->wire('modules')->get('InputfieldAsmSelect');
+			$f->attr('name', 'addTemplate_' . $pgfId);
+			$f->collapsed = 1;
+			$f->icon = 'cube';
+			// $f->columnWidth('50');
+			$f->label = 'Add field to templates';
+			$f->description = 'The template files must be placed in **site/templates/** folder. [Learn more](https://page-grid.com/docs/#/developer/start?id=_2-create-a-template-file)';
+
+			foreach ($this->templates as $t) {
+				if ($t->name == 'admin') continue;
+				if ($t->flags & Template::flagSystem) continue;
+				$filename = wire('config')->paths->templates . $t->name . '.php';
+				if (!file_exists($filename)) continue;
+				$f->addOption($t->id, $t->name);
+				if ($t->name === 'pagegrid-page') continue;
+				if ($t->fields->get('type=FieldtypePageGrid') && $t->fields->get('type=FieldtypePageGrid')->id) continue;
+
+				if (array_search($t->id, $fieldTemplates) !== false) {
+					$t->fieldgroup->add($pgf);
+					$t->fieldgroup->save();
+				} else {
+					$t->fieldgroup->remove($pgf);
+					$t->fieldgroup->save();
+				}
+			}
+
+			$fieldset->add($f);
+		}
 
 		//-------------------------------------------------------
 		//interface
@@ -185,6 +299,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		$f->collapsed(in_array($f->name, $collapsed) ? 1 : 0);
 		$f->themeOffset = 1;
 		$f->textFormat = Inputfield::textFormatBasic;
+		if (!$this->modules->isInstalled('AdminThemeCanvas')) $f->notes = 'If you prefer a more neutral look for your backend, you can also use [AdminThemeCanvas](https://processwire.com/modules/admin-theme-canvas/).';
 		// $f->addOption('setDefault', 'Default'); //set on first run to have default checked
 		$f->addClass('pg-table-auto', 'wrapClass');
 		$f->addOption('hideFieldTitle', 'Hide Field Title | [span.detail] Hide field title in page editor. [/span]');
@@ -195,64 +310,6 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		// $f->val($this->interface);
 		// $f->attr('checked', 'checked');
 		$wrapper->append($f);
-
-		// set interface on AdminThemeCanvas
-		if ($this->input->requestMethod('POST')) {
-			if ($this->modules->isInstalled('AdminThemeCanvas')) {
-				$data = $this->modules->getConfig('AdminThemeCanvas');
-				foreach ($this->interface as $interface) {
-					if ($interface == 'hidePageHeadline') {
-						$data['breadcrumb'] = 'breadcrumb-with-title';
-					}
-					if ($interface == 'hideTitleField') {
-						$data['hide-title'] = 1;
-					}
-					$this->modules->saveConfig('AdminThemeCanvas', $data);
-				}
-			}
-		}
-
-		//-------------------------------------------------------
-		// Field settings for convenience
-		wire('modules')->get('JqueryUI')->use('modal');
-
-		$f = $this->modules->get('InputfieldMarkup');
-		$f->attr('id+name', 'fieldSettings');
-		$f->collapsed = 1;
-		$f->themeOffset = 1;
-		$f->label = 'Field Settings';
-		$f->icon = 'cube';
-		$f->value = '<table class="AdminDataList pw-no-select uk-table uk-table-divider uk-table-small" style="margin-bottom:0;">';
-		$f->value .= '<tr><th>Name</th><th>Templates</th></tr>';
-		$fName = '';
-
-		foreach ($this->fields as $pgf) {
-			if ($pgf->type instanceof FieldtypePageGrid) {
-				$fLink =  $pgf->editUrl() . '&modal=1&';
-				$fName = $pgf->label ? $pgf->label : $pgf->name;
-				$tName = '';
-				foreach ($this->templates as $t) {
-					if ($t->hasField($pgf)) {
-						$tName .= $t->name . ' ';
-					}
-				}
-				$f->value .= '<tr>';
-				$f->value .= '<td><i class="fa fw fa-cog" title="fa-cog"></i>&nbsp; <a href="' . $fLink . '" data-href="' . $fLink . '" class="pw-modal">' . $fName . '</a></td>';
-				$f->value .= '<td>' . $tName . '</td>';
-				$f->value .= '</tr>';
-			}
-		}
-
-		if ($fName == '') {
-			$fLink = $this->config->urls->admin . 'setup/field/add?&modal=1&';
-			$f->collapsed = 0;
-			$f->description = 'To use PAGEGRID you need to create a field first.';
-			$f->value = '<a href="' . $fLink . '" data-href="' . $fLink . '" class="pw-modal">Create Field</a>';
-		}
-
-		$f->value .= '</table>';
-		$wrapper->add($f);
-
 
 		//-------------------------------------------------------
 		//pluins
@@ -274,7 +331,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		$f->icon = 'plug';
 		$f->label = $this->_('Plugins');
 		$f->table = true;
-		$f->collapsed(in_array($f->name, $collapsed) ? 1 : 0);
+		$f->collapsed = 1;
 		$f->themeOffset = 1;
 		$f->textFormat = Inputfield::textFormatBasic;
 		$f->description = 'Vanilla javascript plugins you want to load when using PAGEGRID’s script function.';
@@ -357,7 +414,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 			}
 		}
 		$f->value .= '</table>';
-		$f->value .= '<style>html #notices {display:none;}</style>'; // hide false upload error and use js to show relevant ones
+		$f->value .= '<style>.asmSelect {min-width:200px;} html #notices {display:none;}</style>'; // hide false upload error and use js to show relevant ones
 		if (!count($files)) {
 			$f->description = 'No font files found. You can upload font files using the button below. Fonts are stored under site/templates/fonts/.';
 			$f->value = '';
@@ -459,7 +516,6 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		$fieldset->label = $this->_('Inline Editor');
 		$fieldset->attr('id+name', 'inlineSettings');
 		$fieldset->collapsed(in_array($fieldset->name, $collapsed) ? 1 : 0);
-		$fieldset->description = 'These fields will become editable on the front-end/iframe, directly in the page, simply by checking the boxes below.';
 		$fieldset->icon = 'edit';
 		$fieldset->themeOffset = 1;
 		$wrapper->add($fieldset);
@@ -480,7 +536,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		$coreInputfields = $coreInputfields->inlineEditFields;
 		$coreInputfields->label = 'Text fields';
 		$coreInputfields->icon = 'font';
-		$coreInputfields->description = '';
+		$coreInputfields->description = 'These fields will become editable on the front-end/iframe, directly in the page, simply by checking the boxes below.';
 		$fieldset->add($coreInputfields);
 
 		//NEW placeholder text per field
@@ -495,6 +551,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 
 			foreach ($PageFrontEditFields as $fId) {
 				$PageFrontEditField = $this->fields->get($fId);
+				if (!$PageFrontEditField) continue;
 				$f = $this('modules')->get('InputfieldText');
 				$f->attr('name', 'placeholderText_' . $fId);
 				$f->label = $PageFrontEditField->name;
@@ -538,7 +595,158 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		$f->value($this->sanitizer->text($this->customStyles));
 		$wrapper->append($f);
 
+		//custom uninstall even if field still exists
+		$f = $this->fields->get('type=FieldtypePageGrid');
+
+		if ($f && $f->id) {
+			$f = $this('modules')->get('InputfieldCheckbox');
+			$f->attr('name', 'deleteFields');
+			$f->label = $this->_('Uninstall');
+			$f->checkboxLabel = 'Delete Fields';
+			$f->icon('times-circle');
+			$f->collapsed = 1;
+			$f->description = $this->_('Before you can uninstall the module you have to delete all PAGEGRID fields.');
+			$wrapper->append($f);
+		}
 
 		return $wrapper;
+	}
+
+	public function getBlockSettings($field) {
+
+		$info = $this->modules->getModuleInfoVerbose('PageGridBlocks');
+		$downloaded = $info['name'] ? 1 : 0;
+		$installed = $this->modules->isInstalled('PageGridBlocks');
+		$downloadLink = $this->config->urls->admin . 'module/edit?name=FieldtypePageGrid&collapse_info=1&downloadBlocks';
+
+		//download block module if get var is set
+		if (isset($_GET['downloadBlocks'])) {
+			$this->downloadModule('PageGridBlocks');
+			if (!$installed) $this->modules->install('PageGridBlocks');
+		}
+
+		$value = $this['template_id_' . $field->id];
+		if (!is_array($value)) $value = $value ? array($value) : array();
+
+		/** @var InputfieldAsmSelect $f */
+		$f = $this->wire('modules')->get('InputfieldAsmSelect');
+		$f->attr('name', 'template_id');
+		$f->label = $this->_('Block templates');
+		$f->icon = 'cubes';
+		// $f->required = true;
+		$f->description = $this->_('The block template files must be placed in **site/templates/blocks/** folder. [Learn more](https://page-grid.com/docs/#/developer/blocks?id=create-a-new-block)'); // Templates selection description
+
+		if (!$installed) $f->notes .= 'Alternatively you can also download our [block modules](' . $downloadLink . ')';
+
+		$path = wire('config')->paths->templates . 'blocks/';
+		$files = glob($path . '*.php');
+
+		foreach ($files as $file) {
+			$fileName = str_replace($path, '', $file);
+			$templateName = str_replace('.php', '', $fileName);
+			$t = $this->templates->get($templateName);
+			$attrs = [];
+
+			if ($t && $t->id) {
+				if ($t->flags & Template::flagSystem) continue;
+				if ($t->label) $attrs['data-desc'] = $t->label;
+				if ($t->icon) $attrs['data-handle'] = wireIconMarkup($t->icon, 'fw');
+			} else {
+				//create template
+				$titleField = $this->fields->get('title');
+
+				// fieldgroup for template
+				$fg = new Fieldgroup();
+				$fg->name = $templateName;
+				$fg->add($titleField);
+				$fg->save();
+
+				$t = new Template();
+				$t->name = $templateName;
+				$t->fieldgroup = $fg; // add the field group
+				// $t->icon = 'th';
+				$t->tags = 'MyBlocks';
+				$t->save();
+			}
+
+			$f->addOption($templateName, $templateName, $attrs);
+		}
+
+		//add module blocks
+		$path = wire('config')->paths->siteModules . 'PageGridBlocks/blocks/';
+		$files = glob($path . '*.php');
+
+		//set section 
+		if ($installed) {
+			$f->addOption('--------- Modules ---------');
+			$f->addOptionAttributes('--------- Modules ---------', ['disabled' => 'disabled']);
+		}
+
+		foreach ($files as $file) {
+			$fileName = str_replace($path, '', $file);
+			$templateName = str_replace('.php', '', $fileName);
+			$className = str_replace('pg_', '', $templateName);
+			$className = str_replace('_', '', ucwords($className, '_'));
+			$className = 'Blocks' . $className;
+			$installedBlock = $this->modules->isInstalled($className);
+			$info = $this->modules->getModuleInfoVerbose($className);
+
+			// bd($info);
+
+			//check if module exists
+			if (!$info['name']) continue;
+
+			//check if modules are installed
+			if (!$installedBlock && array_search($templateName, $value)) $this->modules->install($className);
+
+			$attrs = [];
+			$attrs['data-desc'] = $info['title'];
+			$attrs['data-handle'] = wireIconMarkup($info['icon'], 'fw');
+			$f->addOption($templateName, $templateName, $attrs);
+		}
+
+		$f->attr('value', $value);
+		return $f;
+	}
+
+	//helper to download and install missing modules
+	public function downloadModule($name, $update = false) {
+
+		if ($this->modules->get($name)) return;
+
+		// if ($this->session->download_modules != '1') return false;
+
+		$name = $this->wire('sanitizer')->name($name);
+		// $info = self::getModuleInfo();
+
+		$redirectURL = $update ? "./edit?name=$name" : "./";
+		$className = $name;
+		$url = trim($this->wire('config')->moduleServiceURL, '/') . "/$className/?apikey=" . $this->wire('sanitizer')->name($this->wire('config')->moduleServiceKey);
+
+		$http = new WireHttp();
+		$data = $http->get($url);
+
+		if (empty($data)) {
+			$this->error($this->_('Error retrieving data from web service URL') . ' - ' . $http->getError());
+			return $this->session->redirect($redirectURL);
+		}
+		$data = json_decode($data, true);
+		if (empty($data)) {
+			$this->error($this->_('Error decoding JSON from web service'));
+			return $this->session->redirect($redirectURL);
+		}
+		if ($data['status'] == 'success') {
+
+			$installed = $this->modules->isInstalled($className) ? $this->modules->getModuleInfoVerbose($className) : null;
+
+			$destinationDir = $this->wire('config')->paths->siteModules . $className . '/';
+			require_once(wire('config')->paths->modules . 'Process/ProcessModule/ProcessModuleInstall.php');
+			$install = new ProcessModuleInstall();
+
+			$completedDir = $install->downloadModule($data['download_url'], $destinationDir);
+			if ($completedDir) {
+				return true;
+			}
+		}
 	}
 }
