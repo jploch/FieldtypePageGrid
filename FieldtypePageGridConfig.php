@@ -253,7 +253,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 			$f->icon = 'cube';
 			// $f->columnWidth('50');
 			$f->label = 'Add field to templates';
-			$f->description = 'The template files must be placed in **site/templates/** folder. [Learn more](https://page-grid.com/docs/#/developer/start?id=_2-create-a-template-file)';
+			$f->description = 'The template files must be placed in **site/templates/** folder. [Learn more](https://page-grid.com/docs/#/developer/functions)';
 
 			foreach ($this->templates as $t) {
 				if ($t->name == 'admin') continue;
