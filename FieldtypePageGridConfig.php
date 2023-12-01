@@ -49,7 +49,8 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		$pgT = $this->templates->get('pagegrid-page');
 		$pgf = $this->fields->get('PageGrid');
 		$data = $this->modules->getConfig('FieldtypePageGrid');
-		if ($pgf && $pgf->id && $pgT->id && isset($data['addTemplate_' . $pgf->id]) && array_search($pgT->id, $data['addTemplate_' . $pgf->id]) === false) {
+		if ($pgf && $pgf->id && $pgT->id && !isset($data['addTemplate_' . $pgf->id])) {
+			$data['addTemplate_' . $pgf->id] = [];
 			$data['addTemplate_' . $pgf->id][] = $pgT->id;
 			$this->modules->saveConfig('FieldtypePageGrid', $data);
 		}
@@ -264,7 +265,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 				if ($t->name === 'pagegrid-page') continue;
 				if ($t->fields->get('type=FieldtypePageGrid') && $t->fields->get('type=FieldtypePageGrid')->id) continue;
 
-				if (array_search($t->id, $fieldTemplates) !== false) {
+				if (in_array($t->id, $fieldTemplates) !== false) {
 					$t->fieldgroup->add($pgf);
 					$t->fieldgroup->save();
 				} else {
@@ -644,6 +645,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		foreach ($files as $file) {
 			$fileName = str_replace($path, '', $file);
 			$templateName = str_replace('.php', '', $fileName);
+			$templateName = $this->sanitizer->filename($templateName);
 			$t = $this->templates->get($templateName);
 			$attrs = [];
 
@@ -652,21 +654,25 @@ class FieldtypePageGridConfig extends ModuleConfig {
 				if ($t->label) $attrs['data-desc'] = $t->label;
 				if ($t->icon) $attrs['data-handle'] = wireIconMarkup($t->icon, 'fw');
 			} else {
-				//create template
-				$titleField = $this->fields->get('title');
+				//if selected and no template found
+				if (in_array($templateName, $value)) {
 
-				// fieldgroup for template
-				$fg = new Fieldgroup();
-				$fg->name = $templateName;
-				$fg->add($titleField);
-				$fg->save();
+					//create template
+					$titleField = $this->fields->get('title');
 
-				$t = new Template();
-				$t->name = $templateName;
-				$t->fieldgroup = $fg; // add the field group
-				// $t->icon = 'th';
-				$t->tags = 'MyBlocks';
-				$t->save();
+					// fieldgroup for template
+					$fg = new Fieldgroup();
+					$fg->name = $templateName;
+					$fg->add($titleField);
+					$fg->save();
+
+					$t = new Template();
+					$t->name = $templateName;
+					$t->fieldgroup = $fg; // add the field group
+					// $t->icon = 'th';
+					$t->tags = 'Blocks';
+					$t->save();
+				}
 			}
 
 			$f->addOption($templateName, $templateName, $attrs);
@@ -685,6 +691,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		foreach ($files as $file) {
 			$fileName = str_replace($path, '', $file);
 			$templateName = str_replace('.php', '', $fileName);
+			$templateName = $this->sanitizer->filename($templateName);
 			$className = str_replace('pg_', '', $templateName);
 			$className = str_replace('_', '', ucwords($className, '_'));
 			$className = 'Blocks' . $className;
@@ -697,7 +704,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 			if (!$info['name']) continue;
 
 			//check if modules are installed
-			if (!$installedBlock && array_search($templateName, $value)) $this->modules->install($className);
+			if (!$installedBlock && in_array($templateName, $value)) $this->modules->install($className);
 
 			$attrs = [];
 			$attrs['data-desc'] = $info['title'];

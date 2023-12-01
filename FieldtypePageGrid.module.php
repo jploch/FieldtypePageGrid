@@ -16,7 +16,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID'),
       'summary' => __('Commercial page builder module that renders block templates and adds drag and drop functionality in admin.', __FILE__),
-      'version' => '2.0.14',
+      'version' => '2.0.15',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -448,6 +448,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     $data = $this->modules->getConfig('FieldtypePageGrid');
     if ($event->method === 'fieldAdded') $data['addTemplate_' . $f->id][] = $t->id;
     if ($event->method === 'fieldRemoved') {
+      if (!isset($data['addTemplate_' . $f->id]) || !is_array($data['addTemplate_' . $f->id])) return;
       if (($key = array_search($t->id, $data['addTemplate_' . $f->id])) !== false) unset($data['addTemplate_' . $f->id][$key]);
     }
 
