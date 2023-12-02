@@ -24,8 +24,25 @@ class FieldtypePageGridConfig extends ModuleConfig {
 	}
 
 	public function setDefaults(HookEvent $event) {
+
+		//get config data
 		$data = $this->modules->getConfig('FieldtypePageGrid');
 		$dataOld = $data;
+
+		//install selected block modules before render so they can change main module settings
+		foreach ($this->fields->find('type=FieldtypePageGrid') as $pgf) {
+			if (!isset($data['template_id_' . $pgf->id])) continue;
+			$selectedBlocks = $data['template_id_' . $pgf->id];
+			if (!is_array($selectedBlocks)) continue;
+			foreach ($selectedBlocks as $templateName) {
+				$templateName = $this->sanitizer->filename($templateName);
+				$className = str_replace('pg_', '', $templateName);
+				$className = str_replace('_', '', ucwords($className, '_'));
+				$className = 'Blocks' . $className;
+				if (!$this->modules->isInstalled($className) && in_array($templateName, $selectedBlocks)) $this->modules->install($className);
+			}
+		}
+		//END install selected block modules before render so they can change main module settings
 
 		//set checkboxes to default
 		if ($this->modules->get('FieldtypePageGrid')->interfaceDefault) {
@@ -76,6 +93,8 @@ class FieldtypePageGridConfig extends ModuleConfig {
 
 	//this function runs on module save to keep PageFrontEdit and FieldtypePageGrid config is sync
 	public function saveConfig(HookEvent $event) {
+
+		// if (!$this->modules->isInstalled($className) && in_array($templateName, $value)) $this->modules->install($className);
 
 		$classname = $event->arguments[0];
 		$configCore = $this->modules->getConfig('PageFrontEdit');
@@ -220,8 +239,8 @@ class FieldtypePageGridConfig extends ModuleConfig {
 
 
 		//render field settings for convinience
-		foreach ($this->fields as $pgf) {
-			if (!$pgf->type instanceof FieldtypePageGrid) continue;
+		foreach ($this->fields->find('type=FieldtypePageGrid') as $pgf) {
+			// if (!$pgf->type instanceof FieldtypePageGrid) continue;
 
 			//see it field is added to template
 			$pgfId = $pgf->id;
@@ -236,7 +255,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 			$wrapper->add($fieldset);
 
 			//blocks setting
-			$f = $this->getBlockSettings($this->fields->get('type=FieldtypePageGrid'));
+			$f = $this->getBlockSettings($pgf);
 			$f->name = 'template_id_' . $pgfId;
 			$f->label = 'Blocks';
 			// $f->columnWidth('50');
