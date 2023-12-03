@@ -582,13 +582,15 @@ class InputfieldPageGrid extends Inputfield {
 
         //prevent bug with div nested in p if block has <p> as wrapper
         //div is needed for inline editor to work
-        if ($field->inputfieldClass == 'InputfieldTinyMCE') {
+        foreach ($p->template->fields as $field) {
+            if ($field->inputfieldClass !== 'InputfieldTinyMCE') continue;
+            if (!$field->settingsJSON) continue;
             $rtOptions = json_decode($field->settingsJSON);
             $fieldName = $field->name;
             if (isset($rtOptions) && isset($rtOptions->forced_root_block) && $rtOptions->forced_root_block === 'div' && $p->$fieldName) {
                 $validElements = isset($rtOptions->valid_elements) ? explode(' ', $this->sanitizer->words($rtOptions->valid_elements)) : [];
                 if (($key = array_search('div', $validElements)) !== false) {
-                    if(!$this->user->isLoggedin() || (!$backend && $this->ft->inlineEditorFrontDisable )) unset($validElements[$key]);
+                    if (!$this->user->isLoggedin() || (!$backend && $this->ft->inlineEditorFrontDisable)) unset($validElements[$key]);
                 }
                 $p->$fieldName = strip_tags($p->getFormatted($fieldName), $validElements);;
             }
