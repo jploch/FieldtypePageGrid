@@ -536,11 +536,11 @@ class InputfieldPageGrid extends Inputfield {
 
         //add placeholder to text fields
         // prefil inline fields with dummy content (without saving value)
-        // $PageFrontEditData = wire('modules')->getConfig('PageFrontEdit');
+        $PageFrontEditData = wire('modules')->getConfig('PageFrontEdit');
         $FieldtypePageGridData = wire('modules')->getConfig('FieldtypePageGrid');
 
-        if (isset($FieldtypePageGridData['inlineEditFields'])) {
-            $PageFrontEditFields = $FieldtypePageGridData['inlineEditFields'];
+        if (isset($PageFrontEditData['inlineEditFields'])) {
+            $PageFrontEditFields = $PageFrontEditData['inlineEditFields'];
             foreach ($PageFrontEditFields as $fieldId) {
                 $field = wire('fields')->get($fieldId);
                 if ($p->template->hasField($field)) {
@@ -622,13 +622,6 @@ class InputfieldPageGrid extends Inputfield {
 
         //end Read item Settings
 
-        //disable inline edit for frontend, when inlineEditorFrontDisable = true
-        if (!$backend && $this->ft->inlineEditorFrontDisable) $p->edit(false);
-
-        // parse template markup and inssert file uploader
-        $templateRender = $parsedTemplate->render();
-        $templateRender = $this->ft->enableInlineEditFile($templateRender);
-
 
         // END insert uploader
         $header = $this->renderItemHeader($p, $p->template->label, $pOriginal);
@@ -639,6 +632,12 @@ class InputfieldPageGrid extends Inputfield {
 
         //new set render options
         // $this->setRenderOptions($p, $templateRender);
+
+        //disable inline edit for frontend, when inlineEditorFrontDisable = true
+        if (!$backend && $this->ft->inlineEditorFrontDisable) $p->edit(false);
+        // parse template markup and inssert file uploader
+        $templateRender = $parsedTemplate->render();
+        $templateRender = $this->ft->enableInlineEditFile($templateRender);
 
         $docHtml = new \DOMDocument();
         @$docHtml->loadHTML('<?xml encoding="utf-8" ?><html>' . $templateRender . '</html>', LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
