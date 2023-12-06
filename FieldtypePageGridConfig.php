@@ -593,6 +593,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		$f->value = "<pre$preStyle>" . $sanitizer->entities(
 			"<pg-edit page='2145' field='image'>\n <img src='url/example.jpg'>\n</pg-edit>"
 		) . "</pre>";
+		$f->value .= '<style>.asmSelect {min-width:200px;}</style>'; // fix all asmSelects added here as a lazy fix.
 		$fieldset->append($f);
 
 		// ------------------------------------------------------------------------------
