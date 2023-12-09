@@ -25,6 +25,10 @@ class FieldtypePageGridConfig extends ModuleConfig {
 
 	public function setDefaults(HookEvent $event) {
 
+		//return if not module settings page
+		if (!isset($_GET['name'])) return;
+		if ($_GET['name'] !== 'FieldtypePageGrid') return;
+
 		//get config data
 		$data = $this->modules->getConfig('FieldtypePageGrid');
 		$dataOld = $data;
@@ -670,14 +674,15 @@ class FieldtypePageGridConfig extends ModuleConfig {
 	public function getBlockSettings($field) {
 
 		$info = $this->modules->getModuleInfoVerbose('PageGridBlocks');
-		$downloaded = $info['name'] ? 1 : 0;
+		$downloaded = $this->modules->get('PageGridBlocks') ? 1 : 0;
 		$installed = $this->modules->isInstalled('PageGridBlocks');
 		$downloadLink = $this->config->urls->admin . 'module/edit?name=FieldtypePageGrid&collapse_info=1&downloadBlocks';
 
 		//download block module if get var is set
 		if (isset($_GET['downloadBlocks'])) {
 			$this->downloadModule('PageGridBlocks');
-			if (!$installed) $this->modules->install('PageGridBlocks');
+			$downloaded = 1;
+			// if (!$installed) $this->modules->install('PageGridBlocks');
 		}
 
 		$value = $this['template_id_' . $field->id];
@@ -688,10 +693,12 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		$f->attr('name', 'template_id');
 		$f->label = $this->_('Block templates');
 		$f->icon = 'cubes';
+		if (!$installed && !$downloaded) $f->addClass('links-target-self', 'wrapClass');
+		
 		// $f->required = true;
 		$f->description = $this->_('The block template files must be placed in **site/templates/blocks/** folder. [Learn more](https://page-grid.com/docs/#/developer/blocks?id=create-a-new-block)'); // Templates selection description
 
-		if (!$installed) $f->notes .= 'Alternatively you can also download our [block modules](' . $downloadLink . ')';
+		if (!$installed && !$downloaded) $f->notes .= 'Alternatively you can also download our [block modules](' . $downloadLink . ')';
 
 		$path = wire('config')->paths->templates . 'blocks/';
 		$files = glob($path . '*.php');
@@ -716,23 +723,12 @@ class FieldtypePageGridConfig extends ModuleConfig {
 			$f->addOption($templateId, $templateName, $attrs);
 		}
 
-		//convert values back to ids
-		// foreach ($value as $key => $v) {
-		// 	$t = $this->templates->get($v);
-		// 	if ($t && $t->id) {
-		// 		$attrs = [];
-		// 		$value[$key] = $t->id;
-		// 		$f->addOption($t->id, $t->name, $attrs);
-		// 	}
-		// }
-		//END convert values back to ids
-
 		//add module blocks
 		$path = wire('config')->paths->siteModules . 'PageGridBlocks/blocks/';
 		$files = glob($path . '*.php');
 
 		//set section 
-		if ($installed) {
+		if ($downloaded) {
 			$f->addOption('--------- Modules ---------');
 			$f->addOptionAttributes('--------- Modules ---------', ['disabled' => 'disabled']);
 		}
