@@ -16,7 +16,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID'),
       'summary' => __('Commercial page builder module that renders block templates and adds drag and drop functionality in admin.', __FILE__),
-      'version' => '2.0.21',
+      'version' => '2.0.24',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -1026,12 +1026,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     $f = $this->modules->get('FieldtypePageGridConfig')->getBlockSettings($field);
     $f->value = $field->template_id;
     $inputfields->add($f);
-
-    if (!$f->value) {
-      // $this->message("Select a block template on the details tab.");
-      // $this->notices->message("You can select a block template on the details tab.", Notice::allowMarkup);
-    }
-
+    // bd($field->template_id);
     $this->config->scripts->add($this->config->urls->InputfieldPageGrid . "js/FieldtypePageGridConfig.js'");
 
     return $inputfields;
