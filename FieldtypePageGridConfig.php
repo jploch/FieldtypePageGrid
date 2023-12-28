@@ -213,12 +213,12 @@ class FieldtypePageGridConfig extends ModuleConfig {
 			$validateNote = "License is valid for testing!";
 			$collapsed = 8;
 			$statusClass = 'InputfieldIsWarning';
-			$description = "Please buy a license before you launch your project. For test and staging domains you don’t need a license.";
+			$description = "Please [buy a license](https://page-grid.com/buy/) before you launch your project. For test and staging domains you don’t need a license.";
 		}
 
 		if ($valid == 3) {
 			$validateNote = "License is already in use!";
-			$description = "Please buy a license before you launch your project.";
+			$description = "Please [buy a license](https://page-grid.com/buy/) before you launch your project.";
 		}
 
 		$f = $this('modules')->get('InputfieldText');

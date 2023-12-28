@@ -16,7 +16,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID'),
       'summary' => __('Commercial page builder module that renders block templates and adds drag and drop functionality in admin.', __FILE__),
-      'version' => '2.0.25',
+      'version' => '2.0.26',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -1128,7 +1128,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
 
     $result = curl_exec($curl);
     $array = json_decode($result, true);
-    $error = 'Your PageGrid license is invalid <a style="text-decoration:underline;" title="Got to settings" href="' . $this->config->urls->admin . 'module/edit?name=FieldtypePageGrid&collapse_info=1">Enter license key</a>';
+    $error = 'Please buy a PAGEGRID license before you launch your project. For test and staging domains you don’t need a license. <a style="text-decoration:underline;" title="Got to settings" href="' . $this->config->urls->admin . 'module/edit?name=FieldtypePageGrid&collapse_info=1">Enter license key</a>';
 
     if ($array['success'] === true) {
 
