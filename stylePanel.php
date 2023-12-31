@@ -92,6 +92,7 @@ $field->addOption("block", "block");
 $field->addOption("inline", "inline");
 $field->addOption("grid", "grid");
 $field->addOption("flex", "flex");
+$field->addOption("inline-flex", "inline-flex");
 $field->addOption("none", "none");
 $field->set('block', 'block');
 //$field->addClass( 'pg-select-btn');
