@@ -16,7 +16,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID'),
       'summary' => __('Commercial page builder module that renders block templates and adds drag and drop functionality in admin.', __FILE__),
-      'version' => '2.0.28',
+      'version' => '2.0.29',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -88,9 +88,9 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
       $t = new Template();
       $t->name = 'pagegrid-page';
       $t->fieldgroup = $fg; // add the field group
-      // $t->flags = 8; // system template, to prevent use in backend, but also hides contaier permissions :(
-      // $t->noParents = -1; //allow one more (2 pages can use this template)
       $t->icon = 'th';
+      $t->noAppendTemplateFile = 1;
+      $t->noPrependTemplateFile = 1;
       // $t->tags = 'PageGrid'; do not set tag so template is shown on add new page screen
       $t->save();
 
