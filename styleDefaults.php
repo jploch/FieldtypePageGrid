@@ -15,8 +15,8 @@ if ($this->user->isLoggedin()) {
   $defaultCss .= '.pw-AdminThemeCanvas .ui-dialog {filter: grayscale(100%);}';
   $defaultCss .= '.pw-AdminThemeCanvas .ui-button.ui-state-default, .pw-AdminThemeCanvas .ui-dialog .ui-dialog-titlebar {background-color:black;}';
   $defaultCss .= '.ui-widget-overlay {position:fixed!important; z-index: 999998!important;}';
-  $defaultCss .= '.tox .tox-collection__item-label {line-height:1!important;}';
-  $defaultCss .= '.tox .tox-collection__item-label * {color:#000!important; font-size:16px!important; line-height: 1.3!important; mix-blend-mode:unset!important;}';
+  $defaultCss .= '.tox .tox-collection__item-label {line-height:1!important; letter-spacing:0.1px!important;}';
+  $defaultCss .= '.tox .tox-collection__item-label * {color:#000!important; font-size:16px!important; letter-spacing:0.1px!important; line-height: 1.3!important; mix-blend-mode:unset!important;}';
   $defaultCss .= '.tox .tox-collection__item-label h1 {font-size:30px!important;}';
   $defaultCss .= '.tox .tox-collection__item-label h2 {font-size:27px!important;}';
   $defaultCss .= '.tox .tox-collection__item-label h3 {font-size:24px!important;}';
@@ -27,7 +27,7 @@ if ($this->user->isLoggedin()) {
   $defaultCss .= '.pw-edit:has(.pw-edit-orig > br[data-mce-bogus]) {display: none;}'; // hide empty edit tags without placeholder
 }
 
-if($backend) {
+if ($backend) {
   $defaultCss .= 'pg-icon {display:none!important;}';
 }
 
@@ -38,6 +38,19 @@ if ($this->user->hasPermission('PageFrontEdit')) {
 
 if ($this->user->admin_theme == 'AdminThemeCanvas') {
   $defaultCss .= '.pw-edit-buttons .ui-button {background-color:black!important; border:none!important;} .pw-edit-cancel {opacity:0.5!important;}';
+}
+
+//load lazyload css to fade in images
+if ($this->modules->get('FieldtypePageGrid')->plugins && $this->modules->get('FieldtypePageGrid')->plugins[0] === 'lazysizes') {
+  $defaultCss .= '.lazyload,
+  .lazyloading {
+    opacity: 0;
+  }
+  
+  .lazyloaded {
+    opacity: 1;
+    transition: opacity 600ms;
+  }';
 }
 
 $defaultCss .= '*, *::before, *::after {

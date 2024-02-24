@@ -182,6 +182,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 				'lazysizes',
 			),
 			'customStyles' => '',
+			'customScript' => '',
 			'fontColor' => '',
 			'bgColor' => '',
 			'fontPrivacy' => 1,
@@ -634,10 +635,6 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		$f->value .= '<style>.asmSelect {min-width:200px;}</style>'; // fix all asmSelects added here as a lazy fix.
 		$fieldset->append($f);
 
-		// ------------------------------------------------------------------------------
-
-		// CSS SETTINGS ---------------------------------------------------------------
-
 		//custom styles
 		$f = $this('modules')->get('InputfieldTextArea');
 		$f->attr('name', 'customStyles');
@@ -652,6 +649,22 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		$f->themeOffset = 1;
 		$f->icon = 'code';
 		$f->value($this->sanitizer->text($this->customStyles));
+		$wrapper->append($f);
+
+		//custom js
+		$f = $this('modules')->get('InputfieldTextArea');
+		$f->attr('name', 'customScript');
+		$f->label = $this->_('Javascript Code');
+		$f->description = $this->_('You can add custom Javascript code here. If your page has a PAGEGRID field, it will be loaded on the frontend automatically. If you need to add Javascript code to the backend as well you have to load it inside your template file.');
+		$f->rows = 4;
+		$f->collapsed(in_array($f->name, $collapsed) || $this->customScript == '' ? 1 : 0);
+		$f->attr("onclick", "this.style.height = ''; this.style.height = this.scrollHeight +'px'"); // auto resize height based on content
+		$f->attr("oninput", "this.style.height = ''; this.style.height = this.scrollHeight +'px'"); // auto resize height based on content
+		$f->attr('style', 'font-family: monospace;');
+		$f->columnWidth('100');
+		$f->themeOffset = 1;
+		$f->icon = 'code';
+		$f->value($this->sanitizer->text($this->customScript));
 		$wrapper->append($f);
 
 		//custom uninstall even if field still exists

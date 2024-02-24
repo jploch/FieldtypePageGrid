@@ -264,7 +264,9 @@ class InputfieldPageGrid extends Inputfield {
             $settings = '<div class="ui-dialog pg-settings-container pg-stylepanel"><div class="pg-settings pg-stylepanel pg-settings-content">' . $settings . '</div></div>';
             $topNav = '<div class="pg-topnav uk-navbar-center">
         <i class="pg-item-list-button pg-topnav-margin-big fa fw fa-list-ul on" title="Item List"></i>
-        <i class="pg-undo fa fa-fw fa-reply" data-name="fa-reply" title="Undo" style="cursor: pointer;"></i><i class="pg-redo pg-topnav-margin fa fa-fw fa-share" data-name="fa-share" title="Redo" style="cursor: pointer;"></i>
+        <i class="pg-undo fa fa-fw fa-reply" data-name="fa-reply" title="Undo"></i>
+        <i class="pg-redo pg-topnav-margin fa fa-fw fa-share" data-name="fa-share" title="Redo"></i>
+        <i class="pg-play pg-topnav-margin fa fw fa-play" title="Play animations"></i>
         <div id="breakpoints-nav">
        <img src="' . $moduleUrl . '/img/phone-portrait-outline.svg" class="breakpoint-icon breakpoint-icon-s" value="@media (max-width: 640px)" breakpoint="s" title="Breakpoint Small">
        <img src="' . $moduleUrl . '/img/phone-landscape-outline.svg" class="breakpoint-icon breakpoint-icon-m" value="@media (max-width: 960px)" breakpoint="m" title="Breakpoint Medium">
@@ -611,7 +613,12 @@ class InputfieldPageGrid extends Inputfield {
                     $attributes = $PageGridItem['attributes'];
                 }
                 if (isset($PageGridItem['children'])) {
-                    $nestedClasses = 'pg pg-nested pg-droppable ';
+
+                    if ($backend) {
+                        $nestedClasses = 'pg pg-nested pg-droppable ';
+                    } else {
+                        $nestedClasses = 'pg ';
+                    }
 
                     if ($this->user->hasPermission('pagegrid-drag')) {
                         // $nestedClasses .= 'pg-sortable ';
@@ -670,7 +677,11 @@ class InputfieldPageGrid extends Inputfield {
 
         //children
         if ($tag && isset($options->children) && $options->children) {
-            $nestedClasses = 'pg pg-nested pg-droppable ';
+            if ($backend) {
+                $nestedClasses = 'pg pg-nested pg-droppable ';
+            } else {
+                $nestedClasses = 'pg ';
+            }
         }
 
         // remove tag from render on frontend
@@ -687,7 +698,7 @@ class InputfieldPageGrid extends Inputfield {
         //END new set render options
 
         if ($backend) {
-            $layout .= '<' . $tagName . ' id="' . $p->name . '" data-id="' . $p->id . '" data-id-original="' . $pOriginal->id . '" class="' . $classes . ' ' . $nestedClasses . $statusClass . '" data-template="' . $p->template->name . '" data-field="' . $this->name . '" data-name="' . $p->name . '" ' . $attributes . '>';
+            $layout .= '<' . $tagName . ' id="' . $p->name . '" data-id="' . $p->id . '" data-id-original="' . $pOriginal->id . '" class="' . $classes . ' ' . $nestedClasses . $statusClass . '" data-template="' . $p->template->name . '" data-field="' . $this->name . '" data-title="' . $p->title . '" data-name="' . $p->name . '" ' . $attributes . '>';
             $layout .= '<pg-icon>' . wireIconMarkup($p->template->icon) . '</pg-icon>';
             $layout .= $header;
             $layout .= $templateRender;
@@ -974,8 +985,8 @@ class InputfieldPageGrid extends Inputfield {
                         //add prfex pg-animation- to animation classes
                         $cssClasses .= ' ' . $eventClass . ' pg-animation-' . $animationName . ' ';
 
-                        //add keyframe class if event is load to start from first frame
-                        if (($event === 'load' || $event === 'scroll' || $event === 'inview') && !$backend) {
+                        //add first keyframe class to start from first frame
+                        if (!$backend) {
                             foreach ($animationData as $aData) {
                                 if (isset($aData['keyframe']) && $aData['keyframe'] === '0') {
                                     $cssClasses .= ' ' . $aData['id'];
@@ -1023,11 +1034,11 @@ class InputfieldPageGrid extends Inputfield {
 
     //add scripts with same name as block file
 
-    public function scripts($mainPage) {
+    public function scripts($mainPage, $updateAnimations = false) {
         $lastItem = null;
         $jsFiles = "";
-        $jsAnimationData = "";
         $backend = $this->isBackend();
+        $customJs = $this->ft->customScript && !$backend ? '<script>' . $this->ft->customScript . '</script>' : '';
 
         //load js plugins
         foreach ($this->ft->plugins as $pluginName) {
@@ -1084,16 +1095,18 @@ class InputfieldPageGrid extends Inputfield {
 
         //aaaa
         //animation data to access with js on frontend if animation found
+        $jsAnimationData = "";
         $animationsSelectors = [];
         $animationsParent = $this->pages->get('name=pg-animations, template=pg_container');
         $classNames = trim($classNames);
         $classNames = str_replace(' ', '|', $classNames);
 
-        if (!$backend && $classNames && $animationsParent->findOne('')) {
+        if ($classNames && $animationsParent->findOne('')) {
             $cssClassesParent = $this->pages->get('name=pg-classes, template=pg_container');
             $animationItems = new PageArray();
             $animationItems->add($cssClassesParent->find("name=$classNames"));
             $animationItems->add($items);
+            $animationNames = '';
 
             //get items to init animations for
             foreach ($animationItems as $item) {
@@ -1105,7 +1118,7 @@ class InputfieldPageGrid extends Inputfield {
                         if (isset($childData['id']) && isset($childData['breakpoints'])) {
                             foreach ($childData['breakpoints'] as $breakpoint) {
                                 if (!isset($childData['breakpoints'][$breakpoint['name']]['css']['--pg-animation'])) continue;
-
+                                $animationNames .= $childData['breakpoints'][$breakpoint['name']]['css']['--pg-animation'] . ',';
                                 $selector = '.';
                                 $selector2 = '.';
                                 if (isset($childData['tagName']) && $childData['tagName'] === $item->name) {
@@ -1128,12 +1141,17 @@ class InputfieldPageGrid extends Inputfield {
                 }
             }
 
-            if (count($animationsSelectors)) {
+            if (count($animationsSelectors) && $animationNames) {
 
                 $animationsSelectors = array_unique($animationsSelectors);
                 $animationData = [];
+                $animationNames = explode(',', $animationNames);
 
-                foreach ($animationsParent->find('') as $animationPage) {
+                foreach ($animationNames as $animationName) {
+                    if (!$animationName) continue;
+                    $animationPage = $animationsParent->findOne('name=' . $animationName);
+                    if (!$animationPage) continue;
+                    if (!$animationPage->id) continue;
                     $itemData = $animationPage->meta()->pg_styles;
                     if (isset($itemData)) {
                         foreach ($itemData as $childData) {
@@ -1150,13 +1168,16 @@ class InputfieldPageGrid extends Inputfield {
                 //add js var to access data
                 $dataJson = json_encode($animationData);
                 $dataJsonSelectors = json_encode($animationsSelectors);
-                $jsAnimationData = '<script>var pgAnimations = ' . $dataJson . '; var pgAnimationsSelectors = ' . $dataJsonSelectors . ';</script>';
+                $jsAnimationData = '<script id="pg-animation-data">var pgAnimations = ' . $dataJson . '; var pgAnimationsSelectors = ' . $dataJsonSelectors . ';</script>';
                 //add animation js file
                 $jsFiles .= '<script type="text/javascript" src="' . $this->config->urls->InputfieldPageGrid . 'js/pg-animations.js"></script>';
             }
         }
 
-        echo $jsAnimationData . $jsFiles;
+        // if ($updateAnimations) bdb([$dataJson, $dataJsonSelectors]);
+        //if $updateAnimations is true, no neeed to return js files
+        if ($updateAnimations) return json_encode([$animationData, $animationsSelectors]);
+        echo $jsAnimationData . $jsFiles . $customJs;
     }
 
     public function fonts($p) {
@@ -1453,9 +1474,11 @@ class InputfieldPageGrid extends Inputfield {
                     //if animations keyframe use keyframe as classname
                     if ($p->parent()->name === 'pg-animations' && isset($item['keyframe'])) {
 
-                        //if backend set keyframe as class (animation will be generated with js)
+                        //if backend set keyframe as class (animation will be triggered on keyrame click)
                         if ($keyframeClass) {
                             $cssSelector = '.' . $item['id'];
+                            //last keyframe needs to be more specific
+                            if ($item['keyframe'] === '100')  $cssSelector = '.pg .' . $item['id'];
                         } else {
                             $cssSelector = $item['keyframe'] . '%';
                         }
@@ -1645,8 +1668,8 @@ class InputfieldPageGrid extends Inputfield {
             }
             //END if demo get all user data (only demo code in this file)
 
-            // if frontend get just the animation for the page
-            if (!$backend && $animations) {
+            // if frontend get just the animation for the page, load also in backend to get correct order of classes (animations can be sorted)
+            if ($animations) {
                 $animationsArray = explode(',', $animations);
                 $animationsArray = array_unique($animationsArray);
                 foreach ($animationsArray as $animationName) {
@@ -1700,18 +1723,17 @@ class InputfieldPageGrid extends Inputfield {
             //first item is not a keyframe, but animation so skip it
 
             if (isset($keyframeData['keyframe'])) {
-                //set 3. parameter to get classes or % for keyframe
+                //set 3. parameter to get classes or % for keyframe (for backend we all keyframes as classes, so we can select them)
                 $keyframesCss .= $this->renderStyles($animationPage, $keyframeData['id'], $backend);
 
-                //add first keyframe css 
+                //add first keyframe css (on frontend only first and last keyframe are needed)
                 if ($keyframeData['keyframe'] === '0' && !$backend) {
                     $aniCss .= $this->renderStyles($animationPage, $keyframeData['id'], true);
                 }
 
-                //add last keyframe css to preserve states
-                //last keyframe class needs more specific selector to overrite subitem selectors
+                //add last keyframe css to preserve states (on frontend only first and last keyframe are needed)
                 if ($keyframeData['keyframe'] === '100' && !$backend) {
-                    $aniCss .= 'html .pg-main ' . $this->renderStyles($animationPage, $keyframeData['id'], true);
+                    $aniCss .= $this->renderStyles($animationPage, $keyframeData['id'], true);
                 }
             }
         }

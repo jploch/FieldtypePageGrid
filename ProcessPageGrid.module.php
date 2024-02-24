@@ -102,6 +102,13 @@ class ProcessPageGrid extends Process {
 
         // $this->log->save("pagegrid", "type: " . $type);
 
+        if($type === 'updateAnimation') {
+            $p = $this->pages->get($pageId);
+            if(!$p || !$p->id) return;
+            $animationData = $this->modules->get('InputfieldPageGrid')->scripts($p, true);
+            return $animationData;
+        }
+
         // lock/unlock page
         if ($type === 'lock') {
             $data = json_decode($data, true);

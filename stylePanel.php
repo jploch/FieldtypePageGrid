@@ -36,7 +36,7 @@ $fieldset = $this->modules->get('InputfieldFieldset');
 $fieldset->label = 'Selector';
 $fieldset->name = 'pg_settings_selector';
 $fieldset->addClass('hide-label', 'headerClass');
-$fieldset->addClass( 'pg-sticky', 'wrapClass' );
+$fieldset->addClass('pg-sticky', 'wrapClass');
 $wrapper->append($fieldset);
 
 // change tag name
@@ -77,7 +77,6 @@ if ($this->modules->get('InputfieldTextTags')) {
 //$fieldset->append($button);
 
 // LAYOUT
-
 $fieldset = $this->modules->get('InputfieldFieldset');
 $fieldset->label = 'Layout';
 $fieldset->name = 'layout';
@@ -448,70 +447,56 @@ $fieldsetSub->columnWidth = 100;
 $fieldsetAdvanced->append($fieldsetSub);
 
 // position-left
-$field = $this->modules->get('InputfieldInteger');
-$field->inputType = "number";
-$field->set('label', ' ');
-$field->set('icon', 'chevron-left');
-$field->set('name','left');
-$field->addClass('label-left', 'wrapClass');
+$field = createUnitField('left', ' ', 50, 'chevron-left', 'auto');
 $field->addClass('padding-bottom', 'wrapClass');
-// $field->attr('min', '0');
-$field->attr('placeholder', 'auto');
-$field->columnWidth = 30;
-$fieldsetSub->append($field);
-
-$field = createUnit($field->name);
-$field->addOption("auto");
 $fieldsetSub->append($field);
 
 // position-right
-$field = $this->modules->get('InputfieldInteger');
-$field->inputType = "number";
-$field->set('label', ' ');
-$field->set('name', 'right');
-$field->set('icon', 'chevron-right');
-$field->addClass('label-left', 'wrapClass');
+$field = createUnitField('right', ' ', 50, 'chevron-right', 'auto');
 $field->addClass('padding-bottom', 'wrapClass');
-// $field->attr('min', '0');
-$field->attr('placeholder', 'auto');
-$field->columnWidth = 30;
-$fieldsetSub->append($field);
-
-$field = createUnit($field->name);
-$field->addOption("auto");
 $fieldsetSub->append($field);
 
 // position-top
-$field = $this->modules->get('InputfieldInteger');
-$field->inputType = "number";
-$field->set('label', __(' '));
-$field->set('icon', __('chevron-up'));
-$field->set('name', __('top'));
-$field->addClass('label-left', 'wrapClass');
-// $field->attr('min', '0');
-$field->attr('placeholder', 'auto');
-$field->columnWidth = 30;
-$fieldsetSub->append($field);
-
-$field = createUnit($field->name);
-$field->addOption("auto");
+$field = createUnitField('top', ' ', 50, 'chevron-up', 'auto');
 $fieldsetSub->append($field);
 
 // position-bottom
-$field = $this->modules->get('InputfieldInteger');
-$field->inputType = "number";
-$field->set('label', __(' '));
-$field->set('icon', __('chevron-down'));
-$field->set('name', __('bottom'));
-$field->addClass('label-left', 'wrapClass');
-// $field->attr('min', '0');
-$field->attr('placeholder', 'auto');
-$field->columnWidth = 30;
+$field = createUnitField('bottom', ' ', 50, 'chevron-down', 'auto');
 $fieldsetSub->append($field);
 
-$field = createUnit($field->name);
-$field->addOption("auto");
-$fieldsetSub->append($field);
+//float
+$field = $this->modules->get('InputfieldSelect');
+$field->name = "float";
+$field->label = "Float";
+$field->columnWidth = 50;
+$field->addOption("none", "none");
+$field->addOption("left", "left");
+$field->addOption("right", "right");
+$field->addClass('label-left', 'wrapClass');
+$fieldsetAdvanced->append($field);
+
+//shape-outside
+$field = $this->modules->get('InputfieldSelect');
+$field->name = "shape-outside";
+$field->label = "Shape";
+$field->columnWidth = 50;
+$field->addOption("none", "none");
+$field->addOption("circle()", "circle");
+$field->addOption("ellipse()", "ellipse");
+$field->addClass('label-left', 'wrapClass');
+$fieldsetAdvanced->append($field);
+
+//clear
+$field = $this->modules->get('InputfieldSelect');
+$field->name = "clear";
+$field->label = "Clear";
+$field->columnWidth = 100;
+$field->addOption("none", "none");
+$field->addOption("left", "left");
+$field->addOption("right", "right");
+$field->addOption("both", "both");
+$field->addClass('label-left', 'wrapClass');
+$fieldsetAdvanced->append($field);
 
 //overflow-x
 $field = $this->modules->get('InputfieldSelect');
@@ -620,59 +605,23 @@ $field->addClass('label-left', 'wrapClass');
 $field->columnWidth = 100;
 $fieldset->append($field);
 
-// font size
-$fieldsetSub = $this->modules->get('InputfieldFieldset');
-$fieldsetSub->label = 'Size';
-$fieldsetSub->name = 'font-size';
-$fieldsetSub->columnWidth = 60;
-$fieldsetSub->addClass('label-left', 'wrapClass');
-$fieldsetSub->addClass('combo-wrapper');
-$fieldset->append($fieldsetSub);
-
-$field = $this->modules->get('InputfieldInteger');
-$field->inputType = "number";
-$field->set('label', __('Size'));
-$field->set('name', __('font-size'));
-$field->addClass('hide-label', 'headerClass');
-$field->addClass('label-left', 'wrapClass');
-$field->columnWidth = 50;
-$fieldsetSub->append($field);
-
-$field = createUnit($field->name);
-$fieldsetSub->append($field);
+// font-size
+$field = createUnitField('font-size', 'Size', 60);
+$fieldset->append($field);
 
 // line-height
 $field = $this->modules->get('InputfieldInteger');
 $field->inputType = "number";
-$field->set('label', __('Line Height'));
-$field->set('name', __('line-height'));
+$field->label = 'Line Height';
+$field->name = 'line-height';
 $field->attr('step', '0.01');
-// $field->attr('unit', ' '); // empty unit for step fix
 $field->addClass('label-left', 'wrapClass');
 $field->columnWidth = 40;
 $fieldset->append($field);
 
 // letter-spacing
-$fieldsetSub = $this->modules->get('InputfieldFieldset');
-$fieldsetSub->label = 'Letter Spacing';
-$fieldsetSub->name = 'letter-spacing';
-$fieldsetSub->columnWidth = 100;
-$fieldsetSub->addClass('label-left', 'wrapClass');
-$fieldsetSub->addClass('combo-wrapper');
-$fieldset->append($fieldsetSub);
-
-$field = $this->modules->get('InputfieldInteger');
-$field->inputType = "number";
-$field->label = 'Letter Spacing';
-$field->name = 'letter-spacing';
-$field->attr('step', '0.01');
-$field->addClass('hide-label', 'headerClass');
-$field->addClass('label-left', 'wrapClass');
-$field->columnWidth = 50;
-$fieldsetSub->append($field);
-
-$field = createUnit($field->name);
-$fieldsetSub->append($field);
+$field = createUnitField('letter-spacing', 'Letter Spacing', 100);
+$fieldset->append($field);
 
 // text-align
 $field = $this->modules->get('InputfieldSelect');
@@ -681,6 +630,7 @@ $field->label = $this->_("Align");
 $field->addOption("left");
 $field->addOption("right");
 $field->addOption("center");
+$field->addOption("justify");
 $field->set('value', 'left');
 $field->addClass('label-left', 'wrapClass');
 $field->columnWidth = 100;
@@ -731,32 +681,18 @@ $field->addOption("line-through");
 $field->addOption("underline overline");
 $field->set('value', 'none');
 $field->addClass('label-left', 'wrapClass');
-$field->columnWidth = 60;
+$field->columnWidth = 100;
 //$field->addClass( 'hide-label', 'headerClass' );
 // $field->columnWidth = 30;
 $fieldsetSub->append($field);
 
-$fieldsetSubSub = $this->modules->get('InputfieldFieldset');
-$fieldsetSubSub->name = 'text-underline-offset';
-$fieldsetSubSub->label = '   ';
-// $field->addClass('hide-label', 'headerClass');
-$fieldsetSubSub->set('icon', __('arrows-v'));
-$fieldsetSubSub->columnWidth = 30;
-$fieldsetSubSub->addClass('label-left', 'wrapClass');
-$fieldsetSubSub->addClass('combo-wrapper');
-$fieldsetSub->append($fieldsetSubSub);
+//text-decoration-thickness
+$field = createUnitField('text-decoration-thickness', 'Underline thickness', 50, '', 'auto');
+$fieldsetSub->append($field);
 
-$field = $this->modules->get('InputfieldInteger');
-$field->inputType = "number";
-$field->set('name', __('text-underline-offset'));
-$field->addClass('hide-label', 'headerClass');
-// $field->attr('unit', 'px');
-$field->attr('step', '1');
-$fieldsetSubSub->append($field);
-
-$field = createUnit($field->name);
-$field->addOption("auto");
-$fieldsetSubSub->append($field);
+// text-underline-offset
+$field = createUnitField('text-underline-offset', 'Underline offset', 50, '', 'auto');
+$fieldsetSub->append($field);
 
 // white-space
 $field = $this->modules->get('InputfieldSelect');
@@ -828,65 +764,21 @@ $fieldsetSub->columnWidth = 100;
 $fieldset->append($fieldsetSub);
 
 // padding-left
-$field = $this->modules->get('InputfieldInteger');
-$field->inputType = "number";
-$field->set('label', __('   '));
-$field->set('icon', __('chevron-left'));
-$field->set('name', __('padding-left'));
-$field->addClass('label-left', 'wrapClass');
+$field = createUnitField('padding-left', ' ', 50, 'chevron-left', '', 'none');
 $field->addClass('padding-bottom', 'wrapClass');
-$field->attr('min', '0');
-$field->attr('placeholder', 'none');
-$field->columnWidth = 30;
-$fieldsetSub->append($field);
-
-$field = createUnit($field->name);
 $fieldsetSub->append($field);
 
 // padding-right
-$field = $this->modules->get('InputfieldInteger');
-$field->inputType = "number";
-$field->set('label', __(' '));
-$field->set('name', __('padding-right'));
-$field->set('icon', __('chevron-right'));
-$field->addClass('label-left', 'wrapClass');
+$field = createUnitField('padding-right', ' ', 50, 'chevron-right', '', 'none');
 $field->addClass('padding-bottom', 'wrapClass');
-$field->attr('min', '0');
-$field->attr('placeholder', 'none');
-$field->columnWidth = 30;
-$fieldsetSub->append($field);
-
-$field = createUnit($field->name);
 $fieldsetSub->append($field);
 
 // padding-top
-$field = $this->modules->get('InputfieldInteger');
-$field->inputType = "number";
-$field->set('label', __(' '));
-$field->set('icon', __('chevron-up'));
-$field->set('name', __('padding-top'));
-$field->addClass('label-left', 'wrapClass');
-$field->attr('min', '0');
-$field->attr('placeholder', 'none');
-$field->columnWidth = 30;
-$fieldsetSub->append($field);
-
-$field = createUnit($field->name);
+$field = createUnitField('padding-top', ' ', 50, 'chevron-up', '', 'none');
 $fieldsetSub->append($field);
 
 // padding-bottom
-$field = $this->modules->get('InputfieldInteger');
-$field->inputType = "number";
-$field->set('label', __(' '));
-$field->set('icon', __('chevron-down'));
-$field->set('name', __('padding-bottom'));
-$field->addClass('label-left', 'wrapClass');
-$field->attr('min', '0');
-$field->attr('placeholder', 'none');
-$field->columnWidth = 30;
-$fieldsetSub->append($field);
-
-$field = createUnit($field->name);
+$field = createUnitField('padding-bottom', ' ', 50, 'chevron-down', '', 'none');
 $fieldsetSub->append($field);
 
 // END Padding
@@ -900,72 +792,22 @@ $fieldsetSub->columnWidth = 100;
 $fieldset->append($fieldsetSub);
 
 // margin-left
-$field = $this->modules->get('InputfieldInteger');
-$field->inputType = "number";
-$field->set('label', __('   '));
-$field->set('icon', __('chevron-left'));
-$field->set('name', __('margin-left'));
-$field->addClass('label-left', 'wrapClass');
+$field = createUnitField('margin-left', ' ', 50, 'chevron-left', 'auto');
 $field->addClass('padding-bottom', 'wrapClass');
-// $field->attr('min', '0');
-$field->attr('placeholder', 'auto');
-$field->columnWidth = 30;
-$fieldsetSub->append($field);
-
-$field = createUnit($field->name);
-$field->addOption("auto");
 $fieldsetSub->append($field);
 
 // margin-right
-$field = $this->modules->get('InputfieldInteger');
-$field->inputType = "number";
-$field->set('label', __(' '));
-$field->set('name', __('margin-right'));
-$field->set('icon', __('chevron-right'));
-$field->addClass('label-left', 'wrapClass');
+$field = createUnitField('margin-right', ' ', 50, 'chevron-right', 'auto');
 $field->addClass('padding-bottom', 'wrapClass');
-// $field->attr('min', '0');
-$field->attr('placeholder', 'auto');
-$field->columnWidth = 30;
-$fieldsetSub->append($field);
-
-$field = createUnit($field->name);
-$field->addOption("auto");
 $fieldsetSub->append($field);
 
 // margin-top
-$field = $this->modules->get('InputfieldInteger');
-$field->inputType = "number";
-$field->set('label', __(' '));
-$field->set('icon', __('chevron-up'));
-$field->set('name', __('margin-top'));
-$field->addClass('label-left', 'wrapClass');
-// $field->attr('min', '0');
-$field->attr('placeholder', 'auto');
-$field->columnWidth = 30;
-$fieldsetSub->append($field);
-
-$field = createUnit($field->name);
-$field->addOption("auto");
+$field = createUnitField('margin-top', ' ', 50, 'chevron-up', 'auto');
 $fieldsetSub->append($field);
 
 // margin-bottom
-$field = $this->modules->get('InputfieldInteger');
-$field->inputType = "number";
-$field->set('label', __(' '));
-$field->set('icon', __('chevron-down'));
-$field->set('name', __('margin-bottom'));
-$field->addClass('label-left', 'wrapClass');
-// $field->attr('min', '0');
-$field->attr('placeholder', 'auto');
-$field->columnWidth = 30;
+$field = createUnitField('margin-bottom', ' ', 50, 'chevron-down', 'auto');
 $fieldsetSub->append($field);
-
-$field = createUnit($field->name);
-$field->addOption("auto");
-$fieldsetSub->append($field);
-
-// END Padding
 
 //END SPACING
 
@@ -977,139 +819,28 @@ $fieldset->name = 'size';
 $wrapper->append($fieldset);
 
 //width
-$fieldsetSub = $this->modules->get('InputfieldFieldset');
-$fieldsetSub->label = 'Width';
-$fieldsetSub->name = 'width';
-$fieldsetSub->columnWidth = 50;
-$fieldsetSub->addClass('label-left', 'wrapClass');
-$fieldsetSub->addClass('combo-wrapper');
-$fieldset->append($fieldsetSub);
-
-$field = $this->modules->get('InputfieldInteger');
-$field->inputType = "number";
-$field->set('label', __('Width'));
-$field->set('name', __('width'));
-$field->attr('step', '1');
-$field->addClass('hide-label', 'headerClass');
-$field->attr('min', '0');
-$field->attr('placeholder', 'auto');
-$fieldsetSub->append($field);
-
-$field = createUnit($field->name);
-$field->addOption("auto");
-$fieldsetSub->append($field);
+$field = createUnitField('width', 'Width', 50, '', 'auto');
+$fieldset->append($field);
 
 //height
-$fieldsetSub = $this->modules->get('InputfieldFieldset');
-$fieldsetSub->label = 'Height';
-$fieldsetSub->name = 'height';
-$fieldsetSub->columnWidth = 50;
-$fieldsetSub->addClass('label-left', 'wrapClass');
-$fieldsetSub->addClass('combo-wrapper');
-$fieldset->append($fieldsetSub);
-
-$field = $this->modules->get('InputfieldInteger');
-$field->inputType = "number";
-$field->set('label', __('Height'));
-$field->set('name', __('height'));
-$field->addClass('hide-label', 'headerClass');
-$field->attr('min', '0');
-$field->attr('step', '1');
-$field->attr('placeholder', 'auto');
-$fieldsetSub->append($field);
-
-$field = createUnit($field->name);
-$field->addOption("auto");
-$fieldsetSub->append($field);
+$field = createUnitField('height', 'Height', 50, '', 'auto');
+$fieldset->append($field);
 
 //min width
-$fieldsetSub = $this->modules->get('InputfieldFieldset');
-$fieldsetSub->label = 'Min W';
-$fieldsetSub->name = 'min-width';
-$fieldsetSub->columnWidth = 50;
-$fieldsetSub->addClass('label-left', 'wrapClass');
-$fieldsetSub->addClass('combo-wrapper');
-$fieldset->append($fieldsetSub);
-
-$field = $this->modules->get('InputfieldInteger');
-$field->inputType = "number";
-$field->set('label', __('Min Width'));
-$field->set('name', __('min-width'));
-$field->addClass('hide-label', 'headerClass');
-$field->attr('step', '1');
-$field->attr('min', '0');
-$field->attr('placeholder', 'none');
-$fieldsetSub->append($field);
-
-$field = createUnit($field->name);
-$fieldsetSub->append($field);
+$field = createUnitField('min-width', 'Min W', 50, '', '', 'none');
+$fieldset->append($field);
 
 //min height
-$fieldsetSub = $this->modules->get('InputfieldFieldset');
-$fieldsetSub->label = 'Min H';
-$fieldsetSub->name = 'min-height';
-$fieldsetSub->columnWidth = 50;
-$fieldsetSub->addClass('label-left', 'wrapClass');
-$fieldsetSub->addClass('combo-wrapper');
-$fieldset->append($fieldsetSub);
-
-$field = $this->modules->get('InputfieldInteger');
-$field->inputType = "number";
-$field->set('label', __('Height'));
-$field->set('name', __('min-height'));
-$field->addClass('hide-label', 'headerClass');
-$field->attr('step', '1');
-$field->attr('min', '0');
-$field->attr('placeholder', 'none');
-$fieldsetSub->append($field);
-
-$field = createUnit($field->name);
-$fieldsetSub->append($field);
+$field = createUnitField('min-height', 'Min H', 50, '', '', 'none');
+$fieldset->append($field);
 
 //max width
-$fieldsetSub = $this->modules->get('InputfieldFieldset');
-$fieldsetSub->label = 'Max W';
-$fieldsetSub->name = 'max-width';
-$fieldsetSub->columnWidth = 50;
-$fieldsetSub->addClass('label-left', 'wrapClass');
-$fieldsetSub->addClass('combo-wrapper');
-$fieldset->append($fieldsetSub);
-
-$field = $this->modules->get('InputfieldInteger');
-$field->inputType = "number";
-$field->set('label', __('Max Width'));
-$field->set('name', __('max-width'));
-$field->addClass('hide-label', 'headerClass');
-$field->attr('step', '1');
-$field->attr('min', '0');
-$field->attr('placeholder', 'none');
-
-$fieldsetSub->append($field);
-
-$field = createUnit($field->name);
-$fieldsetSub->append($field);
+$field = createUnitField('max-width', 'Max W', 50, '', '', 'none');
+$fieldset->append($field);
 
 //max height
-$fieldsetSub = $this->modules->get('InputfieldFieldset');
-$fieldsetSub->label = 'Max H';
-$fieldsetSub->name = 'max-height';
-$fieldsetSub->columnWidth = 50;
-$fieldsetSub->addClass('label-left', 'wrapClass');
-$fieldsetSub->addClass('combo-wrapper');
-$fieldset->append($fieldsetSub);
-
-$field = $this->modules->get('InputfieldInteger');
-$field->inputType = "number";
-$field->set('label', __('Height'));
-$field->set('name', __('max-height'));
-$field->addClass('hide-label', 'headerClass');
-$field->attr('step', '1');
-$field->attr('min', '0');
-$field->attr('placeholder', 'none');
-$fieldsetSub->append($field);
-
-$field = createUnit($field->name);
-$fieldsetSub->append($field);
+$field = createUnitField('max-height', 'Max H', 50, '', '', 'none');
+$fieldset->append($field);
 
 // object-fit
 $field = $this->modules->get('InputfieldSelect');
@@ -1271,22 +1002,12 @@ $fieldset->append($field);
 //$field->columnWidth = 50;
 //$fieldset->append( $field );
 
-$field = $this->modules->get('InputfieldInteger');
-$field->inputType = "number";
-$field->set('label', __('Width'));
-$field->set('name', __('border-width'));
-$field->addClass('label-left', 'wrapClass');
-$field->attr('unit', 'px');
-$field->columnWidth = 50;
+//border-width
+$field = createUnitField('border-width', 'Width', 50);
 $fieldset->append($field);
 
-$field = $this->modules->get('InputfieldInteger');
-$field->inputType = "number";
-$field->set('label', __('Radius'));
-$field->set('name', __('border-radius'));
-$field->addClass('label-left', 'wrapClass');
-$field->attr('unit', 'px');
-$field->columnWidth = 50;
+//border-radius
+$field = createUnitField('border-radius', 'Radius', 50);
 $fieldset->append($field);
 
 $field = $this->modules->get('InputfieldMarkup');
@@ -1309,7 +1030,6 @@ $fieldset->append($field);
 //END Background
 
 // EFFECTS
-
 $fieldset = $this->modules->get('InputfieldFieldset');
 $fieldset->label = 'Effects';
 $fieldset->name = 'effects-wrapper';
@@ -1357,6 +1077,40 @@ $field->value = '<div class="range-wrap"><output class="bubble"></output><input 
 $field->columnWidth = 100;
 $fieldset->append($field);
 
+//cursor
+$field = $this->modules->get('InputfieldSelect');
+$field->name = "cursor";
+$field->label = "Cursor";
+$field->addClass('label-left', 'wrapClass');
+$field->addOption("auto", "auto");
+$field->addOption("default", "default");
+$field->addOption("context-menu", "context-menu");
+$field->addOption("help", "help");
+$field->addOption("pointer", "pointer");
+$field->addOption("progress", "progress");
+$field->addOption("wait", "wait");
+$field->addOption("cell", "cell");
+$field->addOption("crosshair", "crosshair");
+$field->addOption("text", "text");
+$field->addOption("vertical-text", "vertical-text");
+$field->addOption("alias", "alias");
+$field->addOption("copy", "copy");
+$field->addOption("move", "move");
+$field->addOption("no-drop", "no-drop");
+$field->addOption("not-allowed", "not-allowed");
+$field->addOption("grab", "grab");
+$field->addOption("grabbing", "grabbing");
+$field->addOption("all-scroll", "all-scroll");
+$field->addOption("col-resize", "col-resize");
+$field->addOption("row-resize", "row-resize");
+$field->addOption("ew-resize", "ew-resize");
+$field->addOption("ns-resize", "ns-resize");
+$field->addOption("nesw-resize", "nesw-resize");
+$field->addOption("nwse-resize", "nwse-resize");
+$field->addOption("zoom-in", "zoom-in");
+$field->addOption("zoom-out", "zoom-out");
+$field->columnWidth = 100;
+$fieldset->append($field);
 
 // TRANSFORM
 $fieldset = $this->modules->get('InputfieldFieldset');
@@ -1379,22 +1133,9 @@ $field->columnWidth = 72;
 $field->addClass('hide-label', 'headerClass');
 $fieldsetSubWrapper->append($field);
 
-$fieldsetSub = $this->modules->get('InputfieldFieldset');
-$fieldsetSub->name = 'translate';
-$fieldsetSub->addClass('combo-wrapper');
-$fieldsetSub->addClass('hide-label', 'headerClass');
-$fieldsetSub->columnWidth = 28;
-$fieldsetSubWrapper->append($fieldsetSub);
-
-$field = $this->modules->get('InputfieldInteger');
-$field->inputType = "number";
-$field->name = 'translate';
+$field = createUnitField('translate', '', 28, '', '', '0');
 $field->addClass('hide-label', 'headerClass');
-$field->attr('placeholder', '0');
-$fieldsetSub->append($field);
-
-$field = createUnit($field->name);
-$fieldsetSub->append($field);
+$fieldsetSubWrapper->append($field);
 
 //translate Y
 $fieldsetSubWrapper = $this->modules->get('InputfieldFieldset');
@@ -1413,23 +1154,9 @@ $field->value = '<div class="range-wrap"><output class="bubble"></output><input 
 $field->columnWidth = 72;
 $fieldsetSubWrapper->append($field);
 
-$fieldsetSub = $this->modules->get('InputfieldFieldset');
-$fieldsetSub->name = 'transform';
-$fieldsetSub->addClass('combo-wrapper');
-$fieldsetSub->addClass('hide-label', 'headerClass');
-$fieldsetSub->columnWidth = 28;
-$fieldsetSubWrapper->append($fieldsetSub);
-
-$field = $this->modules->get('InputfieldInteger');
-$field->inputType = "number";
-$field->name = 'transform';
+$field = createUnitField('transform', '', 28, '', '', '0', 'translateY');
 $field->addClass('hide-label', 'headerClass');
-$field->attr('placeholder', '0');
-$field->attr('name-add', 'translateY');
-$fieldsetSub->append($field);
-
-$field = createUnit($field->attr('name-add'));
-$fieldsetSub->append($field);
+$fieldsetSubWrapper->append($field);
 
 //scale
 $fieldsetSubWrapper = $this->modules->get('InputfieldFieldset');
@@ -1565,18 +1292,45 @@ $settings = $tabs . '<div class="pg-sticky pg-interactions-wrapper">' . $interac
 
 // END SETTINGS ------
 
+function createUnitField($name, $label = '', $width = 100, $icon = '', $lastUnit = '', $placeholder = '', $nameAdd = '') {
 
-function createUnit($name) {
+  if(!$label) $label = $name;
+  if($lastUnit && !$placeholder) $placeholder = $lastUnit; 
+
+  $fieldsetSub = wire('modules')->get('InputfieldFieldset');
+  $fieldsetSub->label = $label;
+  $fieldsetSub->name = $name;
+  $fieldsetSub->columnWidth = $width;
+  if($icon) {
+    $fieldsetSub->icon = $icon;
+    $fieldsetSub->addClass('label-icon', 'wrapClass');
+  }
+  $fieldsetSub->addClass('label-left', 'wrapClass');
+  $fieldsetSub->addClass('combo-wrapper');
+
+  $field = wire('modules')->get('InputfieldInteger');
+  $field->inputType = "number";
+  $field->label = $label;
+  $field->name = $name;
+  $field->attr('placeholder', $placeholder);
+  if($nameAdd) $field->attr('name-add', $nameAdd); // used to add transform property name
+  $field->addClass('hide-label', 'headerClass');
+  $fieldsetSub->append($field);
+  
   $field = wire('modules')->get('InputfieldSelect');
   $field->name = $name;
+  if($nameAdd) $field->name = $nameAdd;
   $field->label = " ";
   $field->addOption("px");
   $field->addOption("%");
   $field->addOption("vh");
   $field->addOption("vw");
+  if($lastUnit) $field->addOption($lastUnit);
   $field->addClass('unit');
   $field->addClass('hide-label', 'headerClass');
   $field->addClass('field-combo', 'wrapClass');
   $field->addClass('padding-right', 'wrapClass');
-  return $field;
+  $fieldsetSub->append($field);
+
+  return $fieldsetSub;
 }

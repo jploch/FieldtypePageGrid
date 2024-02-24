@@ -178,6 +178,16 @@ $field->addOption("false", "false");
 $field->columnWidth = 100;
 $fieldset2->append($field);
 
+//prevent default (click)
+$field = $this->modules->get('InputfieldSelect');
+$field->name = 'pg-animation-prevent';
+$field->label = $this->_("Prevent default event");
+$field->addClass('label-left', 'wrapClass');
+$field->addOption("true", "true");
+$field->addOption("false", "false");
+$field->columnWidth = 100;
+$fieldset2->append($field);
+
 // animation-timing-function
 $field = $this->modules->get('InputfieldSelect');
 $field->name = 'animation-timing-function';
