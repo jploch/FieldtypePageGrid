@@ -259,15 +259,23 @@ class InputfieldPageGrid extends Inputfield {
         }
         $parentPage = $this->pages->get($parentPageId);
 
+        //show animation button only if animations set
+        $animationParent = $this->pages->get('name=pg-animations, template=pg_container');
+        if ($animationParent && $animationParent->id) {
+            $hasAnimations = $animationParent->findOne() && $animationParent->findOne()->id ? true : false;
+        } else {
+            $hasAnimations = false;
+        }
+
         if ($user->hasPermission('pagegrid-style-panel') && $this->ft->stylePanel) {
             include 'stylePanel.php';
             $settings = '<div class="ui-dialog pg-settings-container pg-stylepanel"><div class="pg-settings pg-stylepanel pg-settings-content">' . $settings . '</div></div>';
             $topNav = '<div class="pg-topnav uk-navbar-center">
         <i class="pg-item-list-button pg-topnav-margin-big fa fw fa-list-ul on" title="Item List"></i>
         <i class="pg-undo fa fa-fw fa-reply" data-name="fa-reply" title="Undo"></i>
-        <i class="pg-redo pg-topnav-margin fa fa-fw fa-share" data-name="fa-share" title="Redo"></i>
-        <i class="pg-play pg-topnav-margin fa fw fa-play" title="Play animations"></i>
-        <div id="breakpoints-nav">
+        <i class="pg-redo pg-topnav-margin fa fa-fw fa-share" data-name="fa-share" title="Redo"></i>';
+            if ($hasAnimations) $topNav .= '<i class="pg-play pg-topnav-margin fa fw fa-play" title="Play animations"></i>';
+            $topNav .= '<div id="breakpoints-nav">
        <img src="' . $moduleUrl . '/img/phone-portrait-outline.svg" class="breakpoint-icon breakpoint-icon-s" value="@media (max-width: 640px)" breakpoint="s" title="Breakpoint Small">
        <img src="' . $moduleUrl . '/img/phone-landscape-outline.svg" class="breakpoint-icon breakpoint-icon-m" value="@media (max-width: 960px)" breakpoint="m" title="Breakpoint Medium">
        <img src="' . $moduleUrl . '/img/laptop-outline.svg" class="breakpoint-icon breakpoint-icon-base" value="@media (min-width: 640px)" breakpoint="base" title="Breakpoint Base">

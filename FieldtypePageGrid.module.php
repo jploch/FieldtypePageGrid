@@ -16,7 +16,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID'),
       'summary' => __('Commercial page builder module that renders block templates and adds drag and drop functionality in admin.', __FILE__),
-      'version' => '2.0.30',
+      'version' => '2.0.31',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -252,6 +252,14 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     $erole->addPermission("page-edit");
     // $erole->addPermission("page-sort");
     $erole->addPermission("profile-edit");
+
+    //add permissions
+    //play animation
+    if (!$this->permissions->get('page-pagegrid-play')->id) {
+      $permission = $this->permissions->add("page-pagegrid-play");
+      $permission->title = 'Play PAGEGRID animations in backend';
+      $permission->save();
+    }
 
     if (!$this->permissions->get('page-edit-front')->id) {
       $permission = $this->permissions->add("page-edit-front");
@@ -765,6 +773,8 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     if ($user->hasPermission('pagegrid-add')) {
       $theme->addBodyClass("permission-pagegrid-add");
     }
+
+    if(!$user->isSuperuser() && $user->hasPermission('page-pagegrid-play')) $theme->addBodyClass("permission-page-pagegrid-play");
 
     if ($this->config->debug) {
       $theme->addBodyClass("pw-debug-on");
