@@ -158,6 +158,7 @@ $defaultCss .= '</style>';
 $customFont = '';
 $localFonts = $this->getFontNames();
 $filePath = $this->getFontPath();
+$fileUrl = $this->config->urls->templates . 'fonts/';
 
 foreach ($localFonts as $font) {
 
@@ -171,7 +172,7 @@ foreach ($localFonts as $font) {
     $customFont .= '@font-face {
     font-display: swap;
     font-family: "' . $fontName . '";
-    src: url("/site/templates/fonts/' . $font . '");
+    src: url("' . $fileUrl . $font . '");
     font-weight: 400;
     font-style: normal;
     font-stretch: normal;
