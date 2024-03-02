@@ -774,7 +774,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
       $theme->addBodyClass("permission-pagegrid-add");
     }
 
-    if(!$user->isSuperuser() && $user->hasPermission('page-pagegrid-play')) $theme->addBodyClass("permission-page-pagegrid-play");
+    if (!$user->isSuperuser() && $user->hasPermission('page-pagegrid-play')) $theme->addBodyClass("permission-page-pagegrid-play");
 
     if ($this->config->debug) {
       $theme->addBodyClass("pw-debug-on");
@@ -1110,11 +1110,19 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
 
     $whitelist = array(
       '127.0.0.1',
-      '::1'
+      '::1',
+      'page-grid.com',
+      'pagegrid.uber.space'
     );
 
     //localhost
     if (in_array($_SERVER['REMOTE_ADDR'], $whitelist)) {
+      $validHost = true;
+      $valid = 2;
+    }
+
+    //check whitelist urls
+    if (in_array($host, $whitelist)) {
       $validHost = true;
       $valid = 2;
     }
