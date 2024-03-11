@@ -864,7 +864,7 @@ class InputfieldPageGrid extends Inputfield {
             //edit
             $header .= '<pg-item-header-button class="pg-edit" title="' . $this->_('Edit') . '" data-url="./?id=' . $p->id . '&amp;modal=1&pgmodal=1" href="#"><i class="fa fa-pencil"></i></pg-item-header-button>';
 
-            if ($isPgPage) {
+            if ($user->hasPermission('page-clone', $p) && $isPgPage) {
                 //clone
                 $header .= '<pg-item-header-button class="pg-clone" data-template="' . $p->template->name . '" data-parent="' . $p->parent()->id . '"><i class="fa fa-fw fa-clone" data-name="fa-clone" title="Clone"></i></pg-item-header-button>';
             }
@@ -876,7 +876,7 @@ class InputfieldPageGrid extends Inputfield {
                 //symbol
                 $header .= '<pg-item-header-button class="pg-symbol" title="' . $this->_('Create Symbol') . '" href="#"><i class="fa fw fa-cube"></i></pg-item-header-button>';
             }
-            if ($isPgPage) {
+            if ($user->hasPermission('page-delete', $p) && $isPgPage) {
                 //delete
                 $header .= '<pg-item-header-button class="pg-delete" title="' . $this->_('Mark for deletion') . '" href="#"><i class="fa fa-trash"></i></pg-item-header-button>';
             }
