@@ -132,7 +132,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 	//this function runs on module save to keep PageFrontEdit and FieldtypePageGrid config is sync
 	public function saveConfig(HookEvent $event) {
 
-		// if (!$this->modules->isInstalled($className) && in_array($templateName, $value)) $this->modules->install($className);
+		if (!$this->modules->isInstalled('PageFrontEdit')) $this->modules->install('PageFrontEdit');
 
 		$classname = $event->arguments[0];
 		$configCore = $this->modules->getConfig('PageFrontEdit');
@@ -146,7 +146,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 			$configCore['inlineEditFields'] = array();
 		}
 
-		if ($config['inlineEditFields'] != $configCore['inlineEditFields']) {
+		if ($config['inlineEditFields'] != $configCore['inlineEditFields'] || $configCore['inlineLimitPage'] === '1') {
 			if ($classname == 'PageFrontEdit') {
 				$config['inlineEditFields'] = $configCore['inlineEditFields'];
 				$this->modules->saveConfig('FieldtypePageGrid', $config);
@@ -681,6 +681,26 @@ class FieldtypePageGridConfig extends ModuleConfig {
 			$wrapper->append($f);
 		}
 
+		//new remove fields for non-superusers if LimitedModuleEdit is installed
+		if (!$this->user->isSuperuser()) {
+			$wrapper->remove('lKey');
+			$wrapper->remove('interface');
+			$wrapper->remove('plugins');
+			$wrapper->remove('inlineSettings');
+			$wrapper->remove('deleteFields');
+
+			foreach ($this->fields->find('type=FieldtypePageGrid') as $pgf) {
+				$wrapper->remove('fieldSettings_' . $pgfId);
+			}
+
+			//hide module info
+			$f = $this->modules->get('InputfieldMarkup');
+			$f->collapsed = 3; //hidden
+			$f->value = '<style>#ModuleInfo{display:none!important;}</style>';
+			$wrapper->append($f);
+		}
+		//END new remove fields for non-superusers if LimitedModuleEdit is installed
+
 		return $wrapper;
 	}
 
@@ -707,7 +727,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		$f->label = $this->_('Block templates');
 		$f->icon = 'cubes';
 		if (!$installed && !$downloaded) $f->addClass('links-target-self', 'wrapClass');
-		
+
 		// $f->required = true;
 		$f->description = $this->_('The block template files must be placed in **site/templates/blocks/** folder. [Learn more](https://page-grid.com/docs/#/developer/blocks?id=create-a-new-block)'); // Templates selection description
 

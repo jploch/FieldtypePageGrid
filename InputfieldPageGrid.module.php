@@ -820,7 +820,7 @@ class InputfieldPageGrid extends Inputfield {
                           <pg-uploader class="settings_wrap">
                             <pg-uploader class="drop_target">
                               <pg-uploader class="input_button"></pg-uploader>
-                                <input class="inputFile" type="file" data-field="' . $f->name . '" data-id="' . $p->id . '" data-type="upload"/>
+                                <input class="inputFile" type="file" data-quality="'.$f->clientQuality.'" data-max-width="' . $f->maxWidth . '" data-max-height="' . $f->maxHeight . '" data-field="' . $f->name . '" data-id="' . $p->id . '" data-type="upload"/>
                                 </pg-uploader>
                             </pg-uploader>
                         </pg-uploader>

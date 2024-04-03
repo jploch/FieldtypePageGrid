@@ -16,7 +16,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID'),
       'summary' => __('Commercial page builder module that renders block templates and adds drag and drop functionality in admin.', __FILE__),
-      'version' => '2.0.37',
+      'version' => '2.0.41',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -261,6 +261,13 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
       $permission->save();
     }
 
+    //setup permission
+    if (!$this->permissions->get('pagegrid-setup')->id) {
+      $permission = $this->permissions->add("pagegrid-setup");
+      $permission->title = 'Access PAGEGRID setup page';
+      $permission->save();
+    }
+
     if (!$this->permissions->get('page-edit-front')->id) {
       $permission = $this->permissions->add("page-edit-front");
       $permission->title = 'Use the front-end page editor';
@@ -437,11 +444,11 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     if ($pg->id) {
       $hidden = $pg->hasStatus('hidden');
 
-      if ($user->isSuperuser() == 0 && $hidden == 0) {
+      if (!$user->hasPermission('pagegrid-setup') && $hidden == 0) {
         $pg->addStatus(Page::statusHidden);
         $pg->save();
       }
-      if ($user->isSuperuser() && $hidden) {
+      if ($user->hasPermission('pagegrid-setup') && $hidden) {
         $pg->removeStatus(Page::statusHidden);
         $pg->save();
       }
@@ -1112,8 +1119,11 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
       '127.0.0.1',
       '::1',
       'page-grid.com',
-      'pagegrid.uber.space'
+      'cloud.page-grid.com',
+      'pagegrid.uber.space',
+      'cloud.pagegrid.uber.space'
     );
+
 
     //localhost
     if (in_array($_SERVER['REMOTE_ADDR'], $whitelist)) {
