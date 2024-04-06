@@ -45,6 +45,7 @@ class InputfieldPageGrid extends Inputfield {
 
         // defaults
         $this->set('collapsed', '');
+        $this->set('showIf', '');
         $this->set('columnWidth', '');
         $this->set('sortfields', '-date');
         $this->set('template_id', 0); // placeholder only
