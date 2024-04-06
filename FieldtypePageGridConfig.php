@@ -146,7 +146,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 			$configCore['inlineEditFields'] = array();
 		}
 
-		if ($config['inlineEditFields'] != $configCore['inlineEditFields'] || $configCore['inlineLimitPage'] === '1') {
+		if ($config['inlineEditFields'] != $configCore['inlineEditFields']) {
 			if ($classname == 'PageFrontEdit') {
 				$config['inlineEditFields'] = $configCore['inlineEditFields'];
 				$this->modules->saveConfig('FieldtypePageGrid', $config);
