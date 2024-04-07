@@ -16,7 +16,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID'),
       'summary' => __('Commercial page builder module that renders block templates and adds drag and drop functionality in admin.', __FILE__),
-      'version' => '2.0.43',
+      'version' => '2.0.44',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -581,11 +581,13 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
   public function disableInlineEdit($event) {
     $isBackend = isset($_GET['backend']);
     if (!$isBackend && $this->inlineEditorFrontDisable && !$this->config->ajax) {
-      //select admin page to make frontend editor return false
-      $p = $this->pages->get('admin');
-      $p->edit(false);
-      $event->return = $p;
-      $event->replace = true;
+      //select admin page to make frontend editor return false 
+      $p = $this->pages->get($this->config->urls->admin);
+      if ($p && $p->id) {
+        $p->edit(false);
+        $event->return = $p;
+        $event->replace = true;
+      }
     }
   }
 
