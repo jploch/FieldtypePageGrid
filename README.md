@@ -10,23 +10,13 @@ Design fully responsive websites (or parts of them) without writing any code. Re
 
 ### Try PAGEGRID for free  
 
-Checkout the [online demo](https://page-grid.com) (Click the edit button).
-
-PAGEGRID is not free software. However, you can try PAGEGRID and the site profile on your local machine or on a test server as long as you need to make sure it is the right tool for your next project. … and when you’re convinced, [buy your license](https://page-grid.com/buy).
+PAGEGRID is not free software. However, you can try PAGEGRID on your local machine or on a test server as long as you need to make sure it is the right tool for your next project. … and when you’re convinced, [buy your license](https://page-grid.com/buy).
 
 ### Requirements
 - Process Wire 3.0.229 or greater
 
 ### Installation
-1. Go to “Modules > Site > Add New“ in your admin
-2. Paste the Module Class Name "FieldtypePageGrid" into the field “Add Module From Directory“
-3. Click “Get Module Info“
-4. On the overview, click “Download And Install“
-5. On the following screen, click “Install Now“
-
-### More install options
-- [Module install guide](https://page-grid.com/docs/#/developer/installation)
-- [Site profile install guide](https://page-grid.com/docs/#/installation)
+- [Install guide](https://page-grid.com/docs/#/developer/installation)
 
 ### Get up and running
 - [Quick start](https://page-grid.com/docs/#/developer/start)
@@ -47,5 +37,5 @@ If you have ideas for a feature or enhancement for PAGEGRID, please make a post 
 
 ---
 
-© 2023 Jan Ploch
+© 2024 Jan Ploch
 [page-grid.com](https://page-grid.com) · [License agreement](https://github.com/jploch/FieldtypePageGrid/blob/main/LICENSE.md)
