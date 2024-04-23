@@ -339,6 +339,8 @@ class InputfieldPageGrid extends Inputfield {
             foreach ($this->rowTemplates as $template) {
                 /** @var Template $template */
 
+                if ($template->useRoles && !in_array($this->user->id, $template->createRoles)) continue;
+
                 // keep this line for future updates, makes it possible to add items via modal if link is clicked, maybe alternative for non super users oneday
                 // $url = $this->wire('config')->urls->admin . "page/add/?modal=1&template_id=$template->id&parent_id=$parentID&context=PageGrid";
 
