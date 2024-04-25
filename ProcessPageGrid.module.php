@@ -57,10 +57,16 @@ class ProcessPageGrid extends Process {
 
         foreach ($items as $page) {
             if (!$page->hasChildren() && $page->name === 'pg-symbols') continue;
+
+            //for multilanguage site title return object with multiple titles
+            //always use deafult page title as label
+            $label = $page->title;
+            if (!is_string($label)) $label = $page->getLanguageValue('default', 'title');
+
             $a = array(
                 'url' => '',
                 'id' => $page->id,
-                'label' => $page->title,
+                'label' => $label,
                 // 'icon' => $page->getIcon(),
                 'edit' => false
             );
@@ -102,9 +108,9 @@ class ProcessPageGrid extends Process {
 
         // $this->log->save("pagegrid", "type: " . $type);
 
-        if($type === 'updateAnimation') {
+        if ($type === 'updateAnimation') {
             $p = $this->pages->get($pageId);
-            if(!$p || !$p->id) return;
+            if (!$p || !$p->id) return;
             $animationData = $this->modules->get('InputfieldPageGrid')->scripts($p, true);
             return $animationData;
         }
@@ -500,7 +506,7 @@ class ProcessPageGrid extends Process {
             if (!$p || !$p->id) return;
             $parent = $this->pages->get($parentId);
             if (!$parent || !$parent->id) return;
-            
+
             //return if parent is symbol to prevent nested symbols
             if (count($parent->parents('name=pg-symbols, template=pg_container'))) return;
 
