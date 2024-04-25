@@ -16,7 +16,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID'),
       'summary' => __('Commercial page builder module that renders block templates and adds drag and drop functionality in admin.', __FILE__),
-      'version' => '2.0.51',
+      'version' => '2.0.52',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -423,6 +423,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     $this->addHookAfter('Pages::delete', $this, "delete");
     $this->addHookAfter('ProcessPageList::find', $this, "hideDummies");
     $this->addHookAfter('Pages::added', $this, "copyFromBlueprint");
+    $this->addHookAfter('Pages::added', $this, "activateLanguages");
     $this->addHookAfter("Pages::save", $this, "autoPuplish");
     $this->addHookAfter("ProcessPageEdit::buildForm", $this, "modalEdit");
     $this->addHookAfter('ProcessPageAdd::buildForm', $this, "pageAddForm");
@@ -454,6 +455,17 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
       }
     }
     //END hide setup page for non superusers
+  }
+
+  // set all languages active automatically for new pg items
+  public function activateLanguages($event) {
+    if (!$this->templates->get('language')) return;
+    if (!$this->modules->isInstalled('LanguageSupport')) return;
+    $page = $event->arguments(0);
+    //only enable for pg items
+    if (!$page->parents()->get('template=pg_container')) return;
+    foreach ($this->wire->languages as $lang) $page->set("status$lang", 1);
+    $page->save();
   }
 
   public function updateTemplateSettings($event) {

@@ -823,7 +823,7 @@ class InputfieldPageGrid extends Inputfield {
                           <pg-uploader class="settings_wrap">
                             <pg-uploader class="drop_target">
                               <pg-uploader class="input_button"></pg-uploader>
-                                <input class="inputFile" type="file" data-quality="'.$f->clientQuality.'" data-max-width="' . $f->maxWidth . '" data-max-height="' . $f->maxHeight . '" data-field="' . $f->name . '" data-id="' . $p->id . '" data-type="upload"/>
+                                <input class="inputFile" type="file" data-quality="' . $f->clientQuality . '" data-max-width="' . $f->maxWidth . '" data-max-height="' . $f->maxHeight . '" data-field="' . $f->name . '" data-id="' . $p->id . '" data-type="upload"/>
                                 </pg-uploader>
                             </pg-uploader>
                         </pg-uploader>
@@ -1757,6 +1757,22 @@ class InputfieldPageGrid extends Inputfield {
         }
 
         return $animationsCss;
+    }
+
+    //helper to return main page from item (argument: $page inside item template)
+    public function getPage($page) {
+        if (!$page->id) return false;
+        if (!$page->parents()->get('template=pg_container')) return false;
+        $itemParent = $page->closest('template=pg_container');
+        if (!$itemParent->id) return false;
+        $mainPageId = preg_replace("/[^0-9]/", "", $itemParent->name);
+        if (!$mainPageId) return false;
+        $mainPageId = $this->sanitizer->intUnsigned($mainPageId); // force a positive number
+        if (!$mainPageId) return false;
+
+        $mainPage = $this->pages->get($mainPageId);
+        if (!$mainPage->id) return false;
+        return $mainPage;
     }
 
     // options gets rendered inside template and read before render
