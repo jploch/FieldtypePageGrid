@@ -493,7 +493,10 @@ class InputfieldPageGrid extends Inputfield {
         //END check if symbol page was found
 
         //force autonaming/puplishing for all children if only one template selected
-        if (count($p->template->childTemplates) == 1) {
+        //if pgAutoTitle render option is not set to false always use auto title
+        $optionAutoTitle = $p->meta()->pgAutoTitle === false ? 0 : 1;
+
+        if (count($p->template->childTemplates) == 1 && $optionAutoTitle) {
             $p->template->childNameFormat = 'pg-autotitle';
             $p->template->save();
         } else {
@@ -709,7 +712,7 @@ class InputfieldPageGrid extends Inputfield {
         //END new set render options
 
         if ($backend) {
-            $layout .= '<' . $tagName . ' id="' . $p->name . '" data-id="' . $p->id . '" data-id-original="' . $pOriginal->id . '" class="' . $classes . ' ' . $nestedClasses . $statusClass . '" data-template="' . $p->template->name . '" data-field="' . $this->name . '" data-title="' . $p->title . '" data-name="' . $p->name . '" ' . $attributes . '>';
+            $layout .= '<' . $tagName . ' id="' . $p->name . '" data-id="' . $p->id . '" data-id-original="' . $pOriginal->id . '" class="' . $classes . ' ' . $nestedClasses . $statusClass . '" data-template="' . $p->template->name . '" data-field="' . $this->name . '" data-title="' . $p->title . '" data-autoTitle="' . $optionAutoTitle . '" data-name="' . $p->name . '" ' . $attributes . '>';
             $layout .= '<pg-icon>' . wireIconMarkup($p->template->icon) . '</pg-icon>';
             $layout .= $header;
             $layout .= $templateRender;
@@ -1777,13 +1780,10 @@ class InputfieldPageGrid extends Inputfield {
 
     // options gets rendered inside template and read before render
     public function renderOptions($options = []) {
-        // if (!isset($options["page"])) return;
-        // if (!$this->isBackend()) return;
-        // $item = $options["page"];
-        // if (!$item->id) return;
-
-        // set id instead of page object
-        // $options["page"] = $item->id;
+        if (!isset($options["page"])) return;
+        if (!$this->isBackend()) return;
+        $item = $options["page"];
+        if (!$item->id) return;
 
         // convert array to json and set as data-atribite
         $renderOptions = htmlspecialchars(json_encode($options), ENT_QUOTES, 'UTF-8');
@@ -1794,6 +1794,14 @@ class InputfieldPageGrid extends Inputfield {
             $tagsValue = $this->sanitizer->htmlClasses($options["tags"]);
             $tagsValue = strtolower($tagsValue);
             $tags = ' data-pg-tags="' . $tagsValue . '"';
+        }
+
+        if (isset($options['children']) && $options['children']) {
+            if (isset($options['autoTitle']) && $options['autoTitle'] == false) {
+                $item->meta()->set('pgAutoTitle', false);
+            } else {
+                $item->meta()->set('pgAutoTitle', true);
+            }
         }
 
         // needs echo instead of return
