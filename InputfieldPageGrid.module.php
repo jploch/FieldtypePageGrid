@@ -1647,7 +1647,7 @@ class InputfieldPageGrid extends Inputfield {
             $itemCss = $cssMainPage . $itemCss . $animationsCss;
         }
 
-        return $cssTemplates . $cssBackend . $defaults . $fonts . $itemCss . $customCss;
+        return  $cssBackend . $cssTemplates . $defaults . $fonts . $itemCss . $customCss;
     }
 
     public function getAnimationCss($animationPage) {
