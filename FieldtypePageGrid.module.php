@@ -16,7 +16,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID'),
       'summary' => __('Commercial page builder module that renders block templates and adds drag and drop functionality in admin.', __FILE__),
-      'version' => '2.0.55',
+      'version' => '2.0.56',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -764,8 +764,6 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     $returnValue = str_replace("</html>", "", $returnValue);
     $returnValue = str_replace("<html>", "", $returnValue);
     $returnValue = str_replace('<?xml encoding="utf-8" ?>', '', $returnValue);
-
-
 
     return $returnValue;
   }

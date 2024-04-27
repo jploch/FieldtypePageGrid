@@ -339,7 +339,7 @@ class InputfieldPageGrid extends Inputfield {
             foreach ($this->rowTemplates as $template) {
                 /** @var Template $template */
 
-                if ($template->useRoles && !in_array($this->user->id, $template->createRoles)) continue;
+                if (!$this->user->isSuperuser() && $template->useRoles && !in_array($this->user->id, $template->createRoles)) continue;
 
                 // keep this line for future updates, makes it possible to add items via modal if link is clicked, maybe alternative for non super users oneday
                 // $url = $this->wire('config')->urls->admin . "page/add/?modal=1&template_id=$template->id&parent_id=$parentID&context=PageGrid";
@@ -492,19 +492,6 @@ class InputfieldPageGrid extends Inputfield {
         }
         //END check if symbol page was found
 
-        //force autonaming/puplishing for all children if only one template selected
-        //if pgAutoTitle render option is not set to false always use auto title
-        $optionAutoTitle = $p->meta()->pgAutoTitle === false ? 0 : 1;
-
-        if (count($p->template->childTemplates) == 1 && $optionAutoTitle) {
-            $p->template->childNameFormat = 'pg-autotitle';
-            $p->template->save();
-        } else {
-            $p->template->childNameFormat = '';
-            $p->template->save();
-        }
-        //END force autonaming for all children if only one template selected
-
         //disable automatic prepending/appending of template file
         $this->noAppendFile($p);
 
@@ -643,23 +630,21 @@ class InputfieldPageGrid extends Inputfield {
 
         //end Read item Settings
 
-
-        // END insert uploader
         $header = $this->renderItemHeader($p, $p->template->label, $pOriginal);
         $statusClass = $this->getStatusClasses($p);
 
         //make sure outpuformatting is on before render
         $p->of(true);
 
-        //new set render options
-        // $this->setRenderOptions($p, $templateRender);
-
         //disable inline edit for frontend, when inlineEditorFrontDisable = true
         if (!$backend && $this->ft->inlineEditorFrontDisable) $p->edit(false);
+
         // parse template markup and inssert file uploader
         $templateRender = $parsedTemplate->render();
         $templateRender = $this->ft->enableInlineEditFile($templateRender);
 
+        // PARSE RENDER OPTIONS
+        // parse options set via renderOptions
         $docHtml = new \DOMDocument();
         @$docHtml->loadHTML('<?xml encoding="utf-8" ?><html>' . $templateRender . '</html>', LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
         $tag = $docHtml->getElementsByTagName('pg-data') ? $docHtml->getElementsByTagName('pg-data')[0] : 0;
@@ -667,6 +652,7 @@ class InputfieldPageGrid extends Inputfield {
         $tagNameSaved = $this->getTagName($p);
         $tagName = $tagNameSaved;
         $classes = $this->getCssClasses($p);
+        $optionAutoTitle = 1; // deafult enable auto title and puplish of pg items via modal
 
         //tagname
         if ($tag && isset($options->tag)) {
@@ -698,6 +684,10 @@ class InputfieldPageGrid extends Inputfield {
             }
         }
 
+        if ($tag && isset($options->autoTitle)) {
+            $optionAutoTitle = $options->autoTitle;
+        } 
+
         // remove tag from render on frontend
         // needed for js to get data in backend
         if ($tag && !$backend) {
@@ -711,8 +701,19 @@ class InputfieldPageGrid extends Inputfield {
         }
         //END new set render options
 
+        //force autonaming/puplishing for all children if only one template selected
+        //if autoTitle render option is set to true (default)
+        if (count($p->template->childTemplates) == 1 && $optionAutoTitle) {
+            $p->template->childNameFormat = 'pg-autotitle';
+            $p->template->save();
+        } else {
+            $p->template->childNameFormat = '';
+            $p->template->save();
+        }
+        //END force autonaming for all children if only one template selected
+
         if ($backend) {
-            $layout .= '<' . $tagName . ' id="' . $p->name . '" data-id="' . $p->id . '" data-id-original="' . $pOriginal->id . '" class="' . $classes . ' ' . $nestedClasses . $statusClass . '" data-template="' . $p->template->name . '" data-field="' . $this->name . '" data-title="' . $p->title . '" data-autoTitle="' . $optionAutoTitle . '" data-name="' . $p->name . '" ' . $attributes . '>';
+            $layout .= '<' . $tagName . ' id="' . $p->name . '" data-id="' . $p->id . '" data-id-original="' . $pOriginal->id . '" class="' . $classes . ' ' . $nestedClasses . $statusClass . '" data-template="' . $p->template->name . '" data-field="' . $this->name . '" data-title="' . $p->title . '" data-name="' . $p->name . '" ' . $attributes . '>';
             $layout .= '<pg-icon>' . wireIconMarkup($p->template->icon) . '</pg-icon>';
             $layout .= $header;
             $layout .= $templateRender;
@@ -722,75 +723,6 @@ class InputfieldPageGrid extends Inputfield {
         }
 
         return $layout;
-    }
-
-    public function setRenderOptions($p, $templateRender) {
-        //only set in backend, frontend uses saved value
-        if (!$this->isBackend()) return;
-        //Render options
-        //NEW convert options and set to meta before render
-        $docHtml = new \DOMDocument();
-        @$docHtml->loadHTML('<?xml encoding="utf-8" ?><html>' . $templateRender . '</html>', LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
-        $tag = $docHtml->getElementsByTagName('pg-data') ? $docHtml->getElementsByTagName('pg-data')[0] : 0;
-        $options = $tag ? json_decode($tag->getAttribute('pg-data-options')) : [];
-        $itemData = $p->meta()->pg_styles;
-        if (!$tag) return;
-        // if(!isset($options)) return;
-
-        // bd($options);
-
-        $tagNameSaved = $this->getTagName($p);
-
-        if (!isset($itemData)) {
-            $itemData = [];
-        }
-
-        if (!isset($itemData['pgitem'])) {
-            $itemData['pgitem'] = [];
-        }
-
-        //tagname
-        if (isset($options->tag)) {
-
-            $tagName = $this->sanitizer->htmlClass($options->tag);
-            $tagName = strtolower($tagName);
-
-            if (!isset($options->tags) || $tagNameSaved === 'div') {
-
-                if ($tagName && $tagName !== $tagNameSaved) {
-                    $itemData['pgitem']['tagName'] = $tagName;
-                    $p->meta()->set('pg_styles', $itemData);
-                }
-            }
-        }
-
-        //class
-        if (isset($options->class)) {
-            $class = $this->sanitizer->htmlClass($options->class);
-            $class = strtolower($class);
-
-            $classesArray = explode(' ', $this->getCssClasses($p));
-            $hasClass = 0;
-
-            foreach ($classesArray as $className) {
-                if ($class === $className) $hasClass = 1;
-            }
-
-            if (!$hasClass && isset($itemData['pgitem'])) {
-                if (isset($itemData['pgitem']['cssClasses'])) {
-                    $itemData['pgitem']['cssClasses'] = $itemData['pgitem']['cssClasses'] . ' ' . $class;
-                } else {
-                    $itemData['pgitem']['cssClasses'] = $class;
-                }
-                $p->meta()->set('pg_styles', $itemData);
-            }
-        }
-
-        //children
-        if (isset($options->children) && $options->children) {
-            $itemData['pgitem']['children'] = '1';
-            $p->meta()->set('pg_styles', $itemData);
-        }
     }
 
     //function to render file uploader
@@ -1780,28 +1712,20 @@ class InputfieldPageGrid extends Inputfield {
 
     // options gets rendered inside template and read before render
     public function renderOptions($options = []) {
-        if (!isset($options["page"])) return;
         if (!$this->isBackend()) return;
-        $item = $options["page"];
-        if (!$item->id) return;
+        // if (!isset($options["page"])) return;
+        // $item = $options["page"];
+        // if (!$item->id) return;
 
         // convert array to json and set as data-atribite
         $renderOptions = htmlspecialchars(json_encode($options), ENT_QUOTES, 'UTF-8');
 
         //put tags in data attribute for convenience
         $tags = '';
-        if (isset($options["tags"]) && $this->isBackend()) {
+        if (isset($options["tags"])) {
             $tagsValue = $this->sanitizer->htmlClasses($options["tags"]);
             $tagsValue = strtolower($tagsValue);
             $tags = ' data-pg-tags="' . $tagsValue . '"';
-        }
-
-        if (isset($options['children']) && $options['children']) {
-            if (isset($options['autoTitle']) && $options['autoTitle'] == false) {
-                $item->meta()->set('pgAutoTitle', false);
-            } else {
-                $item->meta()->set('pgAutoTitle', true);
-            }
         }
 
         // needs echo instead of return
