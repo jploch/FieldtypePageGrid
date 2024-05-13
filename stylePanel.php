@@ -64,7 +64,7 @@ if ($this->modules->get('InputfieldTextTags')) {
   $field->set('label', __('Selector'));
   $field->addClass('label-left', 'wrapClass');
   $field->set('name', __('data-classes'));
-  $field->attr('placeholder', 'Type to add class…');
+  $field->attr('placeholder', 'Add class…');
   $field->columnWidth = 100;
   $fieldset->append($field);
 }

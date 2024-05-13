@@ -713,7 +713,7 @@ class InputfieldPageGrid extends Inputfield {
         //END force autonaming for all children if only one template selected
 
         if ($backend) {
-            $layout .= '<' . $tagName . ' id="' . $p->name . '" data-id="' . $p->id . '" data-id-original="' . $pOriginal->id . '" class="' . $classes . ' ' . $nestedClasses . $statusClass . '" data-template="' . $p->template->name . '" data-field="' . $this->name . '" data-title="' . $p->title . '" data-name="' . $p->name . '" ' . $attributes . '>';
+            $layout .= '<' . $tagName . ' id="' . $p->name . '" data-id="' . $p->id . '" data-id-original="' . $pOriginal->id . '" class="' . $classes . ' ' . $nestedClasses . $statusClass . '" data-template="' . $p->template->name . '" data-template-label="' . $p->template->label . '" data-field="' . $this->name . '" data-title="' . $p->title . '" data-name="' . $p->name . '" ' . $attributes . '>';
             $layout .= '<pg-icon>' . wireIconMarkup($p->template->icon) . '</pg-icon>';
             $layout .= $header;
             $layout .= $templateRender;
