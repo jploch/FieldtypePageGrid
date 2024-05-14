@@ -1,4 +1,4 @@
-[<img src="https://page-grid.com/github-assets/pagegrid-logo.png" width="300" />](https://page-grid.com)
+[<img src="https://pg.uber.space/github-assets/pagegrid-logo.png" width="300" />](https://page-grid.com)
 
 ### Version 2 out now!
 Version 2 adds symbols, blueprints, animations and more!
