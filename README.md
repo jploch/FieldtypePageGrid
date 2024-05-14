@@ -6,7 +6,7 @@ Version 2 adds symbols, blueprints, animations and more!
 ### PAGEGRID is a friendly pagebuilder for ProcessWire CMS.
 Design fully responsive websites (or parts of them) without writing any code. Rearrange and resize items in a visual way and quickly edit the content of your website. Use ProcessWire's native templates (and fields) to create your own blocks.
 
-<img src="https://page-grid.com/github-assets/pagegrid-screen.png" />
+<img src="https://pg.uber.space/github-assets/pagegrid-screen.png" />
 
 ### Try PAGEGRID for free  
 
