@@ -69,13 +69,6 @@ if ($this->modules->get('InputfieldTextTags')) {
   $fieldset->append($field);
 }
 
-// placement
-
-//$button = $this->modules->get('InputfieldButton');
-//$button->value = 'Force auto placement';
-//$button->attr('title', 'this will remove all manual positions, be careful!');
-//$fieldset->append($button);
-
 // LAYOUT
 $fieldset = $this->modules->get('InputfieldFieldset');
 $fieldset->label = 'Layout';
@@ -163,7 +156,6 @@ $field->addClass('hide-label', 'headerClass');
 $field->columnWidth = 50;
 $fieldsetsub->append($field);
 
-
 //grid align-items (container)
 $field = $this->modules->get('InputfieldSelect');
 $field->name = "align-items";
@@ -179,6 +171,32 @@ $field->set('notes',  $field->label);
 $field->addClass('hide-label', 'headerClass');
 $field->columnWidth = 50;
 $fieldsetsub->append($field);
+
+//grid align-items (container)
+$field = $this->modules->get('InputfieldSelect');
+$field->name = "data-children-placement";
+$field->label = $this->_("Placement of Grid Children");
+// $field->label = ' ';
+$field->addOption("normal", " ");
+$field->addOption("manual", "Convert children to Manual");
+$field->addOption("auto-row", "Convert children to Auto Row");
+$field->addOption("auto-column", "Convert children to Auto Column");
+$field->addOption("auto", "Convert children to Auto");
+$field->set('value', 'normal');
+$field->set('notes',  $field->label);
+$field->addClass('hide-label', 'headerClass');
+$field->columnWidth = 100;
+$fieldsetsub->append($field);
+
+// $field = $this->modules->get('InputfieldMarkup');
+// $field->addClass('hide', 'wrapClass');
+// $field->addClass('hide-label', 'headerClass');
+// $field->name = "data-children-placement-button";
+// $field->value = '<button class="data-children-placement-button-cancel ui-button ui-widget ui-corner-all ui-state-default ui-priority-secondary">Cancel</button>';
+// $field->value .= '<button class="data-children-placement-button-submit ui-button ui-widget ui-corner-all ui-state-default">Convert children</button>';
+// $field->attr('title', 'this will chnage the postion of all the children of this container!');
+// $field->columnWidth = 100;
+// $fieldsetsub->append($field);
 
 // END Grid Parent
 
