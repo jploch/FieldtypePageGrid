@@ -681,6 +681,7 @@ class ProcessPageGrid extends Process {
 
                 $response = array(
                     'newPageClass' => $p->name,
+                    'newChildPageClass' => $this->pageContext->name,
                     'markup' => $this->modules->get('InputfieldPageGrid')->renderItem($p),
                     'message' => $message
                 );

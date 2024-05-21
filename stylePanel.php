@@ -174,18 +174,36 @@ $fieldsetsub->append($field);
 
 //grid align-items (container)
 $field = $this->modules->get('InputfieldSelect');
-$field->name = "data-children-placement";
-$field->label = $this->_("Placement of Grid Children");
-// $field->label = ' ';
-$field->addOption("normal", " ");
-$field->addOption("manual", "Convert children to Manual");
-$field->addOption("auto-row", "Convert children to Auto Row");
-$field->addOption("auto-column", "Convert children to Auto Column");
-$field->addOption("auto", "Convert children to Auto");
-$field->set('value', 'normal');
+$field->name = "pg-children-placement";
+$field->label = "Children Placement";
+$field->addOption("manual", "Manual");
+$field->addOption("auto-row", "Auto Row");
+$field->addOption("auto-column", "Auto Column");
+$field->addOption("auto", "Auto");
+$field->set('value', 'Manual');
 $field->set('notes',  $field->label);
 $field->addClass('hide-label', 'headerClass');
-$field->columnWidth = 100;
+$field->columnWidth = 50;
+$fieldsetsub->append($field);
+
+$field = $this->modules->get('InputfieldInteger');
+$field->inputType = "number";
+$field->name = "pg-children-column-end";
+$field->attr('placeholder', 'auto');
+$field->label = "Colspan";
+$field->set('notes',  $field->label);
+$field->addClass('hide-label', 'headerClass');
+$field->columnWidth = 25;
+$fieldsetsub->append($field);
+
+$field = $this->modules->get('InputfieldInteger');
+$field->inputType = "number";
+$field->name = "pg-children-row-end";
+$field->attr('placeholder', 'auto');
+$field->label = "Rowspan";
+$field->set('notes',  $field->label);
+$field->addClass('hide-label', 'headerClass');
+$field->columnWidth = 25;
 $fieldsetsub->append($field);
 
 // $field = $this->modules->get('InputfieldMarkup');
