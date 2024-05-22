@@ -58,14 +58,14 @@ class InputfieldPageGrid extends Inputfield {
     public function ___render() {
         $user = wire('user');
         $this->ft->createDummies();
-        $this->config->styles->add($this->config->urls->InputfieldPageGrid . "css/main.css?v=2");
+        $this->config->styles->add($this->config->urls->InputfieldPageGrid . "css/main.css?v=" . $this->modules->getModuleInfo('FieldtypePageGrid')['version']);
 
         //needs newest jquery ui version comming with newer PW version, some only with dev flag, load if needed
         if (($this->config->debug !== 'dev' && $this->config->version() >= '3.0.221') || $this->config->version() <= '3.0.210') {
             $this->config->scripts->add($this->config->urls->InputfieldPageGrid . "js/jqueryUi.js'");
         }
 
-        $this->config->scripts->add($this->config->urls->InputfieldPageGrid . "js/main.js?v=2'");
+        $this->config->scripts->add($this->config->urls->InputfieldPageGrid . "js/main.js?v=" . $this->modules->getModuleInfo('FieldtypePageGrid')['version']);
         return $this->renderField();
     }
 
@@ -686,7 +686,7 @@ class InputfieldPageGrid extends Inputfield {
 
         if ($tag && isset($options->autoTitle)) {
             $optionAutoTitle = $options->autoTitle;
-        } 
+        }
 
         // remove tag from render on frontend
         // needed for js to get data in backend
