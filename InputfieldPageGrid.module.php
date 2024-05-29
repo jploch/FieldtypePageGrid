@@ -1752,6 +1752,10 @@ class InputfieldPageGrid extends Inputfield {
         if (!$page->id) return false;
         if (!$page->parents()->get('template=pg_container')) return false;
         $itemParent = $page->closest('template=pg_container');
+
+        //get field container
+        if($itemParent->parent('template=pg_container')->id) $itemParent = $itemParent->parent();
+
         if (!$itemParent->id) return false;
         $mainPageId = preg_replace("/[^0-9]/", "", $itemParent->name);
         if (!$mainPageId) return false;
