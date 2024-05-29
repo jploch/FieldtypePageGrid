@@ -16,7 +16,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID'),
       'summary' => __('Commercial page builder module that renders block templates and adds drag and drop functionality in admin.', __FILE__),
-      'version' => '2.0.68',
+      'version' => '2.0.69',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -94,10 +94,10 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
       // $t->tags = 'PageGrid'; do not set tag so template is shown on add new page screen
       $t->save();
 
-      // copy blueprint template file to template folder and rename
-      $blueprintFile =  $this->config->paths->siteModules . $this->className() . '/pg_blueprint.php';
-      $templateFolder = $this->config->paths->templates . 'pagegrid-page.php';
-      copy($blueprintFile, $templateFolder);
+      // copy pagegrid-page.php template file to site template folder
+      $moduleTemplate =  $this->config->paths->siteModules . $this->className() . '/pagegrid-page.php';
+      $siteTemplate = $this->config->paths->templates . 'pagegrid-page.php';
+      copy($moduleTemplate, $siteTemplate);
 
       //add pg field to starter
       //create field already
