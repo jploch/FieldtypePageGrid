@@ -16,7 +16,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID'),
       'summary' => __('Commercial page builder module that renders block templates and adds drag and drop functionality in admin.', __FILE__),
-      'version' => '2.0.70',
+      'version' => '2.0.71',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -892,19 +892,21 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
   public function delete($event) {
     $pages = $event->wire('pages');
     $page = $event->arguments(0);
-    foreach ($page->template->fieldgroup as $field) {
-      if (!$field->type instanceof FieldtypePageGrid) continue;
-      $itemsParent = $pages->get('pg-' . $page->id);
-      if ($itemsParent->id) {
+    if($page->template->name === 'admin') return;
+    $hasField = $page->fields->get('type=FieldtypePageGrid') ? 1 : 0;
+    //blueprint page has no field (added at runtime) so set var in this case
+    if($page->template->name === 'pg_blueprint') $hasField = 1;
+    if(!$hasField) return;
 
-        foreach ($itemsParent->find('') as $item) {
-          $item->removeStatus(Page::statusLocked);
-          $item->save();
-        }
-
-        $itemsParent->delete(true); // true allown to delete children too
-        $this->message("PageGrid items for " . $page->id . " removed");
+    $itemsParent = $pages->get('pg-' . $page->id);
+    if ($itemsParent->id) {
+      foreach ($itemsParent->find('') as $item) {
+        $item->removeStatus(Page::statusLocked);
+        $item->save();
       }
+
+      $itemsParent->delete(true); // true allow to delete children too
+      $this->message("PageGrid items for " . $page->id . " removed");
     }
   }
 
