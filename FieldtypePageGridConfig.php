@@ -253,10 +253,10 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		wire('modules')->get('JqueryUI')->use('modal');
 
 		//create field if none is found and get var is set
-		if (isset($_GET['createField']) && !$this->fields->get('name=PageGrid')) {
+		if (isset($_GET['createField']) && !$this->fields->get('name=grid')) {
 			$fpg = new Field;
-			$fpg->label = 'pagegrid';
-			$fpg->name = 'PageGrid';
+			$fpg->label = 'Grid';
+			$fpg->name = 'grid';
 			$fpg->type = $this->modules->get('FieldtypePageGrid');
 			$fpg->tags = 'PageGrid';
 			$fpg->save();
@@ -361,7 +361,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		if (!$this->modules->isInstalled('AdminThemeCanvas')) $f->notes = 'If you prefer a more neutral look for your backend, you can also use [AdminThemeCanvas](https://processwire.com/modules/admin-theme-canvas/).';
 		// $f->addOption('setDefault', 'Default'); //set on first run to have default checked
 		$f->addClass('pg-table-auto', 'wrapClass');
-		$f->addOption('hideFieldTitle', 'Hide Field Title | [span.detail] Hide field title in page editor. [/span]');
+		$f->addOption('hideFieldTitle', 'Hide Field Title | [span.detail] Hide field label in page editor if there is only one PAGEGRID field.[/span]');
 		$f->addOption('hidePageHeadline', 'Hide Page Headline | [span.detail] Hide page headline in page editor and add it to breadcrumb. [/span]');
 		$f->addOption('hideTitleField', 'Hide Page Title Field | [span.detail] Hide page title field in page editor and add it to settings tab. [/span]');
 		$f->addOption('hideTabs', 'Hide Tabs | [span.detail] Hide tabs and add a settings icon to show them. [/span]');

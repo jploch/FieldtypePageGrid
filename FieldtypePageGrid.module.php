@@ -16,7 +16,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID'),
       'summary' => __('Commercial page builder module that renders block templates and adds drag and drop functionality in admin.', __FILE__),
-      'version' => '2.0.66',
+      'version' => '2.0.68',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -103,9 +103,14 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
       //create field already
       $f = $this->fields->get("type=FieldtypePageGrid");
       if (!$f || !$f->id) {
+        $nameTaken = $this->fields->get("name=grid");
         $f = new Field;
-        $f->label = 'pagegrid';
-        $f->name = 'PageGrid';
+        $f->label = 'Grid';
+        if ($nameTaken && $nameTaken->id) {
+          $f->name = 'pgrid';
+        } else {
+          $f->name = 'grid';
+        }
         $f->type = $this->modules->get('FieldtypePageGrid');
         $f->tags = 'PageGrid';
         $f->save();
@@ -398,6 +403,18 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
   }
 
   public function ready() {
+
+    //deactivate automatic appending of template file look for string
+    $p = $this->page;
+    if ($p->template->name !== 'admin' && $p->fields->get('type=FieldtypePageGrid')) {
+      $parsedTemplate = new TemplateFile($p->template->filename);
+      if (strpos($parsedTemplate->render(), '<!--pgNoAppendTemplateFile-->') !== false) {
+        $this->config->prependTemplateFile = false;
+        $this->config->appendTemplateFile = false;
+      }
+    }
+    //END deactivate automatic appending of template file
+
     //create pages und templates if they don't exist
     $container = $this->pages->get("name=pg-items, template=pg_container");
     if (!$container->id) $this->createModule();
@@ -555,29 +572,50 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
   }
 
   public function blueprintReady($event) {
-    //make sure blueprint has pg field
-    $page = $event->object->getPage();
-    if ($page->template->name !== 'pg_blueprint') return;
-
-    //add pg field if not set
+    // make sure blueprint has pg fields
+    // the fields are added on runtime, based on parent pages found
+    // supports one or more fields with the pg_blueprint template
+    $p = $event->object->getPage();
+    if (!$p->id) return;
+    if ($p->template->name !== 'pg_blueprint') return;
     $t = $this->templates->get('pg_blueprint');
     if (!$t || !$t->id) return;
 
-    $hasPgField = false;
-    foreach ($t->fields as $f) {
-      if ($f->type instanceof FieldtypePageGrid) {
-        $hasPgField = true;
-        break;
+    //add the fields that have data at runtime
+    $itemsParent = $this->pages->get('name=pg-' . $p->id . ', template=pg_container');
+    if ($itemsParent->id) {
+
+      //make sure older blueprints still work (to support old module versions, can be removed later)
+      if (!count($itemsParent->children('template=pg_container'))) {
+        $f = $this->fields->get('type=FieldtypePageGrid');
+        if ($f && $f->id) {
+          $itemsParentNew = new Page(); // create new page object
+          $itemsParentNew->template = 'pg_container'; // set template
+          $itemsParentNew->parent = $itemsParent->id; // set the parent
+          $itemsParentNew->name = 'pg-' . $f->id; // give it a name used in the url for the page
+          $itemsParentNew->title = $f->name; // set page title (not neccessary but recommended)
+          $itemsParentNew->save();
+
+          foreach ($itemsParent->children() as $p) {
+            if ($p->template->name === 'pg_container') continue;
+            $p->of(false);
+            $p->parent = $itemsParentNew;
+            $p->save();
+            $p->of(true);
+          }
+        }
+      }
+      //END make sure older blueprints still work (to support old module versions, can be removed later)
+
+      foreach ($itemsParent->children('template=pg_container') as $fieldPage) {
+        $fName = str_replace('pg-', '', $fieldPage->name);
+        $f = $this->fields->get("id=$fName, type=FieldtypePageGrid");
+        if ($f && $f->id) {
+          $t->fieldgroup->add($f);
+        }
       }
     }
-
-    $pgField = $this->fields->get('type=FieldtypePageGrid');
-    if (!$hasPgField && $pgField) {
-      $t->fieldgroup->add($pgField);
-      $t->fieldgroup->save();
-    }
   }
-
 
   public function setBlueprintTemplate() {
     $t = $this->templates->get('pg_blueprint');
@@ -770,7 +808,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
 
   //function gets called for $page->fieldname calls render function as alternative
   public function ___formatValue(Page $page, Field $field, $value) {
-    return $this->modules->get('InputfieldPageGrid')->renderGrid($page);
+    return $this->modules->get('InputfieldPageGrid')->renderGrid($page, $field);
   }
 
   // add interface classes to body
@@ -817,22 +855,22 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     $page = $event->arguments(0);
     $copy = $event->arguments(1);
 
+    //if no pg field return
+    if (!$copy->fields->get('type=FieldtypePageGrid')) return;
 
-    foreach ($copy->template->fieldgroup as $field) {
+    $itemsParent = $pages->get('pg-' . $page->id);
+    if ($itemsParent->id) {
+      $cloneItemsParent = $pages->clone($itemsParent);
+      $cloneItemsParent->setAndSave('name', 'pg-' . $copy->id);
+      $cloneItemsParent->setAndSave('title', $copy->title . ' items');
 
-      if (!$field->type instanceof FieldtypePageGrid) continue;
-      $itemsParent = $pages->get('pg-' . $page->id);
-      if ($itemsParent->id) {
-        $cloneItemsParent = $pages->clone($itemsParent);
-        $cloneItemsParent->setAndSave('name', 'pg-' . $copy->id);
-        $cloneItemsParent->setAndSave('title', $copy->title . ' items');
-
-        foreach ($cloneItemsParent->find('') as $clone) {
-          $newName = $clone->template->name . '-' . $clone->id;
-          // // // // bd($newName);
-          $clone->setAndSave('name', $newName);
-          $clone->setAndSave('title', $newName);
-        }
+      // renaming of items to have uniue names
+      foreach ($cloneItemsParent->find('') as $clone) {
+        //skip field page containers
+        if ($clone->template->name === 'pg_container') continue;
+        $newName = $clone->template->name . '-' . $clone->id;
+        $clone->setAndSave('name', $newName);
+        $clone->setAndSave('title', $newName);
       }
     }
   }
@@ -965,6 +1003,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     $cloneItemsParent->setAndSave('title', $page->title . ' items');
 
     foreach ($cloneItemsParent->find('') as $clone) {
+      if ($clone->template->name === 'pg_container') continue;
       $newName = $clone->template->name . '-' . $clone->id;
       $clone->setAndSave('name', $newName);
       $clone->setAndSave('title', $newName);

@@ -242,6 +242,19 @@ class InputfieldPageGrid extends Inputfield {
 
         //END new pages to render based on items parent
 
+        //new for multiple fields collapse all fields but first
+        $fieldFound = '';
+        foreach ($mainPage->fields as $f) {
+            if ($f->type instanceof FieldtypePageGrid) {
+                $fieldFound = $f->name;
+                break;
+            }
+        }
+
+        if ($this->name !== $fieldFound) $this->addClass('InputfieldStateCollapsed', 'wrapClass'); // close if not first field
+        $this->addClass('InputfieldStateWasCollapsed', 'wrapClass'); // add this so header can always be closed
+        //END new for multiple fields collapse all fields but first
+
         $moduleUrl = $this->config->urls->InputfieldPageGrid;
         $user = wire('user');
         $settings = '';
@@ -269,19 +282,21 @@ class InputfieldPageGrid extends Inputfield {
         }
 
         if ($user->hasPermission('pagegrid-style-panel') && $this->ft->stylePanel) {
-            include 'stylePanel.php';
-            $settings = '<div class="ui-dialog pg-settings-container pg-stylepanel"><div class="pg-settings pg-stylepanel pg-settings-content">' . $settings . '</div></div>';
-            $topNav = '<div class="pg-topnav uk-navbar-center">
-        <i class="pg-item-list-button pg-topnav-margin-big fa fw fa-list-ul on" title="Item List"></i>
-        <i class="pg-undo fa fa-fw fa-reply" data-name="fa-reply" title="Undo"></i>
-        <i class="pg-redo pg-topnav-margin fa fa-fw fa-share" data-name="fa-share" title="Redo"></i>';
-            if ($hasAnimations) $topNav .= '<i class="pg-play pg-topnav-margin fa fw fa-play" title="Play animations"></i>';
-            $topNav .= '<div id="breakpoints-nav">
-       <img src="' . $moduleUrl . '/img/phone-portrait-outline.svg" class="breakpoint-icon breakpoint-icon-s" value="@media (max-width: 640px)" breakpoint="s" title="Breakpoint Small">
-       <img src="' . $moduleUrl . '/img/phone-landscape-outline.svg" class="breakpoint-icon breakpoint-icon-m" value="@media (max-width: 960px)" breakpoint="m" title="Breakpoint Medium">
-       <img src="' . $moduleUrl . '/img/laptop-outline.svg" class="breakpoint-icon breakpoint-icon-base" value="@media (min-width: 640px)" breakpoint="base" title="Breakpoint Base">
-       <img src="' . $moduleUrl . '/img/desktop-outline.svg" class="breakpoint-icon breakpoint-icon-l" value="@media (min-width: 1600px)" breakpoint="l" title="Breakpoint Large">
-       </div></div>';
+            include_once 'stylePanel.php';
+            if ($settings) {
+                $settings = '<div data-field=' . $this->name . ' class="ui-dialog pg-settings-container pg-stylepanel"><div class="pg-settings pg-stylepanel pg-settings-content">' . $settings . '</div></div>';
+                $topNav = '<div class="pg-topnav uk-navbar-center">
+            <i class="pg-item-list-button pg-topnav-margin-big fa fw fa-list-ul on" title="Item List"></i>
+            <i class="pg-undo fa fa-fw fa-reply" data-name="fa-reply" title="Undo"></i>
+            <i class="pg-redo pg-topnav-margin fa fa-fw fa-share" data-name="fa-share" title="Redo"></i>';
+                if ($hasAnimations) $topNav .= '<i class="pg-play pg-topnav-margin fa fw fa-play" title="Play animations"></i>';
+                $topNav .= '<div id="breakpoints-nav">
+           <img src="' . $moduleUrl . '/img/phone-portrait-outline.svg" class="breakpoint-icon breakpoint-icon-s" value="@media (max-width: 640px)" breakpoint="s" title="Breakpoint Small">
+           <img src="' . $moduleUrl . '/img/phone-landscape-outline.svg" class="breakpoint-icon breakpoint-icon-m" value="@media (max-width: 960px)" breakpoint="m" title="Breakpoint Medium">
+           <img src="' . $moduleUrl . '/img/laptop-outline.svg" class="breakpoint-icon breakpoint-icon-base" value="@media (min-width: 640px)" breakpoint="base" title="Breakpoint Base">
+           <img src="' . $moduleUrl . '/img/desktop-outline.svg" class="breakpoint-icon breakpoint-icon-l" value="@media (min-width: 1600px)" breakpoint="l" title="Breakpoint Large">
+           </div></div>';
+            }
         }
 
         $addItems = $this->renderAddItemBar();
@@ -301,12 +316,12 @@ class InputfieldPageGrid extends Inputfield {
         }
         //END add blueprint select
 
-        $renderMarkup = $topNav . $settings . '<div class="pg-container" data-page-title="' . $mainPage->title . '" data-page="' . $editID . '" data-id="' . $this->pages->get('pg-classes')->id . '" data-animations-id="' . $this->pages->get('pg-animations')->id . '" data-field="' . $this->name . '" data-admin-url="' . $this->page->rootParent->url() . 'setup/pagegrid/" data-fallbackfonts="' . $this->ft->fallbackFonts . '">' . $addItems . $dataGlobal . $blueprintSelect;
+        $renderMarkup = $topNav . $settings . '<div class="pg-container pg-container-' . $this->name . '" data-page-title="' . $mainPage->title . '" data-page="' . $editID . '" data-id="' . $this->pages->get('pg-classes')->id . '" data-animations-id="' . $this->pages->get('pg-animations')->id . '" data-field="' . $this->name . '" data-admin-url="' . $this->page->rootParent->url() . 'setup/pagegrid/" data-fallbackfonts="' . $this->ft->fallbackFonts . '">' . $addItems . $dataGlobal . $blueprintSelect;
         //loading animation
         $renderMarkup .= '<div class="pg-loading"><div class="fa fa-spin fa-spinner fa-fw"></div></div>';
         //container for item header (item header will be moved here with js)
-        $renderMarkup .= '<div id="pg-item-header"></div>';
-        $renderMarkup .= '<iframe id="pg-iframe-canvas" src="' . wire('pages')->get($parentPageId)->url . '?backend=1" frameBorder="0" scrolling="no" style="width:100%; max-height:100vh; border:0;"></iframe>';
+        $renderMarkup .= '<div class="pg-item-header-container"></div>';
+        $renderMarkup .= '<iframe data-field="' . $this->name . '" id="pg-iframe-canvas-' . $this->name . '" class="pg-iframe-canvas" src="' . wire('pages')->get($parentPageId)->url . '?backend=1&field=' . $this->name . '" loading="lazy" frameBorder="0" scrolling="no" style="width:100%; max-height:100vh; border:0;"></iframe>';
         $renderMarkup .= '</div>';
 
         //render delete button
@@ -335,7 +350,7 @@ class InputfieldPageGrid extends Inputfield {
         $addItems = '';
 
         if (!$getSymbolsOnly) {
-            $addItems = '<div class="pg-add-container"><div class="pg-add-content">';
+            $addItems = '<div data-field=' . $this->name . ' class="pg-add-container pg-add-container-' . $this->name . '"><div class="pg-add-content">';
             foreach ($this->rowTemplates as $template) {
                 /** @var Template $template */
 
@@ -401,23 +416,56 @@ class InputfieldPageGrid extends Inputfield {
         return $backend;
     }
 
-    public function renderGrid($mainPage) {
+    public function renderGrid($mainPage, $field = 0) {
         $backend = $this->isBackend();
         $statusClass = '';
         $itemsParent = $this->pages->get('pg-' . $mainPage->id);
         $layout = "";
+        $fieldCount = count($mainPage->fields->find('type=FieldtypePageGrid'));
 
-        if ($itemsParent->id) {
-            $pagesToRender = $itemsParent->children();
-        } else {
-            return;
-        }
+        if (!$itemsParent->id) return;
 
-        foreach ($mainPage->fields as $field) {
-            if ($field->type instanceof FieldtypePageGrid) {
-                $pg = $field;
+        foreach ($mainPage->fields as $f) {
+            if ($f->type instanceof FieldtypePageGrid) {
+                $pg = $f;
             }
         }
+
+        if (!$field) $field = $pg;
+
+        //NEW support for multiple fields
+        if ($field && $field->id) {
+
+            // multiple fields: check if it's this field or return (prevents double rendering of fields)
+            if (isset($_GET['field']) && $_GET['field'] !== $field->name && $fieldCount > 1) return;
+
+            $itemsParentNew = $itemsParent->get('name=pg-' . $field->id);
+            if ($itemsParentNew->id) {
+            } else {
+                $itemsParentNew = new Page(); // create new page object
+                $itemsParentNew->template = 'pg_container'; // set template
+                $itemsParentNew->parent = $itemsParent->id; // set the parent
+                $itemsParentNew->name = 'pg-' . $field->id; // give it a name used in the url for the page
+                $itemsParentNew->title = $field->name; // set page title (not neccessary but recommended)
+                $itemsParentNew->save();
+            }
+            $pg = $field;
+
+            //update older versions and move pages from page container to field container
+            foreach ($itemsParent->children() as $p) {
+                if ($p->template->name === 'pg_container') continue;
+                $p->of(false);
+                $p->parent = $itemsParentNew;
+                $p->save();
+                $p->of(true);
+            }
+
+            //set new container
+            $itemsParent = $itemsParentNew;
+        }
+        //END NEW support for multiple fields
+
+        $pagesToRender = $itemsParent->children();
 
         foreach ($pagesToRender as $p) {
             $layout .= $this->renderItem($p);
@@ -465,8 +513,13 @@ class InputfieldPageGrid extends Inputfield {
         return $out;
     }
 
-    //disable automatic prepending/appending of template file
+    //disable automatic prepending/appending of template file by passing this string (checked on ready function of fieldtyle module)
     public function noAppendFile($p) {
+        echo '<!--pgNoAppendTemplateFile-->';
+    }
+
+    //for items we never want prepending/appending of template file so disable it in DB
+    public function noAppendFileSave($p) {
         if (!$p->template->noAppendTemplateFile) {
             $p->template->noAppendTemplateFile = 1;
             $p->template->noPrependTemplateFile = 1;
@@ -493,7 +546,7 @@ class InputfieldPageGrid extends Inputfield {
         //END check if symbol page was found
 
         //disable automatic prepending/appending of template file
-        $this->noAppendFile($p);
+        $this->noAppendFileSave($p);
 
         if ($p->template->tags !== 'Blocks') {
             $p->template->tags = 'Blocks';
@@ -1042,6 +1095,7 @@ class InputfieldPageGrid extends Inputfield {
         //aaaa
         //animation data to access with js on frontend if animation found
         $jsAnimationData = "";
+        $animationData = [];
         $animationsSelectors = [];
         $animationsParent = $this->pages->get('name=pg-animations, template=pg_container');
         $classNames = trim($classNames);
@@ -1090,7 +1144,6 @@ class InputfieldPageGrid extends Inputfield {
             if (count($animationsSelectors) && $animationNames) {
 
                 $animationsSelectors = array_unique($animationsSelectors);
-                $animationData = [];
                 $animationNames = explode(',', $animationNames);
 
                 foreach ($animationNames as $animationName) {

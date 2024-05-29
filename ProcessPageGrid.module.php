@@ -447,7 +447,7 @@ class ProcessPageGrid extends Process {
 
                 if ($pItems && $pItems->id && $blueprintItemsPage && $blueprintItemsPage->id) {
                     //remove old items page
-                    $pItems->delete();
+                    $pItems->delete(true);
                     $cloneItems = $this->pages->clone($blueprintItemsPage);
                     $cloneItems->name = 'pg-' . $p->id;
                     $cloneItems->title = $p->title;
@@ -455,6 +455,8 @@ class ProcessPageGrid extends Process {
 
                     //rename itms to prevent naming conflicts
                     foreach ($cloneItems->find('') as $clone) {
+                        //skip field page containers
+                        if ($clone->template->name === 'pg_container') continue;
                         $newName = $clone->template->name . '-' . $clone->id;
                         $clone->setAndSave('name', $newName);
                         $clone->setAndSave('title', $newName);
