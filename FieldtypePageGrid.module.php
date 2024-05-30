@@ -16,7 +16,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID'),
       'summary' => __('Commercial page builder module that renders block templates and adds drag and drop functionality in admin.', __FILE__),
-      'version' => '2.0.71',
+      'version' => '2.0.72',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -266,6 +266,13 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
       $permission->save();
     }
 
+    if (!$this->permissions->get('pagegrid-select')->id) {
+      $permission = $this->permissions->add("pagegrid-select");
+      $permission->title = 'User can select editable elements by click instead of hover';
+      $permission->save();
+    }
+
+
     //setup permission
     if (!$this->permissions->get('pagegrid-setup')->id) {
       $permission = $this->permissions->add("pagegrid-setup");
@@ -433,6 +440,8 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
 
     $gridTemplate = $this->templates->get("pagegrid-page");
     if (!$gridTemplate || !$gridTemplate->id) $this->createModule();
+
+    if (!$this->permissions->get('pagegrid-select')->id) $this->createModule();
 
     $this->addHookAfter("Modules::refresh", $this, "createModule");
     $this->addHookAfter('Pages::cloned', $this, "clone");
@@ -892,11 +901,11 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
   public function delete($event) {
     $pages = $event->wire('pages');
     $page = $event->arguments(0);
-    if($page->template->name === 'admin') return;
+    if ($page->template->name === 'admin') return;
     $hasField = $page->fields->get('type=FieldtypePageGrid') ? 1 : 0;
     //blueprint page has no field (added at runtime) so set var in this case
-    if($page->template->name === 'pg_blueprint') $hasField = 1;
-    if(!$hasField) return;
+    if ($page->template->name === 'pg_blueprint') $hasField = 1;
+    if (!$hasField) return;
 
     $itemsParent = $pages->get('pg-' . $page->id);
     if ($itemsParent->id) {

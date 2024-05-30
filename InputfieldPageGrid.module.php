@@ -500,9 +500,8 @@ class InputfieldPageGrid extends Inputfield {
 
             $statusClass = '';
 
-            if ($this->user->hasPermission('pagegrid-drag')) {
-                $statusClass .= 'pg-sortable';
-            }
+            if ($this->user->hasPermission('pagegrid-drag')) $statusClass .= 'pg-sortable';
+            if ($this->user->hasPermission('pagegrid-select'))  $statusClass .= " pg-permission-select";
 
             $out = '<div id="' . $itemsParent->name . '" class="pg-wrapper pg-item pg-main pg-droppable pg ' . $this->getCssClasses($itemsParent) . ' ' . $statusClass . '" data-id="' . $itemsParent->id . '" data-field="' . $pg->name . '">' . $layout . '</div>';
             $out .= '<div class="pg-dummies" style="display:none!important;">' . $dummies . '</div>';
@@ -890,9 +889,10 @@ class InputfieldPageGrid extends Inputfield {
         if ($p->is(Page::statusUnpublished)) $statusClass .= " pg-unpublished";
         if ($p->is(Page::statusHidden)) $statusClass .= " pg-hidden";
         if ($p->is(Page::statusLocked)) $statusClass .= " pg-locked";
-        if (!($this->user->hasPermission('page-edit', $p))) $statusClass .= " pg-locked";
-        if ($this->user->hasPermission('pagegrid-drag')) $statusClass .= " pg-item-draggable";
-        if ($this->user->hasPermission('pagegrid-resize')) $statusClass .= " pg-item-resizable";
+        if (!($user->hasPermission('page-edit', $p))) $statusClass .= " pg-locked";
+        if ($user->hasPermission('pagegrid-drag')) $statusClass .= " pg-item-draggable";
+        if ($user->hasPermission('pagegrid-resize')) $statusClass .= " pg-item-resizable";
+        if ($user->hasPermission('pagegrid-select'))  $statusClass .= " pg-permission-select";
         if ($user->hasPermission('page-add', $p)) $statusClass .= " pg-permission-add";
         if ($user->hasPermission('page-create', $p)) $statusClass .= " pg-permission-create";
         if ($user->hasPermission('page-delete', $p)) $statusClass .= " pg-permission-delete";
