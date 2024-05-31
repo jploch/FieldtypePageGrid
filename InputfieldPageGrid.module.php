@@ -647,7 +647,8 @@ class InputfieldPageGrid extends Inputfield {
                 if (($key = array_search('div', $validElements)) !== false) {
                     if (!$this->user->isLoggedin() || (!$backend && $this->ft->inlineEditorFrontDisable)) unset($validElements[$key]);
                 }
-                $p->$fieldName = strip_tags($p->getFormatted($fieldName), $validElements);;
+                $validElementsString = count($validElements) ? "<" . implode("><", $validElements) . ">" : "";
+                $p->$fieldName = strip_tags($p->getFormatted($fieldName), $validElementsString);
             }
         }
         //prevent bug with div nested in p if block has <p> as wrapper
