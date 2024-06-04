@@ -424,45 +424,38 @@ class InputfieldPageGrid extends Inputfield {
         $fieldCount = count($mainPage->fields->find('type=FieldtypePageGrid'));
 
         if (!$itemsParent->id) return;
-
-        foreach ($mainPage->fields as $f) {
-            if ($f->type instanceof FieldtypePageGrid) {
-                $pg = $f;
-            }
-        }
-
-        if (!$field) $field = $pg;
+        if (!$field) $field = $mainPage->fields->get('type=FieldtypePageGrid'); //if no argument get first field
+        if (!$field->id) return;
 
         //NEW support for multiple fields
-        if ($field && $field->id) {
+        // multiple fields: check if it's this field or return (prevents double rendering of fields in backend)
+        if (isset($_GET['field']) && $_GET['field'] !== $field->name && $fieldCount > 1) return;
 
-            // multiple fields: check if it's this field or return (prevents double rendering of fields)
-            if (isset($_GET['field']) && $_GET['field'] !== $field->name && $fieldCount > 1) return;
+        //search $this->pages instead of $itemsParent to work with multi language (bug?)
+        $itemsParentNew = $this->pages->get("name=pg-$field->id, parent=$itemsParent->id, template=pg_container");
 
-            $itemsParentNew = $itemsParent->get('name=pg-' . $field->id);
-            if ($itemsParentNew->id) {
-            } else {
-                $itemsParentNew = new Page(); // create new page object
-                $itemsParentNew->template = 'pg_container'; // set template
-                $itemsParentNew->parent = $itemsParent->id; // set the parent
-                $itemsParentNew->name = 'pg-' . $field->id; // give it a name used in the url for the page
-                $itemsParentNew->title = $field->name; // set page title (not neccessary but recommended)
-                $itemsParentNew->save();
-            }
-            $pg = $field;
-
-            //update older versions and move pages from page container to field container
-            foreach ($itemsParent->children() as $p) {
-                if ($p->template->name === 'pg_container') continue;
-                $p->of(false);
-                $p->parent = $itemsParentNew;
-                $p->save();
-                $p->of(true);
-            }
-
-            //set new container
-            $itemsParent = $itemsParentNew;
+        //create field container page if it doesn't exist
+        if (!$itemsParentNew->id) {
+            $itemsParentNew = new Page(); // create new page object
+            $itemsParentNew->template = 'pg_container'; // set template
+            $itemsParentNew->parent = $itemsParent->id; // set the parent
+            $itemsParentNew->name = 'pg-' . $field->id; // give it a name used in the url for the page
+            $itemsParentNew->title = $field->name; // set page title (not neccessary but recommended)
+            $itemsParentNew->save();
         }
+
+        //update older versions and move pages from page container to field container
+        foreach ($itemsParent->children() as $p) {
+            if ($p->template->name === 'pg_container') continue;
+            $p->of(false);
+            $p->parent = $itemsParentNew;
+            $p->save();
+            $p->of(true);
+        }
+
+        //set new container
+        $itemsParent = $itemsParentNew;
+
         //END NEW support for multiple fields
 
         $pagesToRender = $itemsParent->children();
@@ -503,7 +496,7 @@ class InputfieldPageGrid extends Inputfield {
             if ($this->user->hasPermission('pagegrid-drag')) $statusClass .= 'pg-sortable';
             if ($this->user->hasPermission('pagegrid-select'))  $statusClass .= " pg-permission-select";
 
-            $out = '<div id="' . $itemsParent->name . '" class="pg-wrapper pg-item pg-main pg-droppable pg ' . $this->getCssClasses($itemsParent) . ' ' . $statusClass . '" data-id="' . $itemsParent->id . '" data-field="' . $pg->name . '">' . $layout . '</div>';
+            $out = '<div id="' . $itemsParent->name . '" class="pg-wrapper pg-item pg-main pg-droppable pg ' . $this->getCssClasses($itemsParent) . ' ' . $statusClass . '" data-id="' . $itemsParent->id . '" data-field="' . $field->name . '">' . $layout . '</div>';
             $out .= '<div class="pg-dummies" style="display:none!important;">' . $dummies . '</div>';
         } else {
             $out = '<div class="pg-wrapper pg pg-main ' . $this->getCssClasses($itemsParent) . '">' . $layout . '</div>';
@@ -1755,7 +1748,7 @@ class InputfieldPageGrid extends Inputfield {
         $itemParent = $page->closest('template=pg_container');
 
         //get field container
-        if($itemParent->parent('template=pg_container')->id) $itemParent = $itemParent->parent();
+        if ($itemParent->parent('template=pg_container')->id) $itemParent = $itemParent->parent();
 
         if (!$itemParent->id) return false;
         $mainPageId = preg_replace("/[^0-9]/", "", $itemParent->name);
