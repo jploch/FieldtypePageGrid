@@ -304,7 +304,7 @@ class InputfieldPageGrid extends Inputfield {
         //add blueprint select
         $blueprintPages = $this->pages->get('name=pg-blueprints, template=pg_container')->children();
         $blueprintSelect = '';
-        if (count($blueprintPages)) {
+        if (count($blueprintPages) && $this->name == $fieldFound) {
             $blueprintSelect = $this->modules->get('InputfieldSelect');
             $blueprintSelect->name = 'pg-blueprint-select';
             $blueprintSelect->label = 'Select blueprint';
