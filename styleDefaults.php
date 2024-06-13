@@ -110,7 +110,7 @@ $defaultCss .= '.pg-item {
 //     overflow: hidden;
 //   } ';
 
-$defaultCss .= '.pg img, .pg picture, .pg video, .pg audio, .pg canvas, .pg svg, .pg figure {
+$defaultCss .= '.pg-image img, .pg-video video, .pg-media-responsive, .pg-fileupload {
       display: block;
       width: 100%;
       max-width: 100%;

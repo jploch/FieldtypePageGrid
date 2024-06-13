@@ -796,9 +796,9 @@ class InputfieldPageGrid extends Inputfield {
                 $imageUploadEmpty = ' pg-file-picker-empty';
 
                 if ($f->type instanceof FieldtypeImage) {
-                    $imageUpload = '<img class="pg-fileupload" src="">';
+                    $imageUpload = '<img class="pg-fileupload pg-media-responsive" src="">';
                 } else {
-                    $imageUpload = '<video muted loop class="pg-fileupload">';
+                    $imageUpload = '<video muted loop class="pg-fileupload pg-media-responsive">';
                     $imageUpload .= '<source src="" type="video/mp4">';
                     $imageUpload .= '</video>';
                 }
