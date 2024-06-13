@@ -84,7 +84,7 @@ $defaultCss .= '.pg-main, .pg-group {
       list-style: none;
       column-gap: 30px;
       row-gap: 30px;
-      grid-template-columns: repeat(12, [col-start] 1fr);
+      grid-template-columns: repeat(12, 1fr);
       grid-template-rows: auto;
       grid-column-end: -1;
       grid-column-start: 1;
