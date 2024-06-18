@@ -16,7 +16,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID'),
       'summary' => __('Commercial page builder module that renders block templates and adds drag and drop functionality in admin.', __FILE__),
-      'version' => '2.0.90',
+      'version' => '2.0.91',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -142,84 +142,29 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
       $t->save();
     }
 
-    //fieldset for blueprint settings opener
-    $opener = $fields->get('blueprint_settings_wrap');
-    if (!$opener || !$opener->id) {
-      $opener = new Field();
-      $opener->type = new FieldtypeFieldsetOpen();
-      $opener->tags = 'PageGrid';
-      $opener->name = "blueprint_settings_wrap";
-      $opener->label = "Blueprint Settings";
-      $opener->collapsed = 1;
-      $opener->icon = 'cog';
-      $opener->save();
-      $t->fieldgroup->insertAfter($opener, $t->fieldgroup->fields->get("title"));
-      $t->fieldgroup->save();
-
-      //update parent field label
-      if($fields->get('pg_blueprint_parent')) {
-        $f = $fields->get('pg_blueprint_parent');
-        $f->collapsed = 0;
-        $f->icon = '';
-        $f->label = 'Blueprint Parent';
-        $f->save();
-      }
-
-    }
-
     //add blueprint parent field if not set
     $f = $fields->get('pg_blueprint_parent');
 
     if (!$f || !$f->id) {
       $f = new Field;
       $f->name = 'pg_blueprint_parent';
-      $f->label = 'Blueprint Parent';
+      $f->label = 'Blueprint Settings';
       $f->type = 'FieldtypePage';
       $f->tags = 'PageGrid';
       $f->description = 'Select a parent page here if you want to add the content of this blueprint to new child pages automatically.';
       $f->inputfield = 'InputfieldPageListSelect';
       $f->derefAsPage = 1;
       $f->contentType = 1;
-      // $f->collapsed = 1;
+      $f->collapsed = 1;
       $f->icon = 'cog';
       $f->labelFieldName = 'title';
       $f->findPagesSelector = 'template!=2';
       $f->appendMarkup = '<style>#wrap_Inputfield_pg_blueprint_parent .PageListTemplate_admin{display:none;}</style>';
       $f->save();
       // $t->fieldgroup->add($f);
-      $t->fieldgroup->insertAfter($f, $t->fieldgroup->fields->get("blueprint_settings_wrap"));
+      $t->fieldgroup->insertAfter($f, $t->fieldgroup->fields->get("title"));
       $t->fieldgroup->save();
     }
-
-    $f = $fields->get('pg_blueprint_image');
-    if (!$f || !$f->id) {
-      $f = new Field;
-      $f->name = 'pg_blueprint_image';
-      $f->type = 'FieldtypeImage';
-      $f->label = 'Preview Image';
-      $f->tags = 'PageGrid';
-      $f->description = 'Optionally add a preview image or screenshot of your blueprint layout.';
-      $f->extensions = 'gif jpg jpeg png svg';
-      $f->maxFiles = 1;
-      $f->outputFormat = 2;
-      $f->save();
-      $t->fieldgroup->insertAfter($f, $t->fieldgroup->fields->get("pg_blueprint_parent"));
-      $t->fieldgroup->save();
-    }
-
-    //fieldset for blueprint settings closer
-    $closer = $fields->get('blueprint_settings_wrap_END');
-    if (!$closer || !$closer->id) {
-      $closer = new Field();
-      $closer->type = new FieldtypeFieldsetClose();
-      $closer->tags = 'PageGrid';
-      $closer->name = "blueprint_settings_wrap_END";
-      $closer->label = "Blueprint Settings";
-      $closer->save();
-      $t->fieldgroup->insertAfter($closer, $t->fieldgroup->fields->get("pg_blueprint_image"));
-      $t->fieldgroup->save();
-    }
-
     // END create template for blueprints
 
     //create page to hold items

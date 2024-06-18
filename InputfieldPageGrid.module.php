@@ -315,11 +315,7 @@ class InputfieldPageGrid extends Inputfield {
 
             //add options
             foreach ($blueprintPages as $blueprint) {
-                if ($blueprint->getFormatted('pg_blueprint_image')) {
-                    $blueprintSelect->addOption($blueprint->name, $blueprint->name, [$blueprint->getFormatted('pg_blueprint_image')->size(0, 300)->url]);
-                } else {
-                    $blueprintSelect->addOption($blueprint->name);
-                }
+                $blueprintSelect->addOption($blueprint->name);
             }
             if ($blueprintView) $blueprintSelect = $blueprintSelect->render();
         }
