@@ -16,7 +16,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID'),
       'summary' => __('Commercial page builder module that renders block templates and adds drag and drop functionality in admin.', __FILE__),
-      'version' => '2.0.89',
+      'version' => '2.0.90',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -197,6 +197,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
       $f->name = 'pg_blueprint_image';
       $f->type = 'FieldtypeImage';
       $f->label = 'Preview Image';
+      $f->tags = 'PageGrid';
       $f->description = 'Optionally add a preview image or screenshot of your blueprint layout.';
       $f->extensions = 'gif jpg jpeg png svg';
       $f->maxFiles = 1;
