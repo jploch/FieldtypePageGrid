@@ -311,13 +311,17 @@ class InputfieldPageGrid extends Inputfield {
             $blueprintSelect->name = 'pg-blueprint-select';
             $blueprintSelect->label = 'Select blueprint';
 
-            if($blueprintEdit) $blueprintSelect->addClass('pg-blueprint-nav-load');
-            
+            if ($blueprintEdit) $blueprintSelect->addClass('pg-blueprint-nav-load');
+
             //add options
             foreach ($blueprintPages as $blueprint) {
-                $blueprintSelect->addOption($blueprint->name);
+                if ($blueprint->getFormatted('pg_blueprint_image')) {
+                    $blueprintSelect->addOption($blueprint->name, $blueprint->name, [$blueprint->getFormatted('pg_blueprint_image')->size(0, 300)->url]);
+                } else {
+                    $blueprintSelect->addOption($blueprint->name);
+                }
             }
-            if($blueprintView) $blueprintSelect = $blueprintSelect->render();
+            if ($blueprintView) $blueprintSelect = $blueprintSelect->render();
         }
         //END add blueprint select
 
@@ -438,6 +442,21 @@ class InputfieldPageGrid extends Inputfield {
 
         //search $this->pages instead of $itemsParent to work with multi language (bug?)
         $itemsParentNew = $this->pages->get("name=pg-$field->id, parent=$itemsParent->id, template=pg_container");
+
+        //make sure imported pages get new field container name/id
+        $oldFieldContainer = $this->pages->get("name!=pg-$field->id, parent=$itemsParent->id, template=pg_container");
+        if ($oldFieldContainer->id && !$itemsParentNew->id) {
+            $oldFieldId = (int)str_replace("pg-", "", $oldFieldContainer->name);
+            if (!$mainPage->fields->get($oldFieldId)) {
+                $oldFieldContainer->of(false);
+                $oldFieldContainer->name = 'pg-' . $field->id;
+                $oldFieldContainer->title = $field->name;
+                $oldFieldContainer->save();
+                $oldFieldContainer->of(false);
+                $itemsParentNew = $oldFieldContainer;
+            }
+        }
+        //END make sure imported pages get new field container name/id
 
         //create field container page if it doesn't exist
         if (!$itemsParentNew->id) {
