@@ -16,7 +16,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID'),
       'summary' => __('Commercial page builder module that renders block templates and adds drag and drop functionality in admin.', __FILE__),
-      'version' => '2.0.96',
+      'version' => '2.0.97',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -1083,6 +1083,9 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     $this->form->prependFile = $this->config->styles->add($this->config->urls->InputfieldPageGrid . "css/main.css");
 
     if (count($page->fields) > 1) return;
+
+    $addBtn = $this->form->get('AddPageBtn');
+    $addBtn->set('value', __('Add New'));
 
     $this->form->appendMarkup = "
     <script>

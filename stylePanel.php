@@ -58,6 +58,7 @@ $fieldset->append($field);
 
 // Classes
 if ($this->modules->get('InputfieldTextTags')) {
+  $classParent = $this->pages->get('name=pg-classes, template=pg_container');
   $field = $this->modules->get('InputfieldTextTags');
   $field->allowUserTags = true;
   $field->delimiter = 's';
@@ -67,6 +68,12 @@ if ($this->modules->get('InputfieldTextTags')) {
   $field->attr('placeholder', 'Add class…');
   $field->columnWidth = 100;
   $fieldset->append($field);
+
+  $field = $this->modules->get('InputfieldMarkup');
+  $field->addClass('pg-show-classlist', 'wrapClass');
+  $field->value = "<a href='#' class='pg-edit' data-url='./?id=$classParent->id&modal=1&pgmodal=1&pgchildren=1&pghidesettings=1&pghidechildsorting=1&pgnoadd=1' title='Edit Selectors' data-title='Edit Selectors'><i class='fa fa-gear pw-nav-icon'></i></a>";
+  $fieldset->append($field);
+
 }
 
 // LAYOUT
