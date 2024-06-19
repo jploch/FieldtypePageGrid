@@ -97,6 +97,12 @@ $defaultCss .= '.pg-main, .pg-group {
       word-break: break-word;
     } ';
 
+if ($this->modules->get('FieldtypePageGrid')->fallbackFonts) {
+  $defaultCss .= 'html {
+    font-family:' . $this->modules->get('FieldtypePageGrid')->fallbackFonts . ';
+}';
+}
+
 $defaultCss .= '.pg {
      grid-column-end: -1;
      grid-column-start: 1;

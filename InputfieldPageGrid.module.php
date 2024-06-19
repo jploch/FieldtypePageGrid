@@ -1460,9 +1460,14 @@ class InputfieldPageGrid extends Inputfield {
                     //force parent class if class is not page name (subitem)
                     if (substr($item['id'], 0, 6) !== 'pgitem' && $rootEl == 0) {
                         if ($item['id'] == strtolower($item['tagName']) || $item['id'] == strtolower($item['tagName']) . ':hover') {
+                            //for tagname
                             $item['cssClass'] = $p->name . ' ' . $item['id'];
                         } else {
-                            $item['cssClass'] = $p->name . ' .' . $item['id'];
+                            //for classes
+                            // $item['cssClass'] = $p->name . ' .' . $item['id'];
+                            $item['cssClass'] = $item['id']; // no parent selector, class should be unique enough
+                            //let mobile override parent selector styles by applying class two times on mobile
+                            // if ($breakpoint['name'] == 's') $item['cssClass'] = $p->name . ' .' . $item['id'] . '.' . $item['id'];
                         }
                     }
                     //END force parent class if class is not page name (subitem)
@@ -1564,7 +1569,7 @@ class InputfieldPageGrid extends Inputfield {
         if ($loadGlobalClasses) {
             $globalClasses = $this->pages->get('pg-classes');
 
-            foreach ($globalClasses->find('') as $class) {
+            foreach ($globalClasses->find('sort=sort') as $class) {
                 $itemsArray->add($class);
             }
         }
