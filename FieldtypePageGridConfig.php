@@ -361,7 +361,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		if (!$this->modules->isInstalled('AdminThemeCanvas')) $f->notes = 'If you prefer a more neutral look for your backend, you can also use [AdminThemeCanvas](https://processwire.com/modules/admin-theme-canvas/).';
 		// $f->addOption('setDefault', 'Default'); //set on first run to have default checked
 		$f->addClass('pg-table-auto', 'wrapClass');
-		$f->addOption('hideFieldTitle', 'Hide Field Title | [span.detail] Hide field label in page editor if there is only one PAGEGRID field.[/span]');
+		$f->addOption('hideFieldTitle', 'Hide Field Label | [span.detail] Hide field label in page editor if there is only one PAGEGRID field.[/span]');
 		$f->addOption('hidePageHeadline', 'Hide Page Headline | [span.detail] Hide page headline in page editor and add it to breadcrumb. [/span]');
 		$f->addOption('hideTitleField', 'Hide Page Title Field | [span.detail] Hide page title field in page editor and add it to settings tab. [/span]');
 		$f->addOption('hideTabs', 'Hide Tabs | [span.detail] Hide tabs and add a settings icon to show them. [/span]');
