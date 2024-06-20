@@ -1428,9 +1428,9 @@ class InputfieldPageGrid extends Inputfield {
                     $css .= '.breakpoint-' . $breakpoint['name'] . ' ';
                 }
 
-                // breakpoint s is more specific
+                // breakpoint s is more specific (html:root can overwrite parent + child class selectors)
                 if ($breakpoint['name'] == 's' && $backend == 0) {
-                    $css .= $breakpoint['size'] . '{ :root ';
+                    $css .= $breakpoint['size'] . '{ html:root ';
                 }
 
                 if ($breakpoint['name'] == 's' && $backend) {
