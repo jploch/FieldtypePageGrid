@@ -16,7 +16,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID'),
       'summary' => __('Commercial page builder module that renders block templates and adds drag and drop functionality in admin.', __FILE__),
-      'version' => '2.0.98',
+      'version' => '2.0.99',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -1086,6 +1086,16 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
 
     $addBtn = $this->form->get('AddPageBtn');
     $addBtn->set('value', __('Add New'));
+
+    if ($page->name == 'pg-classes') {
+      $childrenPageList = $this->form->get('ChildrenPageList');
+      $childrenPageList->addClass('pg-class-list-wrap', 'wrapClass');
+
+      $f = $this->modules->get('InputfieldMarkup');
+      $f->id = 'stylelist-intro';
+      $f->value = "<style>#stylelist-intro{margin-top:0;}</style><p class='description'>An overview of classes and tags you’ve created or edited on your site. Classes further down in the list overwrite the styles of classes above them.</p>";
+      $this->form->prepend($f);
+    }
 
     $this->form->appendMarkup = "
     <script>

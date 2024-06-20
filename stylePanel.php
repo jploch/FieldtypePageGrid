@@ -71,7 +71,7 @@ if ($this->modules->get('InputfieldTextTags')) {
 
   $field = $this->modules->get('InputfieldMarkup');
   $field->addClass('pg-show-classlist', 'wrapClass');
-  $field->value = "<a href='#' class='pg-edit' data-url='./?id=$classParent->id&modal=1&pgmodal=1&pgchildren=1&pghidesettings=1&pghidechildsorting=1&pgnoadd=1' title='Edit Selectors' data-title='Edit Selectors'><i class='fa fa-gear pw-nav-icon'></i></a>";
+  $field->value = "<a href='#' class='pg-edit' data-url='./?id=$classParent->id&modal=1&pgmodal=1&pgchildren=1&pghidesettings=1&pghidechildsorting=1&pgnoadd=1' title='Edit Style Selectors' data-title='Style Selectors'><i class='fa fa-gear pw-nav-icon'></i></a>";
   $fieldset->append($field);
 
 }
