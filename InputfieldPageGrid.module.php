@@ -516,7 +516,7 @@ class InputfieldPageGrid extends Inputfield {
             if ($this->user->hasPermission('pagegrid-drag')) $statusClass .= 'pg-sortable';
             if ($this->user->hasPermission('pagegrid-select'))  $statusClass .= " pg-permission-select";
 
-            $out = '<div id="' . $itemsParent->name . '" class="pg-wrapper pg-item pg-main pg-droppable pg ' . $this->getCssClasses($itemsParent) . ' ' . $statusClass . '" data-id="' . $itemsParent->id . '" data-field="' . $field->name . '">' . $layout . '</div>';
+            $out = '<div id="' . $itemsParent->name . '" class="pg-is-backend pg-wrapper pg-item pg-main pg-droppable pg ' . $this->getCssClasses($itemsParent) . ' ' . $statusClass . '" data-id="' . $itemsParent->id . '" data-field="' . $field->name . '">' . $layout . '</div>';
             $out .= '<div class="pg-dummies" style="display:none!important;">' . $dummies . '</div>';
         } else {
             $out = '<div class="pg-wrapper pg pg-main ' . $this->getCssClasses($itemsParent) . '">' . $layout . '</div>';
