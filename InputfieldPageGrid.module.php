@@ -321,12 +321,12 @@ class InputfieldPageGrid extends Inputfield {
         }
         //END add blueprint select
 
-        $renderMarkup = $topNav . $settings . '<div class="pg-container pg-container-' . $this->name . '" data-page-title="' . $mainPage->title . '" data-page="' . $editID . '" data-id="' . $this->pages->get('pg-classes')->id . '" data-animations-id="' . $this->pages->get('pg-animations')->id . '" data-field="' . $this->name . '" data-admin-url="' . $this->page->rootParent->url() . 'setup/pagegrid/" data-fallbackfonts="' . $this->ft->fallbackFonts . '">' . $addItems . $dataGlobal . $blueprintSelect;
+        $renderMarkup = $topNav . $settings . '<div class="pg-container pg-container-' . $this->name . '" data-page-title="' . $mainPage->title . '" data-page="' . $editID . '" data-id="' . $this->pages->get('pg-classes')->id . '" data-animations-id="' . $this->pages->get('pg-animations')->id . '" data-field="' . $this->name . '" data-admin-url="' . $this->page->rootParent->url() . 'setup/pagegrid/?page=' . $parentPage->id . '" data-fallbackfonts="' . $this->ft->fallbackFonts . '">' . $addItems . $dataGlobal . $blueprintSelect;
         //loading animation
         $renderMarkup .= '<div class="pg-loading"><div class="fa fa-spin fa-spinner fa-fw"></div></div>';
         //container for item header (item header will be moved here with js)
         $renderMarkup .= '<div class="pg-item-header-container"></div>';
-        $renderMarkup .= '<iframe data-field="' . $this->name . '" id="pg-iframe-canvas-' . $this->name . '" class="pg-iframe-canvas" src="' . wire('pages')->get($parentPageId)->url . '?backend=1&field=' . $this->name . '" loading="lazy" frameBorder="0" scrolling="no" style="width:100%; max-height:100vh; border:0;"></iframe>';
+        $renderMarkup .= '<iframe data-field="' . $this->name . '" id="pg-iframe-canvas-' . $this->name . '" class="pg-iframe-canvas" src="' . wire('pages')->get($parentPageId)->url . '?backend=1&field=' . $this->name . '&page=' . $parentPage->id . '" loading="lazy" frameBorder="0" scrolling="no" style="width:100%; max-height:100vh; border:0;"></iframe>';
         $renderMarkup .= '</div>';
 
         //render delete button
@@ -1505,12 +1505,19 @@ class InputfieldPageGrid extends Inputfield {
                     $css .= $cssSelector . '{ ';
                 }
 
+                $coverImage = 0;
                 foreach ($breakpoint['css'] as $style => $val) {
 
                     $fallbackFonts = $this->ft->fallbackFonts;
 
                     if ($style === 'font-family' && $fallbackFonts) {
                         $val = $val . ', ' . $this->ft->fallbackFonts;
+                    }
+
+                    if ($style === 'align-items' && $val === 'stretch') {
+                        //force strech of rows with grid-template-rows=1fr
+                        $css .= 'grid-template-rows:1fr;';
+                        $coverImage = 1;
                     }
 
                     if ($style === '--pg-animation' && $val === 'unset') {
@@ -1521,6 +1528,12 @@ class InputfieldPageGrid extends Inputfield {
                 }
 
                 $css .= ' } ';
+
+                if ($coverImage && $item['cssClass'] != strtolower($item['tagName'])) {
+                    $css .= '.' . $item['cssClass'] . ' .pg-media-responsive { ';
+                    $css .= 'height:100%; min-height: 100%; object-fit:cover; max-width:none;';
+                    $css .= '}';
+                }
 
                 if (!($breakpoint['name'] == 'base') && $backend == 0) {
                     $css .= ' } ';
@@ -1768,22 +1781,15 @@ class InputfieldPageGrid extends Inputfield {
 
     //helper to return main page from item (argument: $page inside item template)
     public function getPage($page) {
-        if (!$page->id) return false;
-        if (!$page->parents()->get('template=pg_container')) return false;
-        $itemParent = $page->closest('template=pg_container');
 
-        //get field container
-        if ($itemParent->parent('template=pg_container')->id) $itemParent = $itemParent->parent();
+        //This always returns mainpage on frontend
+        $p = wire('page');
 
-        if (!$itemParent->id) return false;
-        $mainPageId = preg_replace("/[^0-9]/", "", $itemParent->name);
-        if (!$mainPageId) return false;
-        $mainPageId = $this->sanitizer->intUnsigned($mainPageId); // force a positive number
-        if (!$mainPageId) return false;
+        //after ajax inside backend we get the admin page, so we need to find the edit page
+        if ($p->template->name === 'admin' && isset($_GET['page'])) $p = $this->pages->get($_GET['page']);
+        if ($p->template->name === 'admin' || !$p->id) return false;
 
-        $mainPage = $this->pages->get($mainPageId);
-        if (!$mainPage->id) return false;
-        return $mainPage;
+        return $p;
     }
 
     // options gets rendered inside template and read before render
