@@ -134,6 +134,7 @@ $field->inputType = "number";
 $field->set('label', __(' '));
 $field->set('notes', __('Rows'));
 $field->set('name', __('grid-template-rows'));
+$field->placeholder = 'auto';
 $field->addClass('hide-label', 'headerClass');
 $field->columnWidth = 25;
 $fieldsetsub->append($field);
