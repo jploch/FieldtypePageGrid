@@ -1430,7 +1430,7 @@ class InputfieldPageGrid extends Inputfield {
 
                 // breakpoint s is more specific
                 if ($breakpoint['name'] == 's' && $backend == 0) {
-                    $css .= $breakpoint['size'] . '{ html ';
+                    $css .= $breakpoint['size'] . '{ :root ';
                 }
 
                 if ($breakpoint['name'] == 's' && $backend) {
@@ -1464,10 +1464,7 @@ class InputfieldPageGrid extends Inputfield {
                             $item['cssClass'] = $p->name . ' ' . $item['id'];
                         } else {
                             //for classes
-                            // $item['cssClass'] = $p->name . ' .' . $item['id'];
-                            $item['cssClass'] = $item['id']; // no parent selector, class should be unique enough
-                            //let mobile override parent selector styles by applying class two times on mobile
-                            // if ($breakpoint['name'] == 's') $item['cssClass'] = $p->name . ' .' . $item['id'] . '.' . $item['id'];
+                            $item['cssClass'] = $p->name . ' .' . $item['id'];
                         }
                     }
                     //END force parent class if class is not page name (subitem)
