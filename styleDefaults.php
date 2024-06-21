@@ -131,12 +131,12 @@ $defaultCss .= '.pg-event-inview {transition: all 600ms ease ;} ';
 
 // Small devices default ( landscape phones, 576px and up )
 $defaultCss .= ' @media (max-width: 640px) {
-        html .pg-main,
-        html .pg-group {
+        html:root .pg-main,
+        html:root .pg-group {
               column-gap: 15px;
               row-gap: 15px;
           }
-          html .pg-item,
+          html:root .pg-item,
           html.breakpoint-s .pg-item {
             grid-column: 1/-1;
             /* grid-row-end: span 1;*/
