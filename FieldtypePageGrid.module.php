@@ -16,7 +16,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID'),
       'summary' => __('Commercial page builder module that renders block templates and adds drag and drop functionality in admin.', __FILE__),
-      'version' => '2.1.10',
+      'version' => '2.1.12',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -660,6 +660,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     if (!$t->id) return;
     $file = $this->config->paths->siteModules . 'FieldtypePageGrid/pg_blueprint.php';
     $t->filename = $file;
+    $t->compile = 0; // prevent bug where file compiler caches emtpy file
     // load pages into var to force init page
     $bpPages = $this->pages->find('template=pg_blueprint, include=all');
   }
