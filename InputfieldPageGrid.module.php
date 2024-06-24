@@ -430,7 +430,7 @@ class InputfieldPageGrid extends Inputfield {
 
         if (!$itemsParent->id) return;
         if (!$field) $field = $mainPage->fields->get('type=FieldtypePageGrid'); //if no argument get first field
-        if (!$field->id) return;
+        if (!$field || !$field->id) return;
 
         //NEW support for multiple fields
         // multiple fields: check if it's this field or return (prevents double rendering of fields in backend)
