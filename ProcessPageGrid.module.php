@@ -105,8 +105,21 @@ class ProcessPageGrid extends Process {
         $mainPageId = isset($_POST['mainPageId']) ? $this->sanitizer->int($_POST['mainPageId']) : '';
         $data = isset($_POST['data']) ? $_POST['data'] : '';
         $type = isset($_POST['type']) ? $_POST['type'] : '';
+        $getToolTip = isset($_POST['getToolTip']) ? $_POST['getToolTip'] : '';
 
-        // $this->log->save("pagegrid", "type: " . $type);
+        // function to get tooltip help text from MDN CSS docs
+        if ($getToolTip) {
+            $url = "https://developer.mozilla.org/en-US/docs/Web/CSS/$getToolTip/index.json";
+            if($getToolTip == 'scale' || $getToolTip == 'rotate' || $getToolTip == 'translate') $url = "https://developer.mozilla.org/en-US/docs/Web/CSS/transform-function/$getToolTip/index.json";
+            $headers = get_headers($url);
+            $urlExists = stripos($headers[0], "200 OK") ? true : false;
+            if (!$urlExists) return '';
+            $json = file_get_contents($url);
+            if (!$json) return '';
+            $obj = json_decode($json);
+            if ($obj && $obj->doc && $obj->doc->summary) return $obj->doc->summary;
+            return '';
+        }
 
         if ($type === 'updateAnimation') {
             $p = $this->pages->get($pageId);

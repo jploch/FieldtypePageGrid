@@ -83,10 +83,9 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		}
 		//END install selected block modules before render so they can change main module settings
 
-
 		//set checkboxes to default
 		if ($this->modules->get('FieldtypePageGrid')->interfaceDefault) {
-			$data['interface'] = array('hideFieldTitle', 'hidePageHeadline', 'hideTitleField', 'hideTabs', 'hideSaveButton');
+			$data['interface'] = array('hideFieldTitle', 'hidePageHeadline', 'hideTitleField', 'hideTabs', 'hideSaveButton', 'showToolTips');
 			$data['interfaceDefault'] = 0;
 		}
 		if ($this->modules->get('FieldtypePageGrid')->pluginsDefault) {
@@ -176,6 +175,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 				'hideTitleField',
 				'hideTabs',
 				'hideSaveButton',
+				'showToolTips',
 			),
 			'pluginsDefault' => 1,
 			'plugins' => array(
@@ -366,6 +366,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		$f->addOption('hideTitleField', 'Hide Page Title Field | [span.detail] Hide page title field in page editor and add it to settings tab. [/span]');
 		$f->addOption('hideTabs', 'Hide Tabs | [span.detail] Hide tabs and add a settings icon to show them. [/span]');
 		$f->addOption('hideSaveButton', 'Hide Save Button | [span.detail] Hide save button (and use automatic ajax save) if there are no other fields than PAGEGRID on the content tab. [/span]');
+		$f->addOption('showToolTips', 'Show Tooltips | [span.detail] Display helpful tooltips when you move the mouse pointer over field labels in the style panel. [/span]');
 		// $f->val($this->interface);
 		// $f->attr('checked', 'checked');
 		$wrapper->append($f);

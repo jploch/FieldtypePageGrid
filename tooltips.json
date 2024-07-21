@@ -1,0 +1,617 @@
+{
+   "align-content": {
+      "Description": "Aligns items in a flex container along flex lines."
+   },
+   "align-items": {
+      "Description": "Aligns child items vertically."
+   },
+   "justify-items": {
+      "Description": "Aligns child items horizontally."
+   },
+   "align-self": {
+      "Description": "Aligns an item vertically."
+   },
+   "all": {
+      "Description": "Resets all element properties to its default or inherited values."
+   },
+   "animation": {
+      "Description": "Creates an animating element."
+   },
+   "animation-delay": {
+      "Description": "Sets a delay before an animation begins."
+   },
+   "animation-direction": {
+      "Description": "Sets how, in which direction, an animation is played."
+   },
+   "animation-duration": {
+      "Description": "Defines the duration of an animation cycle."
+   },
+   "animation-fill-mode": {
+      "Description": "Defines how styles are applied before and after animation."
+   },
+   "animation-iteration-count": {
+      "Description": "Sets the number of times an animation is played."
+   },
+   "animation-name": {
+      "Description": "Defines a name for the animation."
+   },
+   "animation-play-state": {
+      "Description": "Sets the animation play state to running or paused."
+   },
+   "animation-timing-function": {
+      "Description": "Specifies the animation speed curve."
+   },
+   "backface-visibility": {
+      "Description": "Shows or hides the backface visibility of an element."
+   },
+   "background": {
+      "Description": "Sets the background of an element."
+   },
+   "background-attachment": {
+      "Description": "Defines how the background is attached to an element."
+   },
+   "background-blend-mode": {
+      "Description": "Defines the background layer blending mode."
+   },
+   "background-clip": {
+      "Description": "Defines how background extends beyond the element."
+   },
+   "background-color": {
+      "Description": "Sets the background color of the element."
+   },
+   "background-image": {
+      "Description": "Specifies a background image for an element."
+   },
+   "background-origin": {
+      "Description": "Specifies the background image origin position."
+   },
+   "background-position": {
+      "Description": "Sets the position of a background image."
+   },
+   "background-repeat": {
+      "Description": "Specifies how the background image is repeated."
+   },
+   "background-size": {
+      "Description": "Sets the size of the background image."
+   },
+   "border": {
+      "Description": "Specifies a border for an element"
+   },
+   "border-bottom": {
+      "Description": "Specifies a bottom border for an element."
+   },
+   "border-bottom-color": {
+      "Description": "Sets the color of a bottom border ."
+   },
+   "border-bottom-left-radius": {
+      "Description": "Sets the border radius of the bottom left corner."
+   },
+   "border-bottom-right-radius": {
+      "Description": "Sets the border radius of the bottom right corner"
+   },
+   "border-bottom-style": {
+      "Description": "Sets the style of the bottom border."
+   },
+   "border-bottom-width": {
+      "Description": "Sets the width of the bottom border"
+   },
+   "border-collapse": {
+      "Description": "Sets table borders to single collapsed line or separated."
+   },
+   "border-color": {
+      "Description": "Sets the color of the border."
+   },
+   "border-image": {
+      "Description": "Defines an image as border, instead of a color."
+   },
+   "border-image-outset": {
+      "Description": "Sets how far a border image extends beyond the border."
+   },
+   "border-image-repeat": {
+      "Description": "Defines if and how the border image is repeated."
+   },
+   "border-image-slice": {
+      "Description": "Defines how the border image will be sliced."
+   },
+   "border-image-source": {
+      "Description": "Specifies the url of the border image file."
+   },
+   "border-image-width": {
+      "Description": "Sets the width of the image border."
+   },
+   "border-left": {
+      "Description": "Sets the left border of the element."
+   },
+   "border-left-color": {
+      "Description": "Sets the color of the left border."
+   },
+   "border-left-style": {
+      "Description": "Sets the style of the left border."
+   },
+   "border-left-width": {
+      "Description": "Sets the width of the left border."
+   },
+   "border-radius": {
+      "Description": "Sets the radius of the border."
+   },
+   "border-right": {
+      "Description": "Sets the right border of the element."
+   },
+   "border-right-color": {
+      "Description": "Sets the color of the right border."
+   },
+   "border-right-style": {
+      "Description": "Sets the style of the right border."
+   },
+   "border-right-width": {
+      "Description": "Sets the width of the right border."
+   },
+   "border-spacing": {
+      "Description": "Sets the adjacent table cell distance."
+   },
+   "border-style": {
+      "Description": "Defines the style of the border"
+   },
+   "border-top": {
+      "Description": "Sets the top border of the element."
+   },
+   "border-top-color": {
+      "Description": "Sets the color of the top border."
+   },
+   "border-top-left-radius": {
+      "Description": "Sets the border radius of the top left corner."
+   },
+   "border-top-right-radius": {
+      "Description": "Sets the border radius of the top right corner."
+   },
+   "border-top-style": {
+      "Description": "Sets the style of the top border."
+   },
+   "border-top-width": {
+      "Description": "Sets the width of the top border."
+   },
+   "border-width": {
+      "Description": "Sets the border width of the element."
+   },
+   "bottom": {
+      "Description": "Positions the element from the bottom of the relative container."
+   },
+   "box-shadow": {
+      "Description": "Adds a shadow effect to an element."
+   },
+   "box-sizing": {
+      "Description": "Sets how element height and width are calculated."
+   },
+   "caption-side": {
+      "Description": "Defines on which side of the table a caption is placed."
+   },
+   "caret-color": {
+      "Description": "Sets the color of the blinking mouse caret."
+   },
+   "@charset": {
+      "Description": "Specifies the character encoding of the stylesheet."
+   },
+   "clear": {
+      "Description": "Sets the element side that does not allow floating elements."
+   },
+   "clip": {
+      "Description": "Sets how an image is cropped or clipped inside a container."
+   },
+   "clip-path": {
+      "Description": "Clips an element inside a specific shape or SVG."
+   },
+   "color": {
+      "Description": "Specifies the color of text in an element."
+   },
+   "column-count": {
+      "Description": "Divides an element into the specified number of columns."
+   },
+   "column-fill": {
+      "Description": "Specifies how divided columns are filled."
+   },
+   "column-gap": {
+      "Description": "Specifies the space between divided columns."
+   },
+   "row-gap": {
+      "Description": "Specifies the space between divided rows."
+   },
+   "column-rule": {
+      "Description": "Sets the style, width, and color of a column divider."
+   },
+   "column-rule-color": {
+      "Description": "Sets the color of a column divider."
+   },
+   "column-rule-style": {
+      "Description": "Sets the style of a column divider."
+   },
+   "column-rule-width": {
+      "Description": "Sets the width of a column divider."
+   },
+   "column-span": {
+      "Description": "Sets number of divided columns an element should span."
+   },
+   "column-width": {
+      "Description": "Specifies the width of a divided column."
+   },
+   "columns": {
+      "Description": "Divide an element into columns of a certain width."
+   },
+   "content": {
+      "Description": "Used to insert content before or after an element."
+   },
+   "counter-increment": {
+      "Description": "Increase or decrease a CSS counter."
+   },
+   "counter-reset": {
+      "Description": "Initialize or reset CSS counter."
+   },
+   "cursor": {
+      "Description": "Specifies the shape of the mouse cursor."
+   },
+   "direction": {
+      "Description": "Specifies the text writing direction of a block-level element."
+   },
+   "display": {
+      "Description": "<strong>Block</strong> elements start on a new line and take up the full available width. <br><br><strong>Grid</strong> lets you place child elements within rows and columns. <br><br> <strong>Flex</strong> lays out it's child elements on a horizontal or vertical axis. <br><br> <strong>Inline</strong> is the default for text content. Font size and line height determine it's size. <br><br> <strong>Inline-block</strong> behaves like inline, but accepts width and height properties. <br><br> <strong>None</strong> hides the element."
+   },
+   "empty-cells": {
+      "Description": "Specifies whether empty table cell borders will be displayed."
+   },
+   "filter": {
+      "Description": "Adds an image enhancing effect to an image."
+   },
+   "flex": {
+      "Description": "Specifies the width of the flexible items."
+   },
+   "flex-basis": {
+      "Description": "Specifies the initial width of a flex item."
+   },
+   "flex-direction": {
+      "Description": "Specifies the direction for the flex item to align."
+   },
+   "flex-flow": {
+      "Description": "Controls the direction and wrapping of flexible items."
+   },
+   "flex-grow": {
+      "Description": "Specifies how a flex item can grow inside the container."
+   },
+   "flex-shrink": {
+      "Description": "Specifies how a flex item can shrink inside the container."
+   },
+   "flex-wrap": {
+      "Description": "Specifies how flexible items wrap inside the container."
+   },
+   "float": {
+      "Description": "Sets how an element is positioned relative to other elements."
+   },
+   "font": {
+      "Description": "Sets font family, variant, weight, height, and size for an element."
+   },
+   "@font-face": {
+      "Description": "Embeds a custom font inside a web page"
+   },
+   "font-family": {
+      "Description": "Sets the font family for an element."
+   },
+   "font-kerning": {
+      "Description": "Sets the spacing between the font's characters."
+   },
+   "font-size": {
+      "Description": "Sets the size of the font for an element."
+   },
+   "font-size-adjust": {
+      "Description": "Specifies a fall-back font size."
+   },
+   "font-stretch": {
+      "Description": "Sets the text characters to a wider or narrower variant."
+   },
+   "font-style": {
+      "Description": "Set the font style to normal, italic, or oblique."
+   },
+   "font-variant": {
+      "Description": "Specifies that text is displayed in a small-caps font."
+   },
+   "font-weight": {
+      "Description": "Sets the weight or thickness of the font."
+   },
+   "grid": {
+      "Description": "Defines a grid layout with responsive rows and columns."
+   },
+   "grid-area": {
+      "Description": "Sets the size and location of grid items in a grid container."
+   },
+   "grid-auto-columns": {
+      "Description": "Specifies the size of the columns in a grid container."
+   },
+   "grid-auto-flow": {
+      "Description": "Specifies the initial placement of items in a grid container."
+   },
+   "grid-auto-rows": {
+      "Description": "Specifies the initial size of the items in a grid container."
+   },
+   "grid-column": {
+      "Description": "Specifies the size and location of a grid item in a grid container."
+   },
+   "grid-column-end": {
+      "Description": "Specifies how many columns an item will span."
+   },
+   "grid-column-start": {
+      "Description": "Specifies the column in which the grid item should start."
+   },
+   "grid-gap": {
+      "Description": "Specifies the gap size between grid rows and columns."
+   },
+   "grid-row": {
+      "Description": "Specifies the grid item size and location in a grid container."
+   },
+   "grid-row-end": {
+      "Description": "Specifies how many rows an item will span."
+   },
+   "grid-row-gap": {
+      "Description": "Specifies the gap size between rows in a grid container."
+   },
+   "grid-row-start": {
+      "Description": "Specifies the row in which the grid item should start."
+   },
+   "grid-template": {
+      "Description": "Divides a page into sections with a size, position, and layer."
+   },
+   "grid-template-areas": {
+      "Description": "Specifies area in a grid container."
+   },
+   "grid-template-columns": {
+      "Description": "Sets the number of columns in a grid container."
+   },
+   "grid-template-rows": {
+      "Description": "Sets the number of rows in a grid container."
+   },
+   "height": {
+      "Description": "Sets the height of an element."
+   },
+   "hyphens": {
+      "Description": "Specifies hyphenation with wrap opportunities in a line of text."
+   },
+   "@import": {
+      "Description": "Imports a style sheet inside another style sheet."
+   },
+   "justify-content": {
+      "Description": "Defines the alignment of items in a flex container."
+   },
+   "justify-self": {
+      "Description": "Aligns an item horizontally."
+   },
+   "@keyframes": {
+      "Description": "Defines the CSS style to animate."
+   },
+   "left": {
+      "Description": "Positions the element from the left of the relative container."
+   },
+   "letter-spacing": {
+      "Description": "Sets the spacing between characters."
+   },
+   "line-height": {
+      "Description": "Sets the vertical spacing between lines of text."
+   },
+   "list-style": {
+      "Description": "Defines the markers (bullet points) for items in a list."
+   },
+   "list-style-image": {
+      "Description": "Defines an image markers (bullet points) for items in a list."
+   },
+   "list-style-position": {
+      "Description": "Sets the marker (bullet point) positions for items in a list"
+   },
+   "list-style-type": {
+      "Description": "Defines the marker types (bullet points) for items in a list"
+   },
+   "margin": {
+      "Description": "Sets the margin (outside spacing) for an element."
+   },
+   "margin-bottom": {
+      "Description": "Sets the bottom margin (outside spacing) for an element."
+   },
+   "margin-left": {
+      "Description": "Sets the left margin (outside spacing) for an element."
+   },
+   "margin-right": {
+      "Description": "Sets the right margin (outside spacing) for an element."
+   },
+   "margin-top": {
+      "Description": "Sets the top margin (outside spacing) for an element."
+   },
+   "max-height": {
+      "Description": "Sets the maximumn height for an element."
+   },
+   "max-width": {
+      "Description": "Sets the maximum width for an element."
+   },
+   "@media": {
+      "Description": "Applies media queries to a page."
+   },
+   "min-height": {
+      "Description": "Sets the minimum height for an element."
+   },
+   "min-width": {
+      "Description": "Sets the minimum width for an element."
+   },
+   "object-fit": {
+      "Description": "Specifies how an image or video fits inside a container."
+   },
+   "object-position": {
+      "Description": "Specifies the image or video position inside a container."
+   },
+   "opacity": {
+      "Description": "Sets the opacity (transparency) of the element."
+   },
+   "order": {
+      "Description": "Specifies the order of an item in a flex container."
+   },
+   "outline": {
+      "Description": "Adds an outline (highlighted border) to an element."
+   },
+   "outline-color": {
+      "Description": "Sets the color of an outline."
+   },
+   "outline-offset": {
+      "Description": "Sets the space between the outline and border."
+   },
+   "outline-style": {
+      "Description": "Sets the style of an outline."
+   },
+   "outline-width": {
+      "Description": "Sets the width of an outline."
+   },
+   "overflow": {
+      "Description": "Specifies the flow of content that exceeds the container."
+   },
+   "overflow-x": {
+      "Description": "Specifies the flow of content that exceeds the container width."
+   },
+   "overflow-y": {
+      "Description": "Specifies the flow of content that exceeds the container height."
+   },
+   "padding": {
+      "Description": "Sets the spacing between content and element border."
+   },
+   "padding-bottom": {
+      "Description": "Sets the spacing between content and bottom element border."
+   },
+   "padding-left": {
+      "Description": "Sets the spacing between content and left element border."
+   },
+   "padding-right": {
+      "Description": "Sets the spacing between content and right element border."
+   },
+   "padding-top": {
+      "Description": "Sets the spacing between content and top element border."
+   },
+   "page-break-after": {
+      "Description": "Adds a print page-break after an element."
+   },
+   "page-break-before": {
+      "Description": "Adds a print page-break before an element."
+   },
+   "page-break-inside": {
+      "Description": "Specifies if print page-break is allowed inside an element."
+   },
+   "perspective": {
+      "Description": "Adds perspective to a 3D-positioned element."
+   },
+   "perspective-origin": {
+      "Description": "Sets the origin of the perspective for a 3D-positioned element."
+   },
+   "pointer-events": {
+      "Description": "Specifies whether element reacts to pointer events or not."
+   },
+   "position": {
+      "Description": "Sets the element's positioning method."
+   },
+   "quotes": {
+      "Description": "Defines the quotation marks to be used on text."
+   },
+   "right": {
+      "Description": "Positions the element from the right of the relative container."
+   },
+   "scroll-behavior": {
+      "Description": "Specifies the scrolling behavior of an element"
+   },
+   "table-layout": {
+      "Description": "Aligns elements according to a table with rows and columns."
+   },
+   "text-align": {
+      "Description": "Sets the alignment of text inside an element."
+   },
+   "text-align-last": {
+      "Description": "Sets the alignment for the last line of text."
+   },
+   "text-decoration": {
+      "Description": "Defines the style and color of underlined text."
+   },
+   "text-decoration-color": {
+      "Description": "Defines the color of underlined text."
+   },
+   "text-decoration-line": {
+      "Description": "Defines the kind of line to use with text."
+   },
+   "text-decoration-style": {
+      "Description": "Defines the style of underlined text."
+   },
+   "text-indent": {
+      "Description": "Sets the indentation to the beginning of text."
+   },
+   "text-justify": {
+      "Description": "Defines the text justification inside a container."
+   },
+   "text-overflow": {
+      "Description": "Sets the display behavior of text that overflows a container."
+   },
+   "text-shadow": {
+      "Description": "Adds a shadow effect to text."
+   },
+   "text-transform": {
+      "Description": "Defines text capitalization or casing."
+   },
+   "top": {
+      "Description": "Positions the element from the top of the relative container"
+   },
+   "transform1": {
+      "Description": "Applies a 2D or 3D transformation to an element."
+   },
+   "translate1": {
+      "Description": "Move element horizontally."
+   },
+   "transform-origin": {
+      "Description": "Sets the origin for the transformation of the element."
+   },
+   "transform-style": {
+      "Description": "Specifies the display behavior of 3D space nested elements."
+   },
+   "transition": {
+      "Description": "Creates transitions from one property value to another."
+   },
+   "transition-delay": {
+      "Description": "Creates a delay before the transition effect starts."
+   },
+   "transition-duration": {
+      "Description": "Specifies the time the transition will take."
+   },
+   "transition-property": {
+      "Description": "Specifies the CSS property that will transition."
+   },
+   "transition-timing-function": {
+      "Description": "Defines the speed curve function of the transition."
+   },
+   "user-select": {
+      "Description": "Specifies how text can be selected (highlighted)"
+   },
+   "vertical-align": {
+      "Description": "Specifies vertical alignment of an element."
+   },
+   "visibility": {
+      "Description": "Specifies the visibility of an element."
+   },
+   "white-space": {
+      "Description": "Specifies how white-space is handled inside an element."
+   },
+   "width": {
+      "Description": "Sets the width of an element."
+   },
+   "word-break": {
+      "Description": "Specifies how line breaks take place."
+   },
+   "word-spacing": {
+      "Description": "Sets the spacing between words."
+   },
+   "word-wrap": {
+      "Description": "Specifies how long words can be wrapped."
+   },
+   "writing-mode": {
+      "Description": "Sets the text reading orientation: top to bottom, etc."
+   },
+   "z-index": {
+      "Description": "Overlapping elements with a larger z-index cover those with a smaller one."
+   },
+   "mix-blend-mode": {
+      "Description": "The mix-blend-mode property specifies how an element's content should blend with its direct parent background."
+   }
+}

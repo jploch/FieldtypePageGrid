@@ -27,6 +27,7 @@ $field->set('label', __('Show hidden blocks'));
 $field->set('name', __('data-show'));
 $field->set('value', 'none');
 //$field->addClass( 'padding-top', 'wrapClass' );
+createTooltip($field, "Show block items that are set to display none.");
 $field->addClass('hide-label', 'headerClass');
 $field->columnWidth = 100;
 $wrapper->append($field);
@@ -52,7 +53,7 @@ $field->label = $this->_("Tag Name");
 // $field->addOption("p");
 // $field->set('value', 'h2');
 $field->addClass('label-left', 'wrapClass');
-//$field->addClass( 'hide-label', 'headerClass' );
+createTooltip($field, "Specifies the HTML tag of your selected element.");
 $field->columnWidth = 100;
 $fieldset->append($field);
 
@@ -66,14 +67,15 @@ if ($this->modules->get('InputfieldTextTags')) {
   $field->addClass('label-left', 'wrapClass');
   $field->set('name', __('data-classes'));
   $field->attr('placeholder', 'Add class…');
+  createTooltip($field, "CSS classes enable you to make style changes across multiple elements. <br><br>To <strong>create a class</strong> type a class name in the selector field and press the “return” key. <br><br>To <strong>apply styles to a class</strong>, click on a class. Styles that you apply now are saved to this class. <br><br>To <strong>reuse a class</strong> add the class to other elements.");
   $field->columnWidth = 100;
   $fieldset->append($field);
 
   $field = $this->modules->get('InputfieldMarkup');
   $field->addClass('pg-show-classlist', 'wrapClass');
-  $field->value = "<a href='#' class='pg-edit' data-url='./?id=$classParent->id&modal=1&pgmodal=1&pgchildren=1&pghidesettings=1&pghidechildsorting=1&pgnoadd=1' title='Edit Style Selectors' data-title='Style Selectors'><i class='fa fa-gear pw-nav-icon'></i></a>";
+  $field->value = "<a href='#' class='pg-edit' data-url='./?id=$classParent->id&modal=1&pgmodal=1&pgchildren=1&pghidesettings=1&pghidechildsorting=1&pgnoadd=1' data-title='Style Selectors'><i class='fa fa-gear pw-nav-icon'></i></a>";
+  createTooltip($field, "Open the style selector manager. To manage all your classes and tags in one place.");
   $fieldset->append($field);
-
 }
 
 // LAYOUT
@@ -184,7 +186,6 @@ $fieldsetsub->append($field);
 $field = $this->modules->get('InputfieldSelect');
 $field->name = "pg-children-placement";
 $field->label = "Children Placement";
-// $field->wrapAttr("uk-tooltip", "title: Placement of grid children; pos:top; delay: 600");
 $field->addOption("manual", "Manual");
 $field->addOption("auto-row", "Auto Row");
 $field->addOption("auto-column", "Auto Column");
@@ -198,7 +199,6 @@ $fieldsetsub->append($field);
 $field = $this->modules->get('InputfieldInteger');
 $field->inputType = "number";
 $field->name = "pg-children-column-end";
-// $field->wrapAttr("uk-tooltip", "title: Column width of grid children; pos:top; delay: 600");
 $field->attr('placeholder', 'auto');
 $field->label = "Colspan";
 $field->set('notes',  $field->label);
@@ -209,7 +209,6 @@ $fieldsetsub->append($field);
 $field = $this->modules->get('InputfieldInteger');
 $field->inputType = "number";
 $field->name = "pg-children-row-end";
-// $field->wrapAttr("uk-tooltip", "title: Row height of grid children; pos:top; delay: 600");
 $field->attr('placeholder', 'auto');
 $field->label = "Rowspan";
 $field->set('notes',  $field->label);
@@ -602,6 +601,7 @@ $field->set('name', __('color'));
 $field->addClass('label-left', 'wrapClass');
 $field->value = '<input class="uk-input" type="color" id="color" name="color" placeholder="#000000"' . $list . ' >' . $colors;
 $field->columnWidth = 50;
+createTooltip($field, "The color CSS property sets the foreground color value of an element's text and text decorations.");
 $fieldset->append($field);
 
 // opacity
@@ -632,8 +632,8 @@ $field->set('label', __('Font'));
 $field->set('name', __('font-family'));
 $field->addClass('label-left', 'wrapClass');
 $field->addClass('fonts');
-
 $field->attr('local-fonts', $fontNames);
+createTooltip($field, "The font-family CSS property sets the font for the selected element and it's children.");
 $field->columnWidth = 100;
 $fieldset->append($field);
 
@@ -657,6 +657,7 @@ $fieldset->append($field);
 
 // font-size
 $field = createUnitField('font-size', 'Size', 60);
+createTooltip($field, "The font-size CSS property sets the size of the text in px or responsive units such as %, vw and vh.");
 $fieldset->append($field);
 
 // line-height
@@ -664,6 +665,7 @@ $field = $this->modules->get('InputfieldInteger');
 $field->inputType = "number";
 $field->label = 'Line Height';
 $field->name = 'line-height';
+createTooltip($field, "The line-height CSS property sets the distance between lines of text.");
 $field->attr('step', '0.01');
 $field->addClass('label-left', 'wrapClass');
 $field->columnWidth = 40;
@@ -683,6 +685,7 @@ $field->addOption("center");
 $field->addOption("justify");
 $field->set('value', 'left');
 $field->addClass('label-left', 'wrapClass');
+createTooltip($field, "The text-align CSS property sets the horizontal alignment of text.");
 $field->columnWidth = 100;
 $fieldset->append($field);
 
@@ -1333,6 +1336,33 @@ $wrapper->append($field);
 
 // ITEM STYLE SETTINGS END
 
+// add tooltips
+// json from https://www.dofactory.com/css/properties
+$configInterface = wire('modules')->getConfig('FieldtypePageGrid')['interface'] ? wire('modules')->getConfig('FieldtypePageGrid')['interface'] : [];
+$showTooltips = in_array('showToolTips', $configInterface);
+if ($showTooltips) {
+  $json = file_get_contents($this->config->paths->InputfieldPageGrid . 'tooltips.json');
+  $tooltips = json_decode($json, true);
+
+  foreach ($wrapper as $field) {
+    if (!is_object($field)) continue;
+    if (isset($tooltips[$field->name])) createTooltip($field, $tooltips[$field->name]['Description']);
+    foreach ($field as $field2) {
+      if (!is_object($field2)) continue;
+      if (isset($tooltips[$field2->name])) createTooltip($field2, $tooltips[$field2->name]['Description']);
+      foreach ($field2 as $field3) {
+        if (!is_object($field3)) continue;
+        if (isset($tooltips[$field3->name])) createTooltip($field3, $tooltips[$field3->name]['Description']);
+        foreach ($field3 as $field4) {
+          if (!is_object($field4)) continue;
+          if (isset($tooltips[$field4->name])) createTooltip($field4, $tooltips[$field4->name]['Description']);
+        }
+      }
+    }
+  }
+}
+// END add tooltips
+
 
 //animations NEW
 include('stylePanel_interactions.php');
@@ -1342,16 +1372,23 @@ $settings = $tabs . '<div class="pg-sticky pg-interactions-wrapper">' . $interac
 
 // END SETTINGS ------
 
+// helper function to create uikit tooltip
+function createTooltip($field, $text = '') {
+  $configInterface = wire('modules')->getConfig('FieldtypePageGrid')['interface'] ? wire('modules')->getConfig('FieldtypePageGrid')['interface'] : [];
+  $showTooltips = in_array('showToolTips', $configInterface);
+  if ($showTooltips) $field->wrapAttr("data-tooltip", "title: $text; pos:top; delay:300;");
+}
+
 function createUnitField($name, $label = '', $width = 100, $icon = '', $lastUnit = '', $placeholder = '', $nameAdd = '') {
 
-  if(!$label) $label = $name;
-  if($lastUnit && !$placeholder) $placeholder = $lastUnit; 
+  if (!$label) $label = $name;
+  if ($lastUnit && !$placeholder) $placeholder = $lastUnit;
 
   $fieldsetSub = wire('modules')->get('InputfieldFieldset');
   $fieldsetSub->label = $label;
   $fieldsetSub->name = $name;
   $fieldsetSub->columnWidth = $width;
-  if($icon) {
+  if ($icon) {
     $fieldsetSub->icon = $icon;
     $fieldsetSub->addClass('label-icon', 'wrapClass');
   }
@@ -1363,19 +1400,19 @@ function createUnitField($name, $label = '', $width = 100, $icon = '', $lastUnit
   $field->label = $label;
   $field->name = $name;
   $field->attr('placeholder', $placeholder);
-  if($nameAdd) $field->attr('name-add', $nameAdd); // used to add transform property name
+  if ($nameAdd) $field->attr('name-add', $nameAdd); // used to add transform property name
   $field->addClass('hide-label', 'headerClass');
   $fieldsetSub->append($field);
-  
+
   $field = wire('modules')->get('InputfieldSelect');
   $field->name = $name;
-  if($nameAdd) $field->name = $nameAdd;
+  if ($nameAdd) $field->name = $nameAdd;
   $field->label = " ";
   $field->addOption("px");
   $field->addOption("%");
   $field->addOption("vh");
   $field->addOption("vw");
-  if($lastUnit) $field->addOption($lastUnit);
+  if ($lastUnit) $field->addOption($lastUnit);
   $field->addClass('unit');
   $field->addClass('hide-label', 'headerClass');
   $field->addClass('field-combo', 'wrapClass');

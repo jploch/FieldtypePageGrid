@@ -28,6 +28,7 @@ if ($this->modules->get('InputfieldTextTags')) {
     $field->name = '--pg-animation';
     $field->columnWidth = 100;
     $field->attr('placeholder', 'Type to add animation…');
+    createTooltip($field, 'To <strong>create an animation</strong> type a name in the animation field and press the "return" key. <br><br>To <strong>delete an animation</strong>, right click on an animation and select "delete animation". <br><br>To <strong>reuse an animation</strong> add the animation to other elements.');
     $fieldset->append($field);
   }
 
@@ -42,6 +43,7 @@ $field->addOption("inview", "in view");
 $field->addOption("scroll", "on scroll");
 $field->addClass('label-left', 'wrapClass');
 //$field->columnWidth = 100;
+createTooltip($field, 'Trigger event');
 $fieldset->append($field);
 
 //keyframes 
@@ -79,6 +81,7 @@ $field->label = $this->_("Once");
 $field->addClass('label-left', 'wrapClass');
 $field->addOption("false", "false");
 $field->addOption("true", "true");
+createTooltip($field, 'Select true to play the animation only once.');
 $field->columnWidth = 100;
 $fieldset2->append($field);
 
@@ -91,6 +94,7 @@ $field->addOption("false", "false");
 $field->addOption("true", "pin");
 $field->addOption("pin-spacing", "pin-spacing");
 $field->columnWidth = 100;
+createTooltip($field, 'Pin the animation to the screen during scrolling.');
 $fieldset2->append($field);;
 
 //duration
@@ -116,6 +120,7 @@ $field->attr('placeholder', '100');
 $field->attr('show-unit', 'vh');
 $field->attr('step', '1');
 $field->addClass('label-left', 'wrapClass');
+createTooltip($field, 'Scroll distance relative to the screen height.');
 $field->min = 0;
 $field->max = 999999;
 // $field->columnWidth = 50;
@@ -128,6 +133,7 @@ $field->set('name', __('pg-animation-start'));
 $field->addClass('label-left', 'wrapClass');
 $field->value = '<div class="range-wrap"><output class="bubble" data-unit="vh"></output><input name="pg-animation-start" type="range" min="0" max="100" step="1" placeholder="0" class="range"></div>';
 $field->columnWidth = 100;
+createTooltip($field, 'Start of the scroll animation relative to the bottom edge of the screen.');
 $fieldset2->append($field);
 
 //scroll offset end

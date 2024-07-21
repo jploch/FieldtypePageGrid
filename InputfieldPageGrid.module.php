@@ -286,15 +286,15 @@ class InputfieldPageGrid extends Inputfield {
             if ($settings) {
                 $settings = '<div data-field=' . $this->name . ' class="ui-dialog pg-settings-container pg-stylepanel"><div class="pg-settings pg-stylepanel pg-settings-content">' . $settings . '</div></div>';
                 $topNav = '<div class="pg-topnav uk-navbar-center">
-            <i class="pg-item-list-button pg-topnav-margin-big fa fw fa-list-ul on" title="Item List"></i>
-            <i class="pg-undo fa fa-fw fa-reply" data-name="fa-reply" title="Undo"></i>
-            <i class="pg-redo pg-topnav-margin fa fa-fw fa-share" data-name="fa-share" title="Redo"></i>';
-                if ($hasAnimations) $topNav .= '<i class="pg-play pg-topnav-margin fa fw fa-play" title="Play animations"></i>';
+            <i class="pg-item-list-button pg-topnav-margin-big fa fw fa-list-ul on" uk-tooltip="title:Item List; pos:bottom; delay:300;"></i>
+            <i class="pg-undo fa fa-fw fa-reply" data-name="fa-reply" uk-tooltip="title:Undo; pos:bottom; delay:300;"></i>
+            <i class="pg-redo pg-topnav-margin fa fa-fw fa-share" data-name="fa-share" uk-tooltip="title:Redo; pos:bottom; delay:300;"></i>';
+                if ($hasAnimations) $topNav .= '<i class="pg-play pg-topnav-margin fa fw fa-play" uk-tooltip="title:Play Animations; pos:bottom; delay:300;"></i>';
                 $topNav .= '<div id="breakpoints-nav">
-           <img src="' . $moduleUrl . '/img/phone-portrait-outline.svg" class="breakpoint-icon breakpoint-icon-s" value="@media (max-width: 640px)" breakpoint="s" title="Breakpoint Small">
-           <img src="' . $moduleUrl . '/img/phone-landscape-outline.svg" class="breakpoint-icon breakpoint-icon-m" value="@media (max-width: 960px)" breakpoint="m" title="Breakpoint Medium">
-           <img src="' . $moduleUrl . '/img/laptop-outline.svg" class="breakpoint-icon breakpoint-icon-base" value="@media (min-width: 640px)" breakpoint="base" title="Breakpoint Base">
-           <img src="' . $moduleUrl . '/img/desktop-outline.svg" class="breakpoint-icon breakpoint-icon-l" value="@media (min-width: 1600px)" breakpoint="l" title="Breakpoint Large">
+           <img src="' . $moduleUrl . '/img/phone-portrait-outline.svg" class="breakpoint-icon breakpoint-icon-s" value="@media (max-width: 640px)" breakpoint="s" uk-tooltip="title:Breakpoint Small < 640px; pos:bottom; delay:300;">
+           <img src="' . $moduleUrl . '/img/phone-landscape-outline.svg" class="breakpoint-icon breakpoint-icon-m" value="@media (max-width: 960px)" breakpoint="m" uk-tooltip="title:Breakpoint Medium < 960px; pos:bottom; delay:300;">
+           <img src="' . $moduleUrl . '/img/laptop-outline.svg" class="breakpoint-icon breakpoint-icon-base" value="@media (min-width: 640px)" breakpoint="base" uk-tooltip="title:Breakpoint Base; pos:bottom; delay:300;">
+           <img src="' . $moduleUrl . '/img/desktop-outline.svg" class="breakpoint-icon breakpoint-icon-l" value="@media (min-width: 1600px)" breakpoint="l" uk-tooltip="title:Breakpoint Large > 1600px; pos:bottom; delay:300;">
            </div></div>';
             }
         }
