@@ -5,7 +5,7 @@ Design fully responsive websites (or parts of them) without writing any code. Re
 
 Use and customise our [ready-made blocks](https://processwire.com/modules/page-grid-blocks/), or create your own block templates using ProcessWire's native templates (and fields).
 
-Don't want to give your client all that power? Features can be enabled per permission (dragging, resizing, editing, adding items/pages, parent/child relations, style panel, etc.) so you have complete control of how much freedom you want to give to the editor of your website. 
+Don't want to give your client all that power? Use ProcessWire’s powerful permission system to control what your clients can edit. You can then also grant access individually to the style panel, resize or drag functionality using ProcessWire's build in permission system.
 
 <img src="https://pg.uber.space/github-assets/pagegrid-screen.png" />
 
