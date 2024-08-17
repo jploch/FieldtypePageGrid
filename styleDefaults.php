@@ -70,6 +70,14 @@ $defaultCss .= 'p, h1, h2, h3, h4, h5, h6 {
   font-weight: normal;
     } ';
 
+$defaultCss .= 'a {
+   color: inherit;
+   } ';
+
+$defaultCss .= ' .pw-edit:hover a {
+   text-decoration: underline;
+    } ';
+
 //    $defaultCss .= 'html, body {
 //    height: 100%;
 //    } ';
