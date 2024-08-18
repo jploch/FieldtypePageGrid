@@ -74,10 +74,6 @@ $defaultCss .= 'a {
    color: inherit;
    } ';
 
-$defaultCss .= ' .pw-edit:hover a {
-   text-decoration: underline;
-    } ';
-
 //    $defaultCss .= 'html, body {
 //    height: 100%;
 //    } ';
