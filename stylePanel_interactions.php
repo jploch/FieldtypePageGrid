@@ -67,10 +67,24 @@ $fieldset->append($fieldset2);
 //trigger element
 $field = $this->modules->get('InputfieldSelect');
 $field->name = 'pg-animation-trigger';
-$field->label = $this->_("Trigger");
+$field->label = "Trigger";
 $field->addClass('label-left', 'wrapClass');
 $field->addOption("self", "Selected Element");
 $field->addOption("parent", "Parent Element");
+createTooltip($field, 'The element that triggers the animation.');
+$field->columnWidth = 100;
+$fieldset2->append($field);
+
+//target element (allows for stagger animations)
+$field = $this->modules->get('InputfieldSelect');
+$field->name = 'pg-animation-target';
+$field->label = "Target";
+$field->addClass('label-left', 'wrapClass');
+$field->addOption("self", "Selected Element");
+$field->addOption("children", "Children (Stagger Animation)");
+$field->addOption("words", "Words (Stagger Animation)");
+$field->addOption("letters", "Letters (Stagger Animation)");
+createTooltip($field, 'Apply the animation to the selected element or to multiple child elements (use the delay value to create a stagger animation).');
 $field->columnWidth = 100;
 $fieldset2->append($field);
 

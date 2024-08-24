@@ -2,6 +2,11 @@
 
 namespace ProcessWire;
 
+//NOTE
+//adding InputfieldForm class to fieldsets enables showIf feature
+//adding it to main wrapper causes error with inputfieldTags
+//$fieldset->addClass('InputfieldForm', 'wrapClass');
+
 $backend = $this->isBackend();
 
 $defaultCss = '<style class="pg-style-defaults">';
