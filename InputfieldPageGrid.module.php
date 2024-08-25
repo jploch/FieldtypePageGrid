@@ -998,8 +998,8 @@ class InputfieldPageGrid extends Inputfield {
                         $animationData = $animation->meta()->pg_styles;
                         $event = isset($animationData[$animation->name]['animation-event']) ? $animationData[$animation->name]['animation-event'] : 'load';
                         $eventClass = 'pg-event-' . $event;
-                        //add prfex pg-animation- to animation classes
-                        $cssClasses .= ' ' . $eventClass . ' pg-animation-' . $animationName . ' ';
+                        //add event class
+                        $cssClasses .= ' ' . $eventClass . ' ';
 
                         //add first keyframe class to start from first frame
                         if (!$backend) {
