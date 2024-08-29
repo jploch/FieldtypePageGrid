@@ -573,6 +573,91 @@ $fieldsetAdvanced->append($field);
 
 // END LAYOUT
 
+//SVG
+$fieldset = $this->modules->get('InputfieldFieldset');
+$fieldset->label = 'SVG';
+$fieldset->name = 'pg_settings_svg';
+$wrapper->append($fieldset);
+
+// FILL
+$colors = '';
+$list = '';
+
+//fill
+$field = $this->modules->get('InputfieldMarkup');
+$field->label = 'Fill';
+$field->name = 'fill';
+$field->addClass('label-left', 'wrapClass');
+$field->value = '<input class="uk-input" type="color" id="fill" name="fill" placeholder="#000000"' . $list . ' >' . $colors;
+$field->columnWidth = 50;
+$fieldset->append($field);
+
+// opacity
+$field = $this->modules->get('InputfieldMarkup');
+$field->label = 'Opacity';
+$field->name = 'data-fill-opacity';
+$field->addClass('label-left', 'wrapClass');
+$field->value = '<div class="range-wrap"><output class="bubble"></output><input name="data-color-opacity" data-type="fill" type="range" min="0" max="1" step="0.1" placeholder="1" class="range"></div>';
+$field->columnWidth = 50;
+$fieldset->append($field);
+
+//Stroke
+//color
+$field = $this->modules->get('InputfieldMarkup');
+$field->label = 'Stroke';
+$field->name = 'stroke';
+$field->addClass('label-left', 'wrapClass');
+$field->value = '<input class="uk-input" type="color" id="stroke" name="stroke" placeholder="#000000"' . $list . ' >' . $colors;
+$field->columnWidth = 50;
+$fieldset->append($field);
+
+// opacity
+$field = $this->modules->get('InputfieldMarkup');
+$field->label = 'Opacity';
+$field->set('name', __('data-border-opacity'));
+$field->addClass('label-left', 'wrapClass');
+$field->value = '<div class="range-wrap"><output class="bubble"></output><input name="data-color-opacity" data-type="stroke" type="range" min="0" max="1" step="0.1" placeholder="1" class="range"></div>';
+$field->columnWidth = 50;
+$fieldset->append($field);
+
+//stroke-width
+$field = createUnitField('stroke-width', 'Stroke Width', 50);
+$fieldset->append($field);
+
+//stroke-linecap
+$field = $this->modules->get('InputfieldSelect');
+$field->name = "stroke-linecap";
+$field->label = "Stroke Cap";
+$field->addOption("butt", "Butt");
+$field->addOption("square", "Square");
+$field->addOption("round", "Round");
+$field->addClass('label-left', 'wrapClass');
+$field->columnWidth = 50;
+$fieldset->append($field);
+
+// stroke-dasharray
+$field = $this->modules->get('InputfieldInteger');
+$field->inputType = "number";
+$field->label = 'Stroke Dash';
+$field->name = 'stroke-dasharray';
+$field->addClass('label-left', 'wrapClass');
+$field->attr('unit', '');
+$field->attr('placeholder', '0');
+$field->columnWidth = 50;
+$fieldset->append($field);
+
+// stroke-dashoffset
+$field = $this->modules->get('InputfieldInteger');
+$field->inputType = "number";
+$field->label = 'Stroke Offset';
+$field->name = 'stroke-dashoffset';
+$field->addClass('label-left', 'wrapClass');
+$field->attr('unit', '');
+$field->attr('placeholder', '0');
+$field->columnWidth = 50;
+$fieldset->append($field);
+//SVG END
+
 //Typography
 $fieldset = $this->modules->get('InputfieldFieldset');
 $fieldset->label = 'Typography';
