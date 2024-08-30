@@ -930,10 +930,10 @@ class InputfieldPageGrid extends Inputfield {
         return $inputfields;
     }
 
-    // Methodes returns classnames and tagnames for rendering items in frontend + backend
-    // get classes
-
-    public function getCssClasses($item, $options = null, $itemId = 'pgitem') {
+    // function to get default classnames and classes added with style panel
+    // can also be used to allow adding classes to subitems, if called from block template
+    // $item = $page object
+    public function getCssClasses($item, $itemId = 'pgitem', $options = null) {
 
         $itemData = $item->meta()->pg_styles;
         $templateName = str_replace('_', '-', $item->template->name);
@@ -941,17 +941,11 @@ class InputfieldPageGrid extends Inputfield {
         $cssClasses = '';
         $backend = $this->isBackend();
 
-        if ($options == 'parentClasses') {
-
-            $defaultClasses = ' pg ' . $item->name . ' ' . $templateName;
-
-            if ($backend) {
-                $defaultClasses .= ' pg-droppable ';
-            }
-        }
-
+        //return classes for subitems/elements inside block templates
         if ($itemId !== 'pgitem') {
             $defaultClasses = '';
+            //in the backend we add a class to allow adding new classes via style panel
+            if($backend) $defaultClasses = 'pg-add-classes';
         }
 
         if (isset($itemData)) {
@@ -1014,18 +1008,14 @@ class InputfieldPageGrid extends Inputfield {
             }
         }
 
-        if ($options == 'addedClasses') {
-            $Classes = $cssClasses;
-        } else {
-            $Classes = $defaultClasses . ' ' . $cssClasses;
-        }
-
+        $Classes = $defaultClasses . ' ' . $cssClasses;
         //remove last empty space
         $Classes = rtrim($Classes);
 
         return $Classes;
     }
 
+    // function to get tagnames set via stylepanel
     //get tag name
     public function getTagName($item) {
 
