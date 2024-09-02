@@ -110,7 +110,7 @@ class ProcessPageGrid extends Process {
         // function to get tooltip help text from MDN CSS docs
         if ($getToolTip) {
             $url = "https://developer.mozilla.org/en-US/docs/Web/CSS/$getToolTip/index.json";
-            if($getToolTip == 'scale' || $getToolTip == 'rotate' || $getToolTip == 'translate') $url = "https://developer.mozilla.org/en-US/docs/Web/CSS/transform-function/$getToolTip/index.json";
+            if ($getToolTip == 'scale' || $getToolTip == 'rotate' || $getToolTip == 'translate') $url = "https://developer.mozilla.org/en-US/docs/Web/CSS/transform-function/$getToolTip/index.json";
             $headers = get_headers($url);
             $urlExists = stripos($headers[0], "200 OK") ? true : false;
             if (!$urlExists) return '';
@@ -297,11 +297,12 @@ class ProcessPageGrid extends Process {
 
             $p = $this->pages->get($_POST['pageId']);
             $newParent = $this->pages->get($_POST['newParent']);
-            $p->of(false);
-            $p->parent = $newParent;
-            $p->save();
-            $p->of(true);
-
+            if ($p->id && $newParent->id) {
+                $p->of(false);
+                $p->parent = $newParent;
+                $p->save();
+                $p->of(true);
+            }
             return;
         }
         // END change parent
@@ -499,7 +500,7 @@ class ProcessPageGrid extends Process {
 
             if (isset($insertAfter) && $insertAfter != 0) {
                 $afterP = $this->pages->get($insertAfter);
-                $this->pages->insertBefore($p, $afterP);
+                if($afterP->id) $this->pages->insertBefore($p, $afterP);
             }
 
             // set title after save to get unique id
