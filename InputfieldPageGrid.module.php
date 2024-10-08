@@ -945,7 +945,7 @@ class InputfieldPageGrid extends Inputfield {
         if ($itemId !== 'pgitem') {
             $defaultClasses = '';
             //in the backend we add a class to allow adding new classes via style panel
-            if($backend) $defaultClasses = 'pg-add-classes';
+            if ($backend) $defaultClasses = 'pg-add-classes';
         }
 
         if (isset($itemData)) {
@@ -1581,6 +1581,10 @@ class InputfieldPageGrid extends Inputfield {
         if ($itemsParent->id) {
             //getAncestors returns parent and grandchildren. needed because of bug. $page->find('') is not returning all pages
             $pageItems = $this->getAncestors($itemsParent);
+
+            //for some multilang pages this is not returning the children, so get them as a backup like this
+            if (count($pageItems) <= 1) $pageItems = $itemsParent->find('');
+
             $itemsArray->add($pageItems);
             //add symbol children, fix
             foreach ($pageItems as $pageItem) {
