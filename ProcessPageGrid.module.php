@@ -18,7 +18,7 @@ class ProcessPageGrid extends Process {
             'icon' => 'th',
             'requires' => array('FieldtypePageGrid'),
             'installs' => array('FieldtypePageGrid', 'InputfieldPageGrid', 'PageFrontEdit', 'ProcessPageClone'),
-            'version' => '0.0.2',
+            'version' => '0.0.3',
             'useNavJSON' => true,
             'permission' => 'pagegrid-process',
             // page that you want created to execute this module
@@ -500,7 +500,14 @@ class ProcessPageGrid extends Process {
 
             if (isset($insertAfter) && $insertAfter != 0) {
                 $afterP = $this->pages->get($insertAfter);
-                if($afterP->id) $this->pages->insertBefore($p, $afterP);
+                if ($afterP->id) $this->pages->insertBefore($p, $afterP);
+            }
+
+            //test: sometimes parent is not set correctly after insertAfter, so set it here again
+            if ($parent && $parent->id && $p->parent()->id != $parent->id) {
+                $p->of(false);
+                $p->parent = $parent;
+                $p->save();
             }
 
             // set title after save to get unique id
@@ -603,7 +610,7 @@ class ProcessPageGrid extends Process {
 
             $this->log->save("pagegrid", $filePath);
             //test to save only the field so we don't overwrite other fields wich might have changed since upload
-            if ($p->hasField($field_name)) $this->pages->saveField($p, $field_name); 
+            if ($p->hasField($field_name)) $this->pages->saveField($p, $field_name);
             // $p->save();
             return $fileRelativePath . $filename;
         }
