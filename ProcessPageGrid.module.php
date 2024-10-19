@@ -18,7 +18,7 @@ class ProcessPageGrid extends Process {
             'icon' => 'th',
             'requires' => array('FieldtypePageGrid'),
             'installs' => array('FieldtypePageGrid', 'InputfieldPageGrid', 'PageFrontEdit', 'ProcessPageClone'),
-            'version' => '0.0.1',
+            'version' => '0.0.2',
             'useNavJSON' => true,
             'permission' => 'pagegrid-process',
             // page that you want created to execute this module
@@ -602,7 +602,9 @@ class ProcessPageGrid extends Process {
             }
 
             $this->log->save("pagegrid", $filePath);
-            $p->save();
+            //test to save only the field so we don't overwrite other fields wich might have changed since upload
+            if ($p->hasField($field_name)) $this->pages->saveField($p, $field_name); 
+            // $p->save();
             return $fileRelativePath . $filename;
         }
         //excude end
