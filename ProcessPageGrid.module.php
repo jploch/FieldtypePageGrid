@@ -174,12 +174,6 @@ class ProcessPageGrid extends Process {
                 $parent = $settingsPage;
                 $parentID = $parent->id;
                 $className = $dataItem['cssClass'];
-
-                //on demo mode use user as namespace to have unique classnames and animation names
-                if ($this->modules->isInstalled('PageGridDemoMode') && $this->user->hasRole('pagegrid-demo')) {
-                    $className = $dataItem['cssClass'] . '-' . $this->user->id;
-                }
-
                 $settingsPage = $this->pages->get("name=$className, template=pg_container, has_parent=$parentID");
 
                 if ($settingsPage && $settingsPage->id) {
@@ -337,8 +331,6 @@ class ProcessPageGrid extends Process {
             if ($parentId) $p = $this->pages->findOne('name=' . $removeId . ', has_parent=' . $parentId);
 
             if (!$p || !$p->id) return;
-
-            if ($this->modules->isInstalled('PageGridDemoMode') && $this->user->hasRole('pagegrid-demo') && $p->created_users_id !== $this->user->id) return;
 
             $p->removeStatus(Page::statusLocked);
             $p->save();
