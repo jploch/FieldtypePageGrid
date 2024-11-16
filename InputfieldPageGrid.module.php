@@ -710,7 +710,7 @@ class InputfieldPageGrid extends Inputfield {
 
         // parse template markup and inssert file uploader
         $templateRender = $parsedTemplate->render();
-        $templateRender = $this->ft->enableInlineEditFile($templateRender);
+        $templateRender = $this->ft->enableInlineEditFile($templateRender, $p);
 
         // PARSE RENDER OPTIONS
         // parse options set via renderOptions
@@ -797,7 +797,7 @@ class InputfieldPageGrid extends Inputfield {
     //function to render file uploader
     // @param Page $p
     // @param Field Name or Field Id $f
-    public function renderFileUploader($p, $fName) {
+    public function renderFileUploader($p, $fName, $pRender) {
 
         if (!$this->isBackend()) return;
         if (!$p && !$p->id) return;
@@ -827,7 +827,7 @@ class InputfieldPageGrid extends Inputfield {
                           <pg-uploader class="settings_wrap">
                             <pg-uploader class="drop_target">
                               <pg-uploader class="input_button"></pg-uploader>
-                                <input class="inputFile" type="file" data-quality="' . $f->clientQuality . '" data-max-width="' . $f->maxWidth . '" data-max-height="' . $f->maxHeight . '" data-field="' . $f->name . '" data-id="' . $p->id . '" data-type="upload"/>
+                                <input class="inputFile" type="file" data-quality="' . $f->clientQuality . '" data-max-width="' . $f->maxWidth . '" data-max-height="' . $f->maxHeight . '" data-field="' . $f->name . '" data-id="' . $p->id . '" data-id-render="' . $pRender->id . '" data-type="upload"/>
                                 </pg-uploader>
                             </pg-uploader>
                         </pg-uploader>
@@ -1617,6 +1617,9 @@ class InputfieldPageGrid extends Inputfield {
         //render defaults 
         if ($loadDefaults == 1) {
             $defaults = include 'styleDefaults.php';
+            //minify output
+            $defaults = str_replace(array("\r", "\n"), '', $defaults);
+            $defaults = preg_replace('/\s+/', ' ', $defaults);
         }
 
         foreach ($itemsArray as $item) {

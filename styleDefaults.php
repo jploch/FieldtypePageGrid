@@ -8,11 +8,12 @@ namespace ProcessWire;
 //$fieldset->addClass('InputfieldForm', 'wrapClass');
 
 $backend = $this->isBackend();
-
+$inlineEdit = 1;
+if (!$backend && $this->modules->get('FieldtypePageGrid')->inlineEditorFrontDisable) $inlineEdit = 0;
 $defaultCss = '<style class="pg-style-defaults">';
 
 //inline editor fix
-if ($this->user->isLoggedin()) {
+if ($this->user->isLoggedin() && $inlineEdit) {
   $defaultCss .= '.tox.tox-tinymce-inline {z-index:99999!important;}';
   $defaultCss .= '.tox-tinymce-aux {z-index: 999999!important;}';
   $defaultCss .= '.ui-dialog {position:fixed!important; z-index: 999999!important;}';
@@ -36,100 +37,99 @@ if ($backend) {
   $defaultCss .= 'pg-icon {display:none!important;}';
 }
 
-if ($this->user->hasPermission('PageFrontEdit')) {
+if ($this->user->hasPermission('PageFrontEdit') && $inlineEdit) {
   //change to inline to work with plain textarea inline elements
   $defaultCss .= 'body .pw-edit-InputfieldTextarea, .pw-edit-InputfieldTextarea .pw-edit-orig, .pw-edit-InputfieldTextarea .pw-edit-copy {display:inline-block;}';
 }
 
-if ($this->user->admin_theme == 'AdminThemeCanvas') {
+if ($this->user->admin_theme == 'AdminThemeCanvas' && $inlineEdit) {
   $defaultCss .= '.pw-edit-buttons .ui-button {background-color:black!important; border:none!important;} .pw-edit-cancel {opacity:0.5!important;}';
 }
 
 //load lazyload css to fade in images
 if ($this->modules->get('FieldtypePageGrid')->plugins && $this->modules->get('FieldtypePageGrid')->plugins[0] === 'lazysizes') {
-  $defaultCss .= '.lazyload,
-  .lazyloading {
-    opacity: 0;
-  }
+  $defaultCss .= '
+.lazyload,
+.lazyloading {
+   opacity: 0;
+}
   
-  .lazyloaded {
-    opacity: 1;
-    transition: opacity 600ms;
-  }';
+.lazyloaded {
+  opacity: 1;
+  transition: opacity 600ms;
+}';
 }
 
-$defaultCss .= '*, *::before, *::after {
-      box-sizing: border-box;
-      -webkit-font-smoothing: antialiased;
-      margin: 0;
-      padding: 0;
-    } ';
+$defaultCss .= '
+*, *::before, *::after {
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  margin: 0;
+  padding: 0;
+} ';
 
-$defaultCss .= 'html, body {
-    width:100%;
-    } ';
+$defaultCss .= 'html, body {width:100%;} ';
 
-$defaultCss .= 'p, h1, h2, h3, h4, h5, h6 {
+$defaultCss .= '
+p, h1, h2, h3, h4, h5, h6 {
   overflow-wrap: break-word;
   word-break: break-word;
-  font-weight: normal;
-    } ';
+  font-weight: normal; 
+} ';
 
-$defaultCss .= 'a {
-   color: inherit;
-   } ';
+$defaultCss .= 'a {color: inherit;} ';
 
 //    $defaultCss .= 'html, body {
 //    height: 100%;
 //    } ';
 
-$defaultCss .= 'input, button, textarea, select {
-      font: inherit;
-    } ';
+$defaultCss .= 'input, button, textarea, select {font: inherit;} ';
 
-$defaultCss .= '.pg-main, .pg-group {
-      display: grid;
-      margin: 0 auto;
-      list-style: none;
-      column-gap: 30px;
-      row-gap: 30px;
-      grid-template-columns: repeat(12, 1fr);
-      grid-template-rows: auto;
-      grid-column-end: -1;
-      grid-column-start: 1;
-      grid-row-start: auto;
-      width: 100%;
-      height: auto;
-      box-sizing: border-box;
-      position: relative;
-      overflow-wrap: break-word;
-      word-break: break-word;
-    } ';
+$defaultCss .= '
+.pg-main, .pg-group {
+  display: grid;
+  margin: 0 auto;
+  list-style: none;
+  column-gap: 30px;
+  row-gap: 30px;
+  grid-template-columns: repeat(12, 1fr);
+  grid-template-rows: auto;
+  grid-column-end: -1;
+  grid-column-start: 1;
+  grid-row-start: auto;
+  width: 100%;
+  height: auto;
+  box-sizing: border-box;
+  position: relative;
+  overflow-wrap: break-word;
+  word-break: break-word;
+} ';
 
 if ($this->modules->get('FieldtypePageGrid')->fallbackFonts) {
-  $defaultCss .= 'html {
-    font-family:' . $this->modules->get('FieldtypePageGrid')->fallbackFonts . ';
-}';
+  $defaultCss .= 'html {font-family:' . $this->modules->get('FieldtypePageGrid')->fallbackFonts . ';}';
 }
 
-$defaultCss .= '.pg {
-     grid-column-end: -1;
-     grid-column-start: 1;
-    } ';
+$defaultCss .= '
+.pg {
+  grid-column-end: -1;
+  grid-column-start: 1;
+} ';
 
-$defaultCss .= '.pg-item {
-      animation-fill-mode: forwards!important;
-    } ';
+$defaultCss .= '
+.pg-item {
+  animation-fill-mode: forwards!important;
+} ';
 
 // $defaultCss .= '.pg-image, .pg-video {
 //     overflow: hidden;
 //   } ';
 
-$defaultCss .= '.pg-image img, .pg-video video, .pg-media-responsive, .pg-fileupload {
-      display: block;
-      width: 100%;
-      max-width: 100%;
-    } ';
+$defaultCss .= '
+.pg-image img, .pg-video video, .pg-image svg, .pg-media-responsive, .pg-fileupload {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+ } ';
 
 $defaultCss .= '.pg-state-click {cursor:pointer;} ';
 
@@ -139,19 +139,21 @@ $defaultCss .= '* {--pg-animation: initial;}';
 $defaultCss .= '.pg-event-inview {transition: all 600ms ease ;} ';
 
 // Small devices default ( landscape phones, 576px and up )
-$defaultCss .= ' @media (max-width: 640px) {
-        html:root .pg-main,
-        html:root .pg-group {
-              column-gap: 15px;
-              row-gap: 15px;
-          }
-          html:root .pg-item,
-          html.breakpoint-s .pg-item {
-            grid-column: 1/-1;
-            /* grid-row-end: span 1;*/
-            grid-row: auto;
-            }
-        } ';
+$defaultCss .= '
+@media (max-width: 640px) {
+  html:root .pg-main,
+  html:root .pg-group {
+   column-gap: 15px;
+   row-gap: 15px;
+  }
+  html:root .pg-item,
+  html.breakpoint-s .pg-item {
+   grid-column: 1/-1;
+   /* grid-row-end: span 1;*/
+   grid-row: auto;
+  }
+} 
+';
 
 //load TinyMCE styles
 $tmceString = $this->modules->get('InputfieldTinyMCE')->styleFormatsCSS;

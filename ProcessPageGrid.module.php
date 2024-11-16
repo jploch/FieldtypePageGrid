@@ -551,8 +551,9 @@ class ProcessPageGrid extends Process {
 
         // handel uploads to pages
         if ($type === 'upload' && !empty($pageId)) {
-
+            $pageRenderId = isset($_POST['pageRenderId']) ? $this->sanitizer->int($_POST['pageRenderId']) : '';
             $p = $this->pages->get($pageId);
+            $pRender = $this->pages->get($pageRenderId);
             $fileRelativePath = $p->filesUrl();
             $extensions = 'jpg jpeg gif png svg';
             $fileField = 0;
@@ -600,11 +601,29 @@ class ProcessPageGrid extends Process {
                 }
             }
 
-            $this->log->save("pagegrid", $filePath);
+            // $this->log->save("pagegrid", $filePath);
             //test to save only the field so we don't overwrite other fields wich might have changed since upload
             if ($p->hasField($field_name)) $this->pages->saveField($p, $field_name);
             // $p->save();
-            return $fileRelativePath . $filename;
+
+            // if (!count($p->parents('pg-items'))) {
+            //     $p = $p->parent();
+            // }
+
+            bd($p);
+
+            $p->meta()->set('pg_ajax', true);
+            $response = array(
+                'newPageClass' => $pRender->name,
+                'newChildPageClass' => $p->name,
+                'markup' => $this->modules->get('InputfieldPageGrid')->renderItem($pRender),
+                'message' => ''
+            );
+            $p->meta()->set('pg_ajax', false);
+
+            bd($response);
+
+            return (json_encode($response));
         }
         //excude end
     }

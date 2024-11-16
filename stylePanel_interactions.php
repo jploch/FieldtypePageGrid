@@ -30,6 +30,14 @@ if ($this->modules->get('InputfieldTextTags')) {
     $field->attr('placeholder', 'Type to add animation…');
     createTooltip($field, 'To <strong>create an animation</strong> type a name in the animation field and press the "return" key. <br><br>To <strong>delete an animation</strong>, right click on an animation and select "delete animation". <br><br>To <strong>reuse an animation</strong> add the animation to other elements.');
     $fieldset->append($field);
+
+    $animationParent = $this->pages->get('name=pg-animations, template=pg_container');
+    $field = $this->modules->get('InputfieldMarkup');
+    $field->addClass('pg-show-classlist', 'wrapClass');
+    $field->value = "<a href='#' class='pg-edit' data-url='./?id=$animationParent->id&modal=1&pgmodal=1&pgchildren=1&pghidesettings=1&pghidechildsorting=1&pgnoadd=1' data-title='Animations'><i class='fa fa-gear pw-nav-icon'></i></a>";
+    createTooltip($field, "Open the animation manager. To manage all your animations in one place.", "bottom");
+    $fieldset->append($field);
+
   }
 
   // Event

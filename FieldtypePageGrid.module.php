@@ -16,7 +16,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID'),
       'summary' => __('Commercial page builder module that renders block templates and adds drag and drop functionality in admin.', __FILE__),
-      'version' => '2.1.60',
+      'version' => '2.1.62',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -67,7 +67,8 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
       $t->name = 'pg_container';
       $t->fieldgroup = $fg; // add the field group
       // $t->flags = 8; // system template, to prevent use in backend, but also hides contaier permissions :(
-      $t->noParents = -1; //allow one more (2 pages can use this template)
+      // $t->noParents = -1; //allow one more (2 pages can use this template)
+      // $t->noParents = ''; //allow user to create/clone animation and class pages
       $t->icon = 'th';
       $t->tags = 'PageGrid';
       $t->save();
@@ -445,6 +446,13 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
 
     if (!$this->permissions->get('pagegrid-select')->id) $this->createModule();
 
+    //let users clone animations and classes
+    $gridTemplate = $this->templates->get('pg_container');
+    if ($gridTemplate && $gridTemplate->id) {
+      $gridTemplate->noParents = '';
+      $gridTemplate->save();
+    }
+
     //let user change blueprint permissions
     $gridTemplate = $this->templates->get('pg_blueprint');
     if ($gridTemplate && $gridTemplate->useRoles != 1) {
@@ -684,7 +692,6 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
   public function pageAddForm($event) {
     // Retrieve the form
     $form = $event->return;
-
     // Retrieve GET input "parent_id"
     $parentIdInput = $this->wire('input')->get['parent_id'];
     // Sanitize GET input
@@ -712,6 +719,9 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
         $file = $this->config->paths->templates . 'blocks/' .  $t->name . '.php';
         $fileModule = $this->config->paths->siteModules . 'PageGridBlocks/blocks/' . $t->name . '.php';
         $isBlock = 0;
+
+        //allways filter out pg_container
+        if ($t->name == 'pg_container') unset($templates[$key]);
 
         if (file_exists($file)) $isBlock = 1;
         if (file_exists($fileModule)) $isBlock = 1;
@@ -782,7 +792,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     $event->return = $form;
   }
 
-  public function enableInlineEditFile($out) {
+  public function enableInlineEditFile($out, $pRender) {
 
     $editRegionTag = 'pg-edit';
     $hasEditTags = strpos($out, "<$editRegionTag") !== false; // i.e. <edit title>
@@ -806,11 +816,13 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
       foreach ($tags as $tag) {
         $pId = $tag->getAttribute('page');
         $f = $tag->getAttribute('field');
+        // $pRenderId = $tag->getAttribute('render');
+
         $p = wire('pages')->get($pId);
 
         //get uploader markup
         if ($p && $f && $p->id && $p->hasField($f)) {
-          $uploaderString = $this->modules->get('InputfieldPageGrid')->renderFileUploader($p, $f);
+          $uploaderString = $this->modules->get('InputfieldPageGrid')->renderFileUploader($p, $f, $pRender);
           libxml_use_internal_errors(true);
           $uploader = new \DOMDocument;
           $uploader->loadHTML('<html>' . $uploaderString . '</html>', LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
@@ -1100,6 +1112,16 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
       $this->form->prepend($f);
     }
 
+    if ($page->name == 'pg-animations') {
+      $childrenPageList = $this->form->get('ChildrenPageList');
+      $childrenPageList->addClass('pg-animation-list-wrap', 'wrapClass');
+
+      $f = $this->modules->get('InputfieldMarkup');
+      $f->id = 'stylelist-intro';
+      $f->value = "<style>#stylelist-intro{margin-top:0;}</style><p class='description'>An overview of all the animations you’ve created on your site.</p>";
+      $this->form->prepend($f);
+    }
+
     $this->form->appendMarkup = "
     <script>
     function loadChildrenTab() {
@@ -1107,6 +1129,11 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     }
 </script>
 ";
+
+    //remove children/page label
+    $childrenInputfield = $this->form->get('ProcessPageEditChildren');
+    $childrenList = $childrenInputfield->get('ChildrenPageList');
+    $childrenList->label = '';
   }
 
   //reinit PageFrontEdit for ajax items
@@ -1221,7 +1248,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
       $valid = 1;
     }
 
-    if($hash == '8faa4c9ae8583dce18bf41217689ed33') {
+    if ($hash == '8faa4c9ae8583dce18bf41217689ed33') {
       return 1;
     }
 

@@ -74,7 +74,7 @@ if ($this->modules->get('InputfieldTextTags')) {
   $field = $this->modules->get('InputfieldMarkup');
   $field->addClass('pg-show-classlist', 'wrapClass');
   $field->value = "<a href='#' class='pg-edit' data-url='./?id=$classParent->id&modal=1&pgmodal=1&pgchildren=1&pghidesettings=1&pghidechildsorting=1&pgnoadd=1' data-title='Style Selectors'><i class='fa fa-gear pw-nav-icon'></i></a>";
-  createTooltip($field, "Open the style selector manager. To manage all your classes and tags in one place.");
+  createTooltip($field, "Open the style selector manager. To manage all your classes and tags in one place.", "bottom");
   $fieldset->append($field);
 }
 
@@ -1458,10 +1458,10 @@ $settings = $tabs . '<div class="pg-sticky pg-interactions-wrapper">' . $interac
 // END SETTINGS ------
 
 // helper function to create uikit tooltip
-function createTooltip($field, $text = '') {
+function createTooltip($field, $text = '', $position = 'top') {
   $configInterface = wire('modules')->getConfig('FieldtypePageGrid')['interface'] ? wire('modules')->getConfig('FieldtypePageGrid')['interface'] : [];
   $showTooltips = in_array('showToolTips', $configInterface);
-  if ($showTooltips) $field->wrapAttr("data-tooltip", "title: $text; pos:top; delay:300;");
+  if ($showTooltips) $field->wrapAttr("data-tooltip", "title: $text; pos: $position; delay:300;");
 }
 
 function createUnitField($name, $label = '', $width = 100, $icon = '', $lastUnit = '', $placeholder = '', $nameAdd = '') {
