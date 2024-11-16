@@ -610,7 +610,7 @@ class ProcessPageGrid extends Process {
             //     $p = $p->parent();
             // }
 
-            bd($p);
+            // bd($p);
 
             $p->meta()->set('pg_ajax', true);
             $response = array(
@@ -621,7 +621,7 @@ class ProcessPageGrid extends Process {
             );
             $p->meta()->set('pg_ajax', false);
 
-            bd($response);
+            // bd($response);
 
             return (json_encode($response));
         }
