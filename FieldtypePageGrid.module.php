@@ -16,7 +16,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID'),
       'summary' => __('Commercial page builder module that renders block templates and adds drag and drop functionality in admin.', __FILE__),
-      'version' => '2.1.64',
+      'version' => '2.1.65',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -460,6 +460,15 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
       $gridTemplate->save();
     }
 
+    //force inlineLimitPage setting for core PageFrontEdit module
+    if ($this->modules->isInstalled('PageFrontEdit')) {
+      $configCore = $this->modules->getConfig('PageFrontEdit');
+      if ($configCore['inlineLimitPage'] != '0') {
+        $configCore['inlineLimitPage'] = '0';
+        $this->modules->saveConfig('PageFrontEdit', $configCore);
+      }
+    }
+
     $this->addHookAfter("Modules::refresh", $this, "createModule");
     $this->addHookAfter('Pages::cloned', $this, "clone");
     $this->addHookBefore('Page::changed(0:title)', $this, "titleChanged");
@@ -471,7 +480,6 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     $this->addHookAfter("ProcessPageEdit::buildForm", $this, "modalEdit");
     $this->addHookAfter('ProcessPageAdd::buildForm', $this, "pageAddForm");
     $this->addHookBefore('ProcessPageEdit::execute', $this, 'blueprintReady');
-
     $this->addHookAfter('ProcessTemplate::executeAdd', $this, "addTemplate");
     $this->addHookBefore('ProcessTemplate::buildEditForm', $this, "setTemplateFile");
     $this->addHookBefore('ProcessTemplate::getListTableRow', $this, "setTemplateFile");

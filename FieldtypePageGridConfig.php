@@ -701,6 +701,13 @@ class FieldtypePageGridConfig extends ModuleConfig {
 			$wrapper->append($f);
 		}
 		//END new remove fields for non-superusers if LimitedModuleEdit is installed
+		if (isset($_GET['downloadBlocks'])) {
+			$wrapper = new InputfieldWrapper();
+			$f = $this->modules->get('InputfieldMarkup');
+			$f->name = 'downloadNotice';
+			$f->value = "<h2><div uk-spinner></div> Downloading Blocks…</h2>";
+			$wrapper->append($f);
+		}
 
 		return $wrapper;
 	}
@@ -716,6 +723,9 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		if (isset($_GET['downloadBlocks'])) {
 			$this->downloadModule('PageGridBlocks');
 			$downloaded = 1;
+			$moduleSettingsLink = $this->config->urls->admin . 'module/edit?name=FieldtypePageGrid&collapse_info=1';
+			header("refresh: 5; url=$moduleSettingsLink");
+			
 			// if (!$installed) $this->modules->install('PageGridBlocks');
 		}
 
