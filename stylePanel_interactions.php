@@ -27,7 +27,7 @@ if ($this->modules->get('InputfieldTextTags')) {
     $field->addClass('label-left', 'wrapClass');
     $field->name = '--pg-animation';
     $field->columnWidth = 100;
-    $field->attr('placeholder', 'Type to add animation…');
+    $field->attr('placeholder', 'Type to create an animation…');
     createTooltip($field, 'To <strong>create an animation</strong> type a name in the animation field and press the "return" key. <br><br>To <strong>delete an animation</strong>, right click on an animation and select "delete animation". <br><br>To <strong>reuse an animation</strong> add the animation to other elements.');
     $fieldset->append($field);
 

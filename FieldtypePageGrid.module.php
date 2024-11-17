@@ -16,7 +16,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID'),
       'summary' => __('Commercial page builder module that renders block templates and adds drag and drop functionality in admin.', __FILE__),
-      'version' => '2.1.65',
+      'version' => '2.1.66',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -1096,11 +1096,21 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
   public function modalEdit($event) {
 
     if ($this->process != 'ProcessPageEdit') return;
-    if (isset($_GET['pgmodal']) == 0) return;
 
     $this->ppe = $event->object;
     $this->form = $event->return;
     $page = $this->ppe->getPage();
+
+    //remove pg_container and pg_blueprint templates from page settings select
+    $settingsTab = $this->form->find("id=ProcessPageEditSettings")->first();
+    if ($settingsTab && $page->template != 'pg_container' && $page->template != 'pg_blueprint') {
+      foreach ($settingsTab->template->options as $key => $value) {
+        if ($value == 'pg_container' || $value == 'pg_blueprint') $this->form->find("id=ProcessPageEditSettings")->first()->template->removeOption($key);
+      }
+    }
+
+    //pg modal specifics
+    if (isset($_GET['pgmodal']) == 0) return;
 
     //add css to modal
     $this->form->prependFile = $this->config->styles->add($this->config->urls->InputfieldPageGrid . "css/main.css");
