@@ -332,7 +332,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 				}
 			}
 
-			$fieldset->add($f);
+			if ($this->user->isSuperuser()) $fieldset->add($f);
 		}
 
 		//-------------------------------------------------------
@@ -690,9 +690,10 @@ class FieldtypePageGridConfig extends ModuleConfig {
 			$wrapper->remove('inlineSettings');
 			$wrapper->remove('deleteFields');
 
-			foreach ($this->fields->find('type=FieldtypePageGrid') as $pgf) {
-				$wrapper->remove('fieldSettings_' . $pgfId);
-			}
+			//hide field settings
+			// foreach ($this->fields->find('type=FieldtypePageGrid') as $pgf) {
+			// 	$wrapper->remove('fieldSettings_' . $pgfId);
+			// }
 
 			//hide module info
 			$f = $this->modules->get('InputfieldMarkup');
