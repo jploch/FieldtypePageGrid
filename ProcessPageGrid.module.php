@@ -18,7 +18,7 @@ class ProcessPageGrid extends Process {
             'icon' => 'th',
             'requires' => array('FieldtypePageGrid'),
             'installs' => array('FieldtypePageGrid', 'InputfieldPageGrid', 'PageFrontEdit', 'ProcessPageClone'),
-            'version' => '0.0.3',
+            'version' => '0.0.4',
             'useNavJSON' => true,
             'permission' => 'pagegrid-process',
             // page that you want created to execute this module
@@ -612,11 +612,14 @@ class ProcessPageGrid extends Process {
 
             // bd($p);
 
+            $markup = $fileRelativePath . $filename;
+            if($pRender->id) $markup = $this->modules->get('InputfieldPageGrid')->renderItem($pRender);
+
             $p->meta()->set('pg_ajax', true);
             $response = array(
                 'newPageClass' => $pRender->name,
                 'newChildPageClass' => $p->name,
-                'markup' => $this->modules->get('InputfieldPageGrid')->renderItem($pRender),
+                'markup' => $markup,
                 'message' => ''
             );
             $p->meta()->set('pg_ajax', false);

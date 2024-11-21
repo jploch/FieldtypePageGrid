@@ -873,7 +873,7 @@ $parentPageId = (int) wire('input')->get('id');
 $field = $this->modules->get('InputfieldMarkup');
 $field->label = 'List Image';
 $field->addClass('label-left', 'wrapClass');
-$field->value = '<div class="setting pg-file-picker pg-file-picker- pg-style-panel">
+$field->value = '<div class="setting pg-file-picker pg-file-picker-stylepanel">
                       <div class="settings_wrap">
                         <div class="drop_target">
                           <div class="input_button"></div>
@@ -1043,7 +1043,7 @@ $parentPageId = (int) wire('input')->get('id');
 $field = $this->modules->get('InputfieldMarkup');
 $field->label = 'Image';
 $field->addClass('label-left', 'wrapClass');
-$field->value = '<div class="setting pg-file-picker pg-file-picker- pg-style-panel">
+$field->value = '<div class="setting pg-file-picker pg-file-picker-stylepanel">
                       <div class="settings_wrap">
                         <div class="drop_target">
                           <div class="input_button"></div>
