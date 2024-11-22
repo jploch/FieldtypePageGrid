@@ -793,6 +793,21 @@ $field->addClass('label-left', 'wrapClass');
 $field->columnWidth = 100;
 $fieldsetSub->append($field);
 
+// text column
+$field = $this->modules->get('InputfieldInteger');
+$field->inputType = "number";
+$field->label = 'Text Columns';
+$field->name = 'column-count';
+$field->attr('placeholder', '1');
+$field->addClass('label-left', 'wrapClass');
+$field->columnWidth = 50;
+$field->min = 0;
+$fieldsetSub->append($field);
+
+// text column gap
+$field = createUnitField('column-gap', 'Column Gap', 50, '', '', '15');
+$fieldsetSub->append($field);
+
 // text-decoration
 $field = $this->modules->get('InputfieldSelect');
 $field->name = "text-transform";

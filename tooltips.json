@@ -204,13 +204,13 @@
       "Description": "Specifies the color of text in an element."
    },
    "column-count": {
-      "Description": "Divides an element into the specified number of columns."
+      "Description": "Divides a text into the specified number of columns."
    },
    "column-fill": {
       "Description": "Specifies how divided columns are filled."
    },
    "column-gap": {
-      "Description": "Specifies the space between divided columns."
+      "Description": "Specifies the space between divided text columns."
    },
    "row-gap": {
       "Description": "Specifies the space between divided rows."
