@@ -16,13 +16,13 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID'),
       'summary' => __('Commercial page builder module that renders block templates and adds drag and drop functionality in admin.', __FILE__),
-      'version' => '2.1.71',
+      'version' => '2.1.72',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
       'installs' => array('InputfieldPageGrid', 'ProcessPageGrid', 'PageFrontEdit', 'ProcessPageClone'),
       'requires' => array('ProcessWire>=3.0.210', 'PHP>=5.4.0'),
-      'autoload' => true,
+      'autoload' => 'template=admin',
       'permissions' => array(
         'pagegrid-process' => 'Allow PAGEGRID to process ajax calls',
         'page-pagegrid-edit' => 'Edit PAGEGRID items in modal (applies to all editable templates)',
