@@ -543,12 +543,26 @@ class InputfieldPageGrid extends Inputfield {
 
     public function renderItem($p) {
 
+        $backend = $this->isBackend();
+        $layout = '';
+
         //check if symbol page was found
         $pOriginal = $p; // set original as data attribute later to be able to convert back
         if ($p->meta('pg_symbol') !== null && $p->meta('pg_symbol')) {
             $symbolId = $p->meta('pg_symbol');
             $symbol = $this->pages->get($symbolId);
+
             if ($symbol && $symbol->id && $symbol->parent->name === 'pg-symbols') {
+
+                // fix: check if there is the same symbol inside this symbol creating a death loop
+                // JS should prevents this, but just in case something goes wrong
+                if ($backend) {
+                    foreach ($symbol->find('') as $child) {
+                        if ($child->meta('pg_symbol') == $symbolId) $child->delete(true);
+                    }
+                }
+                // END fix: check if there is the same symbol inside this symbol creating a death loop 
+
                 $p = $symbol;
             } else {
                 //if no symbol page found remove reference
@@ -564,10 +578,6 @@ class InputfieldPageGrid extends Inputfield {
             $p->template->tags = 'Blocks';
             $p->template->save();
         }
-
-        $backend = $this->isBackend();
-
-        $layout = '';
 
         $layoutTitle = $p->template->label ? $p->template->label : $p->template->name;
         //            $layoutTitle = wireIconMarkup( $p->template->icon ) . ' ' . $p->title;
