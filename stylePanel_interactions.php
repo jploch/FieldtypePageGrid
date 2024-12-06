@@ -20,27 +20,26 @@ $interactions->append($fieldset);
 
 // animations
 if ($this->modules->get('InputfieldTextTags')) {
-    $field = $this->modules->get('InputfieldTextTags');
-    $field->allowUserTags = true;
-    $field->delimiter = 'c';
-    $field->set('label', __('Animation'));
-    $field->addClass('label-left', 'wrapClass');
-    $field->name = '--pg-animation';
-    $field->columnWidth = 100;
-    $field->attr('placeholder', 'Type to create an animation…');
-    createTooltip($field, 'To <strong>create an animation</strong> type a name in the animation field and press the "return" key. <br><br>To <strong>delete an animation</strong>, right click on an animation and select "delete animation". <br><br>To <strong>reuse an animation</strong> add the animation to other elements.');
-    $fieldset->append($field);
+  $field = $this->modules->get('InputfieldTextTags');
+  $field->allowUserTags = true;
+  $field->delimiter = 'c';
+  $field->set('label', __('Animation'));
+  $field->addClass('label-left', 'wrapClass');
+  $field->name = '--pg-animation';
+  $field->columnWidth = 100;
+  $field->attr('placeholder', 'Type to create an animation…');
+  createTooltip($field, 'To <strong>create an animation</strong> type a name in the animation field and press the "return" key. <br><br>To <strong>delete an animation</strong>, right click on an animation and select "delete animation". <br><br>To <strong>reuse an animation</strong> add the animation to other elements.');
+  $fieldset->append($field);
 
-    $animationParent = $this->pages->get('name=pg-animations, template=pg_container');
-    $field = $this->modules->get('InputfieldMarkup');
-    $field->addClass('pg-show-classlist', 'wrapClass');
-    $field->value = "<a href='#' class='pg-edit' data-url='./?id=$animationParent->id&modal=1&pgmodal=1&pgchildren=1&pghidesettings=1&pghidechildsorting=1&pgnoadd=1' data-title='Animations'><i class='fa fa-gear pw-nav-icon'></i></a>";
-    createTooltip($field, "Open the animation manager. To manage all your animations in one place.", "bottom");
-    $fieldset->append($field);
+  $animationParent = $this->pages->get('name=pg-animations, template=pg_container');
+  $field = $this->modules->get('InputfieldMarkup');
+  $field->addClass('pg-show-classlist', 'wrapClass');
+  $field->value = "<a href='#' class='pg-edit' data-url='./?id=$animationParent->id&modal=1&pgmodal=1&pgchildren=1&pghidesettings=1&pghidechildsorting=1&pgnoadd=1' data-title='Animations'><i class='fa fa-gear pw-nav-icon'></i></a>";
+  createTooltip($field, "Open the animation manager. To manage all your animations in one place.", "bottom");
+  $fieldset->append($field);
+}
 
-  }
-
-  // Event
+// Event
 $field = $this->modules->get('InputfieldSelect');
 $field->name = 'pg-animation-event';
 $field->label = $this->_("Event");
@@ -63,6 +62,7 @@ $field->name = 'data-animation-keyframes';
 $field->addClass('label-left', 'wrapClass');
 $field->value = '<div class="range-multi range-add range-keyframes" data-unit="%" min="0" max="100"><output class="bubble" data-unit="%"></output></div>';
 $field->columnWidth = 100;
+createTooltip($field, 'Play animation');
 $fieldset->append($field);
 
 //options
@@ -131,6 +131,7 @@ $field->addClass('label-left', 'wrapClass');
 $field->min = 0;
 $field->max = 99;
 // $field->columnWidth = 50;
+createTooltip($field, 'Duration of the animation in seconds.');
 $fieldset2->append($field);
 
 //scroll duration
@@ -179,13 +180,14 @@ $field->attr('step', '0.1');
 $field->addClass('label-left', 'wrapClass');
 $field->min = 0;
 $field->max = 99;
+createTooltip($field, 'Delay of the animation in seconds. If you choose multiple targets you can use the delay value to create a stagger animation.');
 // $field->columnWidth = 50;
 $fieldset2->append($field);
 
 //animation-iteration-count
 $field = $this->modules->get('InputfieldSelect');
 $field->name = 'animation-iteration-count';
-$field->label = $this->_("Repeat");
+$field->label = 'Repeat';
 $field->addClass('label-left', 'wrapClass');
 $field->addOption("1", "1");
 $field->addOption("2", "2");
@@ -193,6 +195,7 @@ $field->addOption("3", "3");
 $field->addOption("4", "4");
 $field->addOption("5", "5");
 $field->addOption("infinite", "infinite");
+createTooltip($field, 'Controls how often the animation is played.');
 $field->columnWidth = 100;
 $fieldset2->append($field);
 
@@ -204,6 +207,7 @@ $field->addClass('label-left', 'wrapClass');
 $field->addOption("true", "true");
 $field->addOption("false", "false");
 $field->columnWidth = 100;
+createTooltip($field, 'If this is set to true the animation will be played backwards on the second interaction.');
 $fieldset2->append($field);
 
 //prevent default (click)
@@ -213,6 +217,7 @@ $field->label = $this->_("Prevent default event");
 $field->addClass('label-left', 'wrapClass');
 $field->addOption("true", "true");
 $field->addOption("false", "false");
+createTooltip($field, 'Prevent the browser to load link urls on the selected element, when clicked/touched.');
 $field->columnWidth = 100;
 $fieldset2->append($field);
 
@@ -221,30 +226,17 @@ $field = $this->modules->get('InputfieldSelect');
 $field->name = 'animation-timing-function';
 $field->label = $this->_("Easing");
 $field->addClass('label-left', 'wrapClass');
-$field->addOption("linear", "linear");
-$field->addOption("ease", "ease");
-$field->addOption("ease-in", "ease in");
-$field->addOption("ease-out", "ease out");
+addEasingOptions($field);
+createTooltip($field, 'Apply easing to the entire animation.');
+$fieldset2->append($field);
 
-$field->addOption("cubic-bezier(0.32, 0, 0.67, 0)", "ease in cubic");
-$field->addOption("cubic-bezier(0.33, 1, 0.68, 1)", "ease out cubic");
-$field->addOption("cubic-bezier(0.65, 0, 0.35, 1)", "ease in/out cubic");
-
-$field->addOption("cubic-bezier(0.5, 0, 0.75, 0)", "ease in quart");
-$field->addOption("cubic-bezier(0.25, 1, 0.5, 1)", "ease out quart");
-$field->addOption("cubic-bezier(0.76, 0, 0.24, 1)", "ease in/out quart");
-
-$field->addOption("cubic-bezier(0.64, 0, 0.78, 0)", "ease in quint");
-$field->addOption("cubic-bezier(0.22, 1, 0.36, 1)", "ease out quint");
-$field->addOption("cubic-bezier(0.83, 0, 0.17, 1)", "ease in/out quint");
-
-$field->addOption("cubic-bezier(0.7, 0, 0.84, 0)", "ease in expo");
-$field->addOption("cubic-bezier(0.16, 1, 0.3, 1)", "ease out expo");
-$field->addOption("cubic-bezier(0.87, 0, 0.13, 1)", "ease in/out expo");
-
-$field->addOption("cubic-bezier(0.55, 0, 1, 0.45)", "ease in circ");
-$field->addOption("cubic-bezier(0, 0.55, 0.45, 1)", "ease out circ");
-$field->addOption("cubic-bezier(0.85, 0, 0.15, 1)", "ease in/out circ");
+//keyframe animation-timing-function (easing)
+$field = $this->modules->get('InputfieldSelect');
+$field->name = 'keyframe-animation-timing-function';
+$field->label = 'Keyframe Easing';
+$field->addClass('label-left', 'wrapClass');
+addEasingOptions($field);
+createTooltip($field, 'Apply easing to the selected keyframe segment.');
 $fieldset2->append($field);
 
 //scroll timing
@@ -273,6 +265,8 @@ $field->addOption("expoInOut", "ease in/out expo");
 $field->addOption("circIn", "ease in circ");
 $field->addOption("circOut", "ease out circ");
 $field->addOption("circInOut", "ease in/out circ");
+
+createTooltip($field, 'Apply easing to the scroll animation.');
 $fieldset2->append($field);
 
 //scroll offset start
@@ -293,3 +287,29 @@ $fieldset2->append($field);
 // $field->columnWidth = 100;
 // $fieldset->append($field);
 
+function addEasingOptions($field) {
+  $field->addOption("linear", "linear");
+  $field->addOption("ease", "ease");
+  $field->addOption("ease-in", "ease in");
+  $field->addOption("ease-out", "ease out");
+
+  $field->addOption("cubic-bezier(0.32, 0, 0.67, 0)", "ease in cubic");
+  $field->addOption("cubic-bezier(0.33, 1, 0.68, 1)", "ease out cubic");
+  $field->addOption("cubic-bezier(0.65, 0, 0.35, 1)", "ease in/out cubic");
+
+  $field->addOption("cubic-bezier(0.5, 0, 0.75, 0)", "ease in quart");
+  $field->addOption("cubic-bezier(0.25, 1, 0.5, 1)", "ease out quart");
+  $field->addOption("cubic-bezier(0.76, 0, 0.24, 1)", "ease in/out quart");
+
+  $field->addOption("cubic-bezier(0.64, 0, 0.78, 0)", "ease in quint");
+  $field->addOption("cubic-bezier(0.22, 1, 0.36, 1)", "ease out quint");
+  $field->addOption("cubic-bezier(0.83, 0, 0.17, 1)", "ease in/out quint");
+
+  $field->addOption("cubic-bezier(0.7, 0, 0.84, 0)", "ease in expo");
+  $field->addOption("cubic-bezier(0.16, 1, 0.3, 1)", "ease out expo");
+  $field->addOption("cubic-bezier(0.87, 0, 0.13, 1)", "ease in/out expo");
+
+  $field->addOption("cubic-bezier(0.55, 0, 1, 0.45)", "ease in circ");
+  $field->addOption("cubic-bezier(0, 0.55, 0.45, 1)", "ease out circ");
+  $field->addOption("cubic-bezier(0.85, 0, 0.15, 1)", "ease in/out circ");
+}
