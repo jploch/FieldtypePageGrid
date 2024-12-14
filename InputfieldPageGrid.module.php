@@ -368,7 +368,7 @@ class InputfieldPageGrid extends Inputfield {
         $addItems = '';
 
         if (!$getSymbolsOnly) {
-            $addItems = '<div data-field=' . $this->name . ' class="pg-add-container pg-add-container-' . $this->name . '"><div class="pg-add-tabs"><div class="pg-add-tab pg-add-tab-items pg-add-tab-active"><i class="fa fw fa-th-large" title="fa-th-large"></i></div><div class="pg-add-tab pg-add-tab-symbols"><i class="fa fw fa-cube"></i></div></div><div class="pg-add-content">';
+            $addItems = '<div data-field=' . $this->name . ' class="pg-add-container pg-add-container-' . $this->name . '"><div class="pg-add-tabs"><div class="pg-add-tab pg-add-tab-items pg-add-tab-active"><i class="fa fw fa-th-large" title="fa-th-large"></i></div><div class="pg-add-tab pg-add-tab-symbols" uk-tooltip="title:Symbols; pos:right; delay:300;"><i class="fa fw fa-cube"></i></div></div><div class="pg-add-content">';
             foreach ($this->rowTemplates as $template) {
                 /** @var Template $template */
 

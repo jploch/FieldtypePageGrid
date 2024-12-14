@@ -543,7 +543,8 @@ class ProcessPageGrid extends Process {
             $clone = $this->pages->clone($p);
             $templateName = str_replace('_', '-', $p->template->name);
             $clone->name = $templateName . '-' . $clone->id; //generate unique name to support multiple symbold on same page
-            $clone->title = $templateName . '-' . $clone->id;
+            // $clone->title = $templateName . '-' . $clone->id;
+            $clone->title = $p->title;
             $clone->parent = $parent;
             $clone->save();
 
