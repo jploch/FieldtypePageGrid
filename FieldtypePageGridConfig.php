@@ -195,6 +195,10 @@ class FieldtypePageGridConfig extends ModuleConfig {
 
 		//add js for font uploader and to save collapsed states
 		$this->config->scripts->add($this->config->urls->FieldtypePageGrid . "js/FieldtypePageGridConfig.js'");
+		$this->config->scripts->add($this->config->urls->FieldtypePageGrid . "prism.js'");
+		$this->config->styles->add($this->config->urls->FieldtypePageGrid . "css/prism.css'");
+		$this->config->styles->add($this->config->urls->FieldtypePageGrid . "css/prism-vs.css'");
+		
 
 		$wrapper = new InputfieldWrapper();
 		$valid = $this->modules->get('FieldtypePageGrid')->setup();
@@ -644,12 +648,15 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		$f->rows = 4;
 		$f->collapsed(in_array($f->name, $collapsed) || $this->customStyles == '' ? 1 : 0);
 		$f->attr("onclick", "this.style.height = ''; this.style.height = this.scrollHeight +'px'"); // auto resize height based on content
-		$f->attr("oninput", "this.style.height = ''; this.style.height = this.scrollHeight +'px'"); // auto resize height based on content
 		$f->attr('style', 'font-family: monospace;');
 		$f->columnWidth('100');
 		$f->themeOffset = 1;
 		$f->icon = 'code';
 		$f->value($this->sanitizer->text($this->customStyles));
+		$f->attr('oninput', 'update(this.value, this); sync_scroll(this);');
+		$f->attr('onscroll', 'sync_scroll(this);');
+		$f->attr('onkeydown', 'check_tab(this, event);');
+		$f->addClass('input-prism');
 		$wrapper->append($f);
 
 		//custom js
@@ -660,12 +667,16 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		$f->rows = 4;
 		$f->collapsed(in_array($f->name, $collapsed) || $this->customScript == '' ? 1 : 0);
 		$f->attr("onclick", "this.style.height = ''; this.style.height = this.scrollHeight +'px'"); // auto resize height based on content
-		$f->attr("oninput", "this.style.height = ''; this.style.height = this.scrollHeight +'px'"); // auto resize height based on content
+		// $f->attr("oninput", "this.style.height = ''; this.style.height = this.scrollHeight +'px'"); // auto resize height based on content
 		$f->attr('style', 'font-family: monospace;');
 		$f->columnWidth('100');
 		$f->themeOffset = 1;
 		$f->icon = 'code';
 		$f->value($this->sanitizer->text($this->customScript));
+		$f->attr('oninput', 'update(this.value, this); sync_scroll(this);');
+		$f->attr('onscroll', 'sync_scroll(this);');
+		$f->attr('onkeydown', 'check_tab(this, event);');
+		$f->addClass('input-prism');
 		$wrapper->append($f);
 
 		//custom uninstall even if field still exists
@@ -726,7 +737,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 			$downloaded = 1;
 			$moduleSettingsLink = $this->config->urls->admin . 'module/edit?name=FieldtypePageGrid&collapse_info=1';
 			header("refresh: 5; url=$moduleSettingsLink");
-			
+
 			// if (!$installed) $this->modules->install('PageGridBlocks');
 		}
 

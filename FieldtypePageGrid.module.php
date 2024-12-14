@@ -16,7 +16,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID'),
       'summary' => __('Commercial page builder module that renders block templates and adds drag and drop functionality in admin.', __FILE__),
-      'version' => '2.1.77',
+      'version' => '2.1.78',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -1114,6 +1114,12 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
 
     //add css to modal
     $this->form->prependFile = $this->config->styles->add($this->config->urls->InputfieldPageGrid . "css/main.css");
+
+    if ($page->template->name == 'pg_code') {
+      $this->form->prependFile = $this->config->styles->add($this->config->urls->InputfieldPageGrid . "css/prism.css");
+      $this->form->prependFile = $this->config->styles->add($this->config->urls->InputfieldPageGrid . "css/prism-vs.css");
+      $this->form->prependFile = $this->config->scripts->add($this->config->urls->InputfieldPageGrid . "prism.js");
+    }
 
     if (count($page->fields) > 1) return;
 

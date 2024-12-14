@@ -325,6 +325,7 @@ class InputfieldPageGrid extends Inputfield {
         //loading animation
         $renderMarkup .= '<div class="pg-loading"><div class="fa fa-spin fa-spinner fa-fw"></div></div>';
         //container for item header (item header will be moved here with js)
+        $renderMarkup .= $this->renderIconPicker();
         $renderMarkup .= '<div class="pg-item-header-container"></div>';
         $renderMarkup .= '<iframe data-field="' . $this->name . '" id="pg-iframe-canvas-' . $this->name . '" class="pg-iframe-canvas" src="' . wire('pages')->get($parentPageId)->url . '?backend=1&field=' . $this->name . '&page=' . $parentPage->id . '" loading="lazy" frameBorder="0" scrolling="no" style="width:100%; max-height:100vh; border:0;"></iframe>';
         $renderMarkup .= '</div>';
@@ -344,6 +345,18 @@ class InputfieldPageGrid extends Inputfield {
         return $renderMarkup;
     }
 
+    public function renderIconPicker() {
+        $field = $this->modules->get('InputfieldIcon');
+        $field->name = 'pg-icon-picker';
+        $field->label = 'Icon';
+        $field->addClass('pg-icon-picker', 'wrapClass');
+        $scriptUrl = $this->config->urls->modules . 'Inputfield/InputfieldIcon/InputfieldIcon.js';
+        $stylesUrl = $this->config->urls->modules . 'Inputfield/InputfieldIcon/InputfieldIcon.css';
+        $styles = "<link type='text/css' href='$stylesUrl' rel='stylesheet'>";
+        $script = "<script type='text/javascript' src='$scriptUrl'></script>";
+        return '<div class="pg-icon-picker-wrapper">' . $field->render() . '</div>' . $script;
+    }
+
     public function renderAddItemBar($getSymbolsOnly = 0) {
 
         // render the 'Add New' buttons for each template
@@ -355,7 +368,7 @@ class InputfieldPageGrid extends Inputfield {
         $addItems = '';
 
         if (!$getSymbolsOnly) {
-            $addItems = '<div data-field=' . $this->name . ' class="pg-add-container pg-add-container-' . $this->name . '"><div class="pg-add-content">';
+            $addItems = '<div data-field=' . $this->name . ' class="pg-add-container pg-add-container-' . $this->name . '"><div class="pg-add-tabs"><div class="pg-add-tab pg-add-tab-items pg-add-tab-active"><i class="fa fw fa-th-large" title="fa-th-large"></i></div><div class="pg-add-tab pg-add-tab-symbols"><i class="fa fw fa-cube"></i></div></div><div class="pg-add-content">';
             foreach ($this->rowTemplates as $template) {
                 /** @var Template $template */
 
@@ -382,11 +395,28 @@ class InputfieldPageGrid extends Inputfield {
         $linkedPages = implode("|", $linkedPages->fetchAll(\PDO::FETCH_COLUMN, 0));
         $linkedPages = $this->pages->getByIDs($linkedPages);
 
+        //sort symbols
+        $syncedSymbols = new PageArray();
+        $unSyncedSymbols = new PageArray();
+
         foreach ($symbols as $symbol) {
-            if ($symbol->template->icon == '') {
+            $sync = $symbol->meta()->pg_sync === 0 ? 0 : 1;
+            if ($sync) $syncedSymbols->add($symbol);
+            if (!$sync) $unSyncedSymbols->add($symbol);
+        }
+
+        $symbolsSorted = new PageArray();
+        $symbolsSorted->add($syncedSymbols);
+        $symbolsSorted->add($unSyncedSymbols);
+
+        foreach ($symbolsSorted as $symbol) {
+            $sync = $symbol->meta()->pg_sync === 0 ? 0 : 1;
+            $icon = $symbol->meta()->pg_icon ? $symbol->meta()->pg_icon : $symbol->template->icon;
+
+            if (!$icon) {
                 $tIcon = '<div class="pg-iconletter">' . substr($symbol->title, 0, 1) . '</div>';
             } else {
-                $tIcon = wireIconMarkup($symbol->template->icon);
+                $tIcon = wireIconMarkup($icon);
             }
 
             $linkedPagesCount = 0;
@@ -396,7 +426,7 @@ class InputfieldPageGrid extends Inputfield {
                 }
             }
 
-            $addItems .= '<div class="pg-add pg-add-symbol" data-id="' . $symbol->id . '" data-template-id="' . $symbol->template->id . '" template="' . $symbol->template->name . '">' . $tIcon . '<span class="ui-button-text"><span class="pg-symbol-title">' . $symbol->title . '</span><span class="pg-symbol-number">' . $linkedPagesCount . '</span></span></div>';
+            $addItems .= '<div class="pg-add pg-add-symbol" data-sync="' . $sync . '" data-id="' . $symbol->id . '" data-template-id="' . $symbol->template->id . '" template="' . $symbol->template->name . '">' . $tIcon . '<span class="ui-button-text"><span class="pg-symbol-title">' . $symbol->title . '</span><span class="pg-symbol-number">' . $linkedPagesCount . '</span></span></div>';
         }
 
         $addItems .= '</div>';
@@ -860,6 +890,9 @@ class InputfieldPageGrid extends Inputfield {
         //if frontend return empty string
         if (!$this->isBackend()) return $header;
 
+        //disbale inline edit on title field
+        $p->edit(false);
+
         //make sure outpuformatting is on before render
         $p->of(true);
 
@@ -899,6 +932,10 @@ class InputfieldPageGrid extends Inputfield {
             }
             $header .= '</span>';
         }
+
+        //reanable inline edit on title field (if set)
+        $p->edit(true);
+
         return $header;
     }
 

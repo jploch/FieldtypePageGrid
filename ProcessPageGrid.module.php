@@ -222,6 +222,8 @@ class ProcessPageGrid extends Process {
             if (!$p || !$p->id) return;
             $isSymbol = isset($_POST['isSymbol']) ? $_POST['isSymbol'] : 0;
             $isSymbol = json_decode($isSymbol, true);
+            $sync = isset($_POST['sync']) ? $_POST['sync'] : 1;
+            $sync = json_decode($sync, true);
 
             //if no symbol unlink
             if (!$isSymbol) {
@@ -243,12 +245,23 @@ class ProcessPageGrid extends Process {
                 $originalP->save();
                 $originalP->trash();
 
+                //rename children to prevent duplicated classes
+                foreach ($clone->find('') as $cloneItem) {
+                    $cloneItem->of(false);
+                    $templateName = str_replace('_', '-', $cloneItem->template->name);
+                    $cloneItem->title = $templateName . '-' . $cloneItem->id;
+                    $cloneItem->name = $templateName . '-' . $cloneItem->id;
+                    $cloneItem->save();
+                    $cloneItem->of(true);
+                }
+
                 $p = $clone;
             } else {
                 //create symbol
                 $symbolParent = $this->pages->get("name=pg-symbols, template=pg_container");
                 $symbolTitle = isset($_POST['name']) ? $_POST['name'] : $p->title;
                 $symbolName = $this->sanitizer->pageName($symbolTitle, true);
+                $symbolIcon = isset($_POST['icon']) ? $_POST['icon'] : '';
 
                 //clone item page to symbols
                 $clone = $this->pages->clone($p);
@@ -258,7 +271,9 @@ class ProcessPageGrid extends Process {
                 $clone->save();
 
                 //set meta symbol page
-                $p->meta()->set('pg_symbol', $clone->id);
+                if ($sync) $p->meta()->set('pg_symbol', $clone->id);
+                if ($symbolIcon) $clone->meta()->set('pg_icon', $symbolIcon);
+                $clone->meta()->set('pg_sync', $sync);
             }
 
             $css = $this->modules->get('InputfieldPageGrid')->renderStyles($p);
@@ -268,7 +283,7 @@ class ProcessPageGrid extends Process {
             }
 
             $newPageClass = $p->name;
-            if ($clone && $clone->name) $newPageClass = $clone->name;
+            if ($clone && $clone->name && $sync) $newPageClass = $clone->name;
 
             //get symbol markup for add item bar
             $addBar = $this->modules->get('InputfieldPageGrid')->renderAddItemBar(1);
@@ -515,7 +530,7 @@ class ProcessPageGrid extends Process {
             return (json_encode($response));
         }
 
-        if ($type === 'addSymbol' && !empty($pageId)) {
+        if (($type === 'addSymbol' || $type === 'addFromSymbol') && !empty($pageId)) {
 
             $p = $this->pages->get($pageId);
             if (!$p || !$p->id) return;
@@ -526,24 +541,53 @@ class ProcessPageGrid extends Process {
             if (count($parent->parents('name=pg-symbols, template=pg_container'))) return;
 
             $clone = $this->pages->clone($p);
-            $clone->name = $p->template->name . '-' . $clone->id; //generate unique name to support multiple symbold on same page
+            $templateName = str_replace('_', '-', $p->template->name);
+            $clone->name = $templateName . '-' . $clone->id; //generate unique name to support multiple symbold on same page
+            $clone->title = $templateName . '-' . $clone->id;
             $clone->parent = $parent;
             $clone->save();
+
+            // bd($parent);
 
             $insertAfter = $this->sanitizer->int($_POST['insertAfter']);
 
             if (isset($insertAfter) && $insertAfter != 0) {
                 $afterP = $this->pages->get($insertAfter);
                 $this->pages->insertBefore($clone, $afterP);
+                // bd($afterP);
             }
 
+            $newPageClass = $p->name;
+            $pId = $clone->id;
+
             //set meta symbol page
-            $clone->meta()->set('pg_symbol', $p->id);
+            // $clone->meta()->set('pg_symbol', $p->id);
+            if ($type == 'addSymbol') $clone->meta()->set('pg_symbol', $p->id);
+
+            //add non-synced symbols/patterns
+            if ($type == 'addFromSymbol') {
+                $clone->meta()->remove('pg_symbol');
+                $css = $this->modules->get('InputfieldPageGrid')->renderStyles($clone);
+
+                foreach ($clone->find('') as $cloneItem) {
+                    $cloneItem->of(false);
+                    $templateName = str_replace('_', '-', $cloneItem->template->name);
+                    $cloneItem->title = $templateName . '-' . $cloneItem->id;
+                    $cloneItem->name = $templateName . '-' . $cloneItem->id;
+                    $cloneItem->save();
+                    $cloneItem->of(true);
+                    $cloneItem->meta()->remove('pg_symbol');
+                    $css .= $this->modules->get('InputfieldPageGrid')->renderStyles($cloneItem);
+                }
+                $newPageClass = $clone->name;
+                $pId = $p->id;
+            }
 
             $response = array(
-                'newPageClass' => $p->name,
+                'newPageClass' => $newPageClass,
                 'markup' => $this->modules->get('InputfieldPageGrid')->renderItem($clone),
-                'pageId' => $clone->id
+                'pageId' => $pId,
+                'css' => $css
             );
 
             return (json_encode($response));
@@ -613,7 +657,7 @@ class ProcessPageGrid extends Process {
             // bd($p);
 
             $markup = $fileRelativePath . $filename;
-            if($pRender->id) $markup = $this->modules->get('InputfieldPageGrid')->renderItem($pRender);
+            if ($pRender->id) $markup = $this->modules->get('InputfieldPageGrid')->renderItem($pRender);
 
             $p->meta()->set('pg_ajax', true);
             $response = array(
