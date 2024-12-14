@@ -922,7 +922,7 @@ class InputfieldPageGrid extends Inputfield {
                 //lock
                 $header .= '<pg-item-header-button class="pg-lock" href="#"><i class="fa fa-lock" title="' . $this->_('Unlock') . '"></i><i class="fa fa-unlock" title="' . $this->_('Lock') . '"></i></pg-item-header-button>';
             }
-            if ($user->isSuperuser() && $isPgPage && !$this->modules->isInstalled('PageGridDemoMode')) {
+            if (($user->isSuperuser() || $user->hasRole('pagegrid-admin') || $user->hasRole('pagegrid-designer')) && $isPgPage) {
                 //symbol
                 $header .= '<pg-item-header-button class="pg-symbol" title="' . $this->_('Create Symbol') . '" href="#"><i class="fa fw fa-cube"></i></pg-item-header-button>';
             }
