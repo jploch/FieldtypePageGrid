@@ -460,6 +460,14 @@ class InputfieldPageGrid extends Inputfield {
 
         if (!$itemsParent->id) return;
         if (!$field) $field = $mainPage->fields->get('type=FieldtypePageGrid'); //if no argument get first field
+
+        //the blueprint template has no pg fields, so we check the field container page, if no specific field is called
+        if (!$field && $mainPage->template->name == 'pg_blueprint') {
+            $fieldPage = $itemsParent->get('template=pg_container');
+            $fId = str_replace('pg-', '', $fieldPage->name);
+            $field = $this->fields->get("id=$fId, type=FieldtypePageGrid");
+        }
+
         if (!$field || !$field->id) return;
 
         //NEW support for multiple fields
@@ -621,6 +629,11 @@ class InputfieldPageGrid extends Inputfield {
             //look inside module block folder
             $templateFilename = $this->config->paths->siteModules . 'PageGridBlocks/blocks/' . $template_name . $ext;
         }
+
+        //look inside site/templates folder if no block file found (might no be a good idea?)
+        // if (file_exists($templateFilename) == 0) {
+        //     $templateFilename = $this->config->paths->templates . $template_name . $ext;
+        // }
 
         if (file_exists($templateFilename) == 0) {
             return false;
@@ -1662,7 +1675,7 @@ class InputfieldPageGrid extends Inputfield {
         $cssMainPage = $this->renderStyles($mainPage);
 
         //render defaults 
-        if ($loadDefaults == 1) {
+        if ($loadDefaults == true) {
             $defaults = include 'styleDefaults.php';
             //minify output
             $defaults = str_replace(array("\r", "\n"), '', $defaults);

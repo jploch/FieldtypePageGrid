@@ -16,7 +16,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID'),
       'summary' => __('Commercial page builder module that renders block templates and adds drag and drop functionality in admin.', __FILE__),
-      'version' => '2.1.81',
+      'version' => '2.1.82',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -407,7 +407,6 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     $this->fuel->set('pagegrid', $this->modules->get('InputfieldPageGrid'));
     $this->addHookAfter('AdminTheme::getExtraMarkup', $this, 'addBodyClasses');
     $this->addHookBefore("PageFrontEdit::getPage", $this, "disableInlineEdit");
-    // $this->addHookAfter('Page::render', $this, 'enableInlineEditFile', ['priority' => 999]);
     $this->config->styles->add($this->config->urls->InputfieldPageGrid . "css/AdminThemeCanvas-fix.css");
     $this->setBlueprintTemplate();
   }
@@ -483,6 +482,10 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     $this->addHookAfter('ProcessTemplate::executeAdd', $this, "addTemplate");
     $this->addHookBefore('ProcessTemplate::buildEditForm', $this, "setTemplateFile");
     $this->addHookBefore('ProcessTemplate::getListTableRow', $this, "setTemplateFile");
+
+    //NEW add bluerint render template select
+    $this->addHookAfter('ProcessTemplate::buildEditForm', $this, 'addCustomTemplateSetting');
+    $this->addHookBefore('ProcessTemplate::executeSave', $this, 'saveCustomTemplateSetting');
 
     //this is needed to keep module and field settings in sync
     $this->addHookAfter('ProcessField::fieldSaved', $this, "updateFieldSettings");
@@ -681,6 +684,39 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     $t->compile = 0; // prevent bug where file compiler caches emtpy file
     // load pages into var to force init page
     $bpPages = $this->pages->find('template=pg_blueprint, include=all');
+  }
+
+  public function addCustomTemplateSetting($event) {
+    if ($this->page->template->name != 'admin') return;
+    $form = $event->return;
+    $template = $this->templates->get($event->arguments('template'));
+
+    // Create a custom Inputfield
+    $bpParent = $this->pages->get('name=pg-blueprints, template=pg_container');
+    $field = $this->modules->get('InputfieldSelect');
+    $field->icon = 'th';
+    $field->attr('id+name', 'blueprint');
+    $field->label = $this->_("PAGEGRID Blueprint");
+    $field->description = 'Select a blueprint, if you want PAGEGRID to render this template. To use this feature follow this [guide](https://page-grid.com/docs/#/developer/templates).';
+    $field->showRootPage = false;
+    $field->collapsed = 2;
+    $field->wrapAttr('style', 'display:none;'); // hide field until docs are ready
+    foreach($bpParent->children() as $bp) {
+      $field->addOption($bp->id, $bp->title);
+    }
+    $field->attr('value', $template->blueprint);
+
+    // Add the field to the form
+    $form->insertAfter($field, 'fieldgroup_fields');
+    // $form->add($field);
+  }
+
+  public function saveCustomTemplateSetting($event) {
+    // $template = $this->templates->get($this->input->id);
+    $template = $this->templates->get($this->input->post->id);
+    $blueprintValue = $this->input->post->blueprint ? $this->input->post->blueprint : null;
+    $template->blueprint = $blueprintValue;
+    // bd($blueprintValue);
   }
 
   //disable inline editor if settings checkbox inlineEditorFrontDisable is checked
