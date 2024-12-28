@@ -1101,7 +1101,7 @@ class InputfieldPageGrid extends Inputfield {
     //add scripts with same name as block file
 
     public function scripts($mainPage, $updateAnimations = false) {
-        $lastItem = null;
+        $arrayFiles = [];
         $jsFiles = "";
         $backend = $this->isBackend();
         $customJs = $this->ft->customScript && !$backend ? '<script>' . $this->ft->customScript . '</script>' : '';
@@ -1142,9 +1142,9 @@ class InputfieldPageGrid extends Inputfield {
             $filename = wire('config')->paths->templates . 'blocks/' . $item->template->name . '.js';
             $filenameUrl = wire('config')->urls->templates . 'blocks/' . $item->template->name . '.js';
 
-            if ($item->template->name !== $lastItem && file_exists($filename)) {
+            if (!in_array($item->template->name, $arrayFiles) && file_exists($filename)) {
                 $jsFiles .= '<script type="text/javascript" src="' . $filenameUrl . '"></script>';
-                $lastItem = $item->template->name;
+                $arrayFiles[] = $item->template->name;
             }
 
             if (file_exists($filename) == 0) {
@@ -1152,9 +1152,9 @@ class InputfieldPageGrid extends Inputfield {
                 $filename = wire('config')->paths->siteModules . 'PageGridBlocks/blocks/' . $item->template->name . '.js';
                 $filenameUrl = wire('config')->urls->siteModules . 'PageGridBlocks/blocks/' . $item->template->name . '.js';
 
-                if ($item->template->name !== $lastItem && file_exists($filename)) {
+                if (!in_array($item->template->name, $arrayFiles) && file_exists($filename)) {
                     $jsFiles .= '<script type="text/javascript" src="' . $filenameUrl . '"></script>';
-                    $lastItem = $item->template->name;
+                    $arrayFiles[] = $item->template->name;
                 }
             }
         }
@@ -1601,10 +1601,10 @@ class InputfieldPageGrid extends Inputfield {
 
     public function styles($mainPage, $loadDefaults = 1, $loadGlobalClasses = 1, $loadFiles = 1, $loadFonts = 1) {
 
+        $arrayFiles = [];
         $itemCss = '';
         $cssBackend = '';
         $backend = $this->isBackend();
-        $lastItem = 0;
         $cssTemplates = '';
         $defaults = '';
         $fonts = '';
@@ -1689,10 +1689,10 @@ class InputfieldPageGrid extends Inputfield {
                 $filename = wire('config')->paths->templates . 'blocks/' . $item->template->name . '.css';
                 $filenameUrl = wire('config')->urls->templates . 'blocks/' . $item->template->name . '.css';
 
-                if ($item->template->name !== $lastItem && file_exists($filename)) {
+                if (!in_array($item->template->name, $arrayFiles) && file_exists($filename)) {
                     $cssTemplates .= '
     <link rel="stylesheet" type="text/css" href="' . $filenameUrl . '">';
-                    $lastItem = $item->template->name;
+                    $arrayFiles[] = $item->template->name;
                 }
 
                 if (file_exists($filename) == 0) {
@@ -1700,10 +1700,10 @@ class InputfieldPageGrid extends Inputfield {
                     $filename = wire('config')->paths->siteModules . 'PageGridBlocks/blocks/' . $item->template->name . '.css';
                     $filenameUrl = wire('config')->urls->siteModules . 'PageGridBlocks/blocks/' . $item->template->name . '.css';
 
-                    if ($item->template->name !== $lastItem && file_exists($filename)) {
+                    if (!in_array($item->template->name, $arrayFiles) && file_exists($filename)) {
                         $cssTemplates .= '
     <link rel="stylesheet" type="text/css" href="' . $filenameUrl . '">';
-                        $lastItem = $item->template->name;
+                        $arrayFiles[] = $item->template->name;
                     }
                 }
             }
