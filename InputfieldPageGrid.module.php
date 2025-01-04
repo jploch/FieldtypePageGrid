@@ -764,41 +764,48 @@ class InputfieldPageGrid extends Inputfield {
         // parse template markup and inssert file uploader
         $templateRender = $parsedTemplate->render();
         $templateRender = $this->ft->enableInlineEditFile($templateRender, $p);
-
-        // PARSE RENDER OPTIONS
-        // parse options set via renderOptions
-        $docHtml = new \DOMDocument();
-        @$docHtml->loadHTML('<?xml encoding="utf-8" ?><html>' . $templateRender . '</html>', LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
-        $tag = $docHtml->getElementsByTagName('pg-data') ? $docHtml->getElementsByTagName('pg-data')[0] : 0;
-        $options = $tag ? json_decode($tag->getAttribute('pg-data-options')) : [];
         $tagNameSaved = $this->getTagName($p);
         $tagName = $tagNameSaved;
         $classes = $this->getCssClasses($p);
         $optionAutoTitle = 1; // deafult enable auto title and puplish of pg items via modal
 
+        // GET RENDER OPTIONS set via block files
+        $options = $p->template->pgOptions ? json_decode($p->template->pgOptions, true) : [];
+
+        //some options we need to access in hooks so we save it as session
+        if ($backend) {
+            $oldSession = $this->session->get('pg_template_' . $p->template->name);
+            $jsonOptions = json_encode($options);
+            if ($oldSession != $jsonOptions) {
+                $this->session->set('pg_template_' . $p->template->name, $jsonOptions);
+                // bd('save');
+            }
+        }
+
         //tagname
-        if ($tag && isset($options->tag)) {
-            $tagName = $this->sanitizer->htmlClass($options->tag);
+        if (isset($options['tag'])) {
+            $tagName = $this->sanitizer->htmlClass($options['tag']);
             $tagName = strtolower($tagName);
+
+            //allow tags to change
+            if (isset($options['tags']) && $tagNameSaved !== 'div') $tagName = $tagNameSaved;
+
             // replace p tag with custom el to prevent nesting bug with <p> and inline editor <div>
             if ($tagName == 'p') {
                 if ($this->user->isLoggedin()) $tagName = 'pg-ptag';
                 if (!$backend && $this->ft->inlineEditorFrontDisable) $tagName = 'p';
             }
-
-            //allow tags to change
-            if (isset($options->tags) && $tagNameSaved !== 'div') $tagName = $tagNameSaved;
         }
 
         //classes
-        if ($tag && isset($options->classes)) {
-            $classNames = $this->sanitizer->htmlClasses($options->classes);
+        if (isset($options['classes'])) {
+            $classNames = $this->sanitizer->htmlClasses($options['classes']);
             $classNames = strtolower($classNames);
             if ($classNames) $classes .= ' ' . $classNames;
         }
 
         //children
-        if ($tag && isset($options->children) && $options->children) {
+        if (isset($options['children']) && $options['children']) {
             if ($backend) {
                 $nestedClasses = 'pg pg-nested pg-droppable ';
             } else {
@@ -806,22 +813,11 @@ class InputfieldPageGrid extends Inputfield {
             }
         }
 
-        if ($tag && isset($options->autoTitle)) {
-            $optionAutoTitle = $options->autoTitle;
+        //autoTitle
+        if (isset($options['autoTitle'])) {
+            $optionAutoTitle = $options['autoTitle'];
         }
-
-        // remove tag from render on frontend
-        // needed for js to get data in backend
-        if ($tag && !$backend) {
-            $dataTag = 'pg-data';
-            $hasOptionTags = strpos($templateRender, "<$dataTag") !== false;
-
-            if ($hasOptionTags) {
-                // remove option tags
-                $templateRender = preg_replace('!</?' . $dataTag . '(?:\s[^>]*>|>)\s*!is', '', $templateRender);
-            }
-        }
-        //END new set render options
+        // END GET RENDER OPTIONS set via block files
 
         //force autonaming/puplishing for all children if only one template selected
         //if autoTitle render option is set to true (default)
@@ -835,7 +831,9 @@ class InputfieldPageGrid extends Inputfield {
         //END force autonaming for all children if only one template selected
 
         if ($backend) {
-            $layout .= '<' . $tagName . ' id="' . $p->name . '" data-id="' . $p->id . '" data-id-original="' . $pOriginal->id . '" class="' . $classes . ' ' . $nestedClasses . $statusClass . '" data-template="' . $p->template->name . '" data-template-label="' . $p->template->label . '" data-field="' . $this->name . '" data-title="' . $p->getUnformatted('title') . '" data-name="' . $p->name . '" ' . $attributes . '>';
+            $renderOptions = json_encode($options, JSON_FORCE_OBJECT);
+            $renderOptionsTags = isset($options['tags']) ? $options['tags'] : '';
+            $layout .= "<" . $tagName . " id='" . $p->name . "' data-id='" . $p->id . "' data-id-original='" . $pOriginal->id . "' class='" . $classes . " " . $nestedClasses . $statusClass . "' data-template='" . $p->template->name . "' data-template-label='" . $p->template->label . "' data-field='" . $this->name . "' data-title='" . $p->getUnformatted('title') . "' data-name='" . $p->name . "' " . $attributes . " data-tags='" . $renderOptionsTags . "' data-pg-options='" . $renderOptions . "'>";
             $layout .= '<pg-icon>' . wireIconMarkup($p->template->icon) . '</pg-icon>';
             $layout .= $header;
             $layout .= $templateRender;
@@ -1849,27 +1847,15 @@ class InputfieldPageGrid extends Inputfield {
         return $p;
     }
 
-    // options gets rendered inside template and read before render
+    // pass options to template file before render
     public function renderOptions($options = []) {
-        if (!$this->isBackend()) return;
-        // if (!isset($options["page"])) return;
-        // $item = $options["page"];
-        // if (!$item->id) return;
-
-        // convert array to json and set as data-atribite
-        $renderOptions = htmlspecialchars(json_encode($options), ENT_QUOTES, 'UTF-8');
-
-        //put tags in data attribute for convenience
-        $tags = '';
-        if (isset($options["tags"])) {
-            $tagsValue = $this->sanitizer->htmlClasses($options["tags"]);
-            $tagsValue = strtolower($tagsValue);
-            $tags = ' data-pg-tags="' . $tagsValue . '"';
+        //set options to template at runtime
+        $templateName = basename(debug_backtrace()[0]['file'], '.php');
+        $t = $this->templates->get($templateName);
+        if ($t->id) {
+            $optionsJson = json_encode($options);
+            $t->pgOptions = $optionsJson;
         }
-
-        // needs echo instead of return
-        // will be processed before render on itemRender()
-        echo '<pg-data class="pg-data" ' . $tags . ' pg-data-options="' . $renderOptions . '"></pg-data>';
     }
 
     //returns grandchildren. needed because of bug. $page->find('') is not returning all pages

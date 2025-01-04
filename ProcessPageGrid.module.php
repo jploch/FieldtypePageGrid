@@ -305,12 +305,20 @@ class ProcessPageGrid extends Process {
             // // // // bd('parent change');
 
             $p = $this->pages->get($_POST['pageId']);
+            $insertAfter = $this->pages->get($_POST['insertAfter']);
             $newParent = $this->pages->get($_POST['newParent']);
             if ($p->id && $newParent->id) {
+                $top = $newParent->children('sort=sort')->first();
                 $p->of(false);
                 $p->parent = $newParent;
                 $p->save();
                 $p->of(true);
+
+                if ($insertAfter->id && $insertAfter->template->name != 'pg_container') {
+                    $this->pages->insertBefore($p, $insertAfter);
+                } else {
+                    if ($top->id) $this->pages->insertBefore($p, $top);
+                }
             }
             return;
         }
@@ -319,6 +327,7 @@ class ProcessPageGrid extends Process {
         // change sort order of groups, sort must be pipe seperated string
         if (!empty($_POST['sort'])) {
 
+            $returnMarkup = $_POST['returnMarkup'];
             $sort = $_POST['sort'];
             $ids = explode('|', $sort);
             $i = 0;
@@ -332,10 +341,17 @@ class ProcessPageGrid extends Process {
             // re-build sort values for children of parent, removing duplicates and gaps needed?
             $first = $this->pages->get($ids[0]);
             if ($first->id) {
-                $this->pages->sort($first->parent(), true);
+                $parent = $first->parent();
+                $this->pages->sort($parent, true);
+                if ($returnMarkup) {
+                    $response = array(
+                        'pageId' => $parent->id,
+                        'markup' => $this->modules->get('InputfieldPageGrid')->renderItem($parent)
+                    );
+                    return (json_encode($response));
+                }
             }
-
-            return;
+            return 0;
         }
         // END change sort order of groups
 

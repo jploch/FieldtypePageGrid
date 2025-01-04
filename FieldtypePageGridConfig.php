@@ -198,7 +198,22 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		$this->config->scripts->add($this->config->urls->FieldtypePageGrid . "prism.js'");
 		$this->config->styles->add($this->config->urls->FieldtypePageGrid . "css/prism.css'");
 		$this->config->styles->add($this->config->urls->FieldtypePageGrid . "css/prism-vs.css'");
-		
+
+		if (isset($_GET['downloadBlocksDialog'])) {
+			$wrapper = new InputfieldWrapper();
+			$downloadLink = $this->config->urls->admin . 'module/edit?name=FieldtypePageGrid&collapse_info=1&downloadBlocks';
+			$cancelLink = $this->config->urls->admin . 'module/edit?name=FieldtypePageGrid&collapse_info=1';
+			$f = $this->modules->get('InputfieldMarkup');
+			$f->name = 'downloadBlockModules';
+			$f->label = 'Download Core Block Modules';
+			$f->description = 'For a quick start click on the download link and select our premade blocks.';
+			$f->icon = 'download';
+			$f->value = "<a class='ui-button ui-state-default ui-priority-secondary' href='$cancelLink'>Cancel</a>";
+			$f->value .= "<a class='ui-button ui-state-default' href='$downloadLink'>Download</a>";
+			$wrapper->add($f);
+			return $wrapper;
+		}
+
 
 		$wrapper = new InputfieldWrapper();
 		$valid = $this->modules->get('FieldtypePageGrid')->setup();
@@ -729,7 +744,12 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		$info = $this->modules->getModuleInfoVerbose('PageGridBlocks');
 		$downloaded = $this->modules->get('PageGridBlocks') ? 1 : 0;
 		$installed = $this->modules->isInstalled('PageGridBlocks');
-		$downloadLink = $this->config->urls->admin . 'module/edit?name=FieldtypePageGrid&collapse_info=1&downloadBlocks';
+		$downloadLink = $this->config->urls->admin . 'module/edit?name=FieldtypePageGrid&collapse_info=1&downloadBlocksDialog';
+		$selectAllLink = $this->config->urls->admin . 'module/edit?name=FieldtypePageGrid&collapse_info=1&selectDefaultBlocks&field=' . $field->id;
+		$data = $this->modules->getConfig('FieldtypePageGrid');
+		$hasItems = 1;
+		if (!isset($data['template_id_' . $field->id])) $hasItems = 0;
+		if (isset($data['template_id_' . $field->id]) && $data['template_id_' . $field->id] == []) $hasItems = 0;
 
 		//download block module if get var is set
 		if (isset($_GET['downloadBlocks'])) {
@@ -737,9 +757,21 @@ class FieldtypePageGridConfig extends ModuleConfig {
 			$downloaded = 1;
 			$moduleSettingsLink = $this->config->urls->admin . 'module/edit?name=FieldtypePageGrid&collapse_info=1';
 			header("refresh: 5; url=$moduleSettingsLink");
-
-			// if (!$installed) $this->modules->install('PageGridBlocks');
 		}
+
+		//select/install default block module
+		if ($installed && isset($_GET['selectDefaultBlocks']) && isset($_GET['field'])) {
+			$value = [];
+			$defaultBlocks = ['pg_text', 'pg_editor', 'pg_image', 'pg_video', 'pg_gallery', 'pg_gallery_video', 'pg_iframe', 'pg_group', 'pg_navigation', 'pg_slider', 'pg_accordion', 'pg_datalist', 'pg_prev_next', 'pg_spacer', 'pg_code'];
+			foreach ($defaultBlocks as $tName) {
+				$t = $this->templates->get($tName);
+				if ($t && $t->id) $value[] = $t->id;
+			}
+			$data['template_id_' . $_GET['field']] = $value;
+			$this->modules->saveConfig('FieldtypePageGrid', $data);
+			$this->session->redirect($this->config->urls->admin . 'module/edit?name=FieldtypePageGrid&collapse_info=1');
+		}
+
 
 		$value = $this['template_id_' . $field->id];
 		if (!is_array($value)) $value = $value ? array($value) : array();
@@ -749,13 +781,15 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		$f->attr('name', 'template_id');
 		$f->label = $this->_('Block templates');
 		$f->icon = 'cubes';
-		if (!$installed && !$downloaded) $f->addClass('links-target-self', 'wrapClass');
+		$f->addClass('links-target-self', 'wrapClass');
 
 		// $f->required = true;
-		$f->description = $this->_('The block template files must be placed in **site/templates/blocks/** folder. [Learn more](https://page-grid.com/docs/#/developer/blocks?id=create-a-new-block)'); // Templates selection description
+		$f->description = $this->_('The block template files must be placed in **site/templates/blocks/** folder. [Learn more](https://page-grid.com/docs/#/developer/blocks?id=create-a-new-block)');
+		if (!$installed && !$downloaded) $f->notes = 'Alternatively you can also download our [block modules](' . $downloadLink . ')';
+		if ($installed && $downloaded) $f->notes .= 'The selected block templates will be created/installed automatically.';
+		if ($installed && $downloaded && !$hasItems) $f->notes .= ' [Select default blocks](' . $selectAllLink . ')';
 
-		if (!$installed && !$downloaded) $f->notes .= 'Alternatively you can also download our [block modules](' . $downloadLink . ')';
-
+		//look in site/templates folder first
 		$path = wire('config')->paths->templates . 'blocks/';
 		$files = glob($path . '*.php');
 
@@ -774,9 +808,12 @@ class FieldtypePageGridConfig extends ModuleConfig {
 			if ($t && $t->label) $attrs['data-desc'] = $t->label;
 			if ($t && $t->icon) $attrs['data-handle'] = wireIconMarkup($t->icon, 'fw');
 
+			$templateLabel = $templateName;
+			if ($t && $t->label) $templateLabel = $t->label;
+
 			$templateId = $templateName;
 			if ($t && $t->id) $templateId = $t->id;
-			$f->addOption($templateId, $templateName, $attrs);
+			$f->addOption($templateId, $templateLabel, $attrs);
 		}
 
 		//add module blocks
@@ -809,8 +846,12 @@ class FieldtypePageGridConfig extends ModuleConfig {
 			$attrs['data-desc'] = $info['title'];
 			$attrs['data-handle'] = wireIconMarkup($info['icon'], 'fw');
 			$templateId = $templateName;
-			if ($this->templates->get($templateName)) $templateId = $this->templates->get($templateName)->id;
-			$f->addOption($templateId, $templateName, $attrs);
+			$templateLabel = str_replace('Block', '', $info['title']);
+			$t = $this->templates->get($templateName);
+			if ($t && $t->id) $templateId = $t->id;
+			if ($t && $t->id) $templateLabel = $t->label;
+			// if(!$installedBlock) $templateLabel .= ' (install)';
+			$f->addOption($templateId, $templateLabel, $attrs);
 		}
 
 		// $this['template_id_' . $field->id] = $value;

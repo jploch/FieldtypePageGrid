@@ -16,7 +16,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID'),
       'summary' => __('Commercial page builder module that renders block templates and adds drag and drop functionality in admin.', __FILE__),
-      'version' => '2.1.90',
+      'version' => '2.2.00',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -468,6 +468,15 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
       }
     }
 
+    //enforce block childrenTab template settings
+    // foreach ($this->templates as $t) {
+    //   $options = $t->pgOptions ? json_decode($t->pgOptions, true) : [];
+    //   if (isset($options['childrenTab']) && $t->tabChildren != $options['childrenTab']) {
+    //     $t->tabChildren = $options['childrenTab'];
+    //     $t->save();
+    //   }
+    // }
+
     $this->addHookAfter("Modules::refresh", $this, "createModule");
     $this->addHookAfter('Pages::cloned', $this, "clone");
     $this->addHookBefore('Page::changed(0:title)', $this, "titleChanged");
@@ -712,7 +721,6 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
   }
 
   public function saveCustomTemplateSetting($event) {
-    // $template = $this->templates->get($this->input->id);
     $template = $this->templates->get($this->input->post->id);
     $blueprintValue = $this->input->post->blueprint ? $this->input->post->blueprint : null;
     $template->blueprint = $blueprintValue;
@@ -745,6 +753,9 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
 
     if (!$parentPage || !$parentPage->id) return;
     if ($parentPage->template->name === 'pg_container' && $parentPage->name !== 'pg-blueprints') return;
+
+    //get children settings for parent from template file
+    $options = $parentPage->template->pgOptions ? json_decode($parentPage->template->pgOptions, true) : [];
 
     //check if pagegrid item page
     $isPageGrid = false;
@@ -782,6 +793,8 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
         //pagegrid page
         //only show block templates
         if ($isPageGrid && !$isBlock) unset($templates[$key]);
+        //check if allowed children option is set
+        if ($isPageGrid && $isBlock && isset($options['children']) && is_array($options['children']) && !in_array($t->name, $options['children'])) unset($templates[$key]);
       }
 
       //for blueprint set blueprint template, and hide inputfield
@@ -1131,70 +1144,92 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
   // add function to load children inside modal when no other fields, function gets called from js when needed
   public function modalEdit($event) {
 
+    // make sure we're editing a page and not a user
     if ($this->process != 'ProcessPageEdit') return;
 
-    $this->ppe = $event->object;
-    $this->form = $event->return;
-    $page = $this->ppe->getPage();
+    $page = $event->object->getPage();
+    if (!$page || !$page->id) return;
+
+    //check if pagegrid item page
+    $isPageGrid = false;
+    if (count($page->parents('template=pg_container'))) {
+      $isPageGrid = true;
+    }
+    if (isset($_GET['pgmodal'])) $isPageGrid = true;
+    if (!$isPageGrid) return;
+    //END check if pagegrid item page
+
+    $options = $this->session->get('pg_template_' . $page->template->name) ? json_decode($this->session->get('pg_template_' . $page->template->name), true) : [];
+    $form = $event->return;
+    $contentTab = $form->children->get('id=ProcessPageEditContent');
+    $childrenTab = $form->children->get('id=ProcessPageEditChildren');
+    $settingsTab = $form->get("id=ProcessPageEditSettings");
+
+    // bd($this->session->get('pg_template_' . $page->template->name));
+
+    //add css to modal
+    $form->prependFile = $this->config->styles->add($this->config->urls->InputfieldPageGrid . "css/main.css");
+
+    if ($page->template->name == 'pg_code') {
+      $form->prependFile = $this->config->styles->add($this->config->urls->InputfieldPageGrid . "css/prism.css");
+      $form->prependFile = $this->config->styles->add($this->config->urls->InputfieldPageGrid . "css/prism-vs.css");
+      $form->prependFile = $this->config->scripts->add($this->config->urls->InputfieldPageGrid . "prism.js");
+    }
 
     //remove pg_container and pg_blueprint templates from page settings select
-    $settingsTab = $this->form->find("id=ProcessPageEditSettings")->first();
     if ($settingsTab && $settingsTab->template && $page->template != 'pg_container' && $page->template != 'pg_blueprint') {
       foreach ($settingsTab->template->options as $key => $value) {
-        if ($value == 'pg_container' || $value == 'pg_blueprint') $this->form->find("id=ProcessPageEditSettings")->first()->template->removeOption($key);
+        if ($value == 'pg_container' || $value == 'pg_blueprint') $form->find("id=ProcessPageEditSettings")->first()->template->removeOption($key);
       }
     }
 
-    //pg modal specifics
-    if (isset($_GET['pgmodal']) == 0 && $page->template->name != 'pg_group') return;
-    if (isset($_GET['modal']) == 0) return;
+    if ($childrenTab && $childrenTab->id) {
+      $addBtn = $form->get('AddPageBtn');
+      $childrenPageList = $form->get('ChildrenPageList');
 
-    //add css to modal
-    $this->form->prependFile = $this->config->styles->add($this->config->urls->InputfieldPageGrid . "css/main.css");
+      if ($addBtn) $addBtn->set('value', __('Add New'));
 
-    if ($page->template->name == 'pg_code') {
-      $this->form->prependFile = $this->config->styles->add($this->config->urls->InputfieldPageGrid . "css/prism.css");
-      $this->form->prependFile = $this->config->styles->add($this->config->urls->InputfieldPageGrid . "css/prism-vs.css");
-      $this->form->prependFile = $this->config->scripts->add($this->config->urls->InputfieldPageGrid . "prism.js");
+      if ($childrenPageList) {
+        $childrenPageList->description = '';
+
+        if ($page->name == 'pg-classes') {
+          $childrenPageList->addClass('pg-class-list-wrap', 'wrapClass');
+
+          $f = $this->modules->get('InputfieldMarkup');
+          $f->id = 'stylelist-intro';
+          $f->value = "<style>#stylelist-intro{margin-top:0;}</style><p class='description'>An overview of classes and tags you’ve created or edited on your site. Classes further down in the list overwrite the styles of classes above them.</p>";
+          $form->prepend($f);
+        }
+
+        if ($page->name == 'pg-animations') {
+          $childrenPageList->addClass('pg-animation-list-wrap', 'wrapClass');
+
+          $f = $this->modules->get('InputfieldMarkup');
+          $f->id = 'stylelist-intro';
+          $f->value = "<style>#stylelist-intro{margin-top:0;}</style><p class='description'>An overview of all the animations you’ve created on your site.</p>";
+          $form->prepend($f);
+        }
+
+        //remove/change children/page label
+        $childrenPageList->label = $this->_("Children");
+        if (!isset($options['childrenTab'])) $childrenPageList->label = '';
+        if (isset($options['childrenLabel'])) $childrenPageList->label = $options['childrenLabel'];
+      }
+
+      // move children to content tab if option is set
+      if (isset($options['childrenTab']) && ($options['childrenTab'] == 'append' || $options['childrenTab'] == 'prepend')) {
+        $lastContentField = $contentTab->children()->last();
+
+        foreach ($childrenTab->children() as $f) {
+          if ($options['childrenTab'] == 'append') $contentTab->append($f);
+          if ($options['childrenTab'] == 'prepend' && $lastContentField->id) $contentTab->insertBefore($f, $lastContentField);
+        }
+      }
+      if (!isset($options['children']) || isset($options['childrenTab'])) {
+        $form->remove($childrenTab);
+        $form->appendMarkup = "<style>li:has(#_ProcessPageEditChildren){display:none!important;}</style>";
+      }
     }
-
-    if (count($page->fields) > 1 && $page->template->name != 'pg_slider') return;
-
-    $addBtn = $this->form->get('AddPageBtn');
-    $addBtn->set('value', __('Add New'));
-
-    if ($page->name == 'pg-classes') {
-      $childrenPageList = $this->form->get('ChildrenPageList');
-      $childrenPageList->addClass('pg-class-list-wrap', 'wrapClass');
-
-      $f = $this->modules->get('InputfieldMarkup');
-      $f->id = 'stylelist-intro';
-      $f->value = "<style>#stylelist-intro{margin-top:0;}</style><p class='description'>An overview of classes and tags you’ve created or edited on your site. Classes further down in the list overwrite the styles of classes above them.</p>";
-      $this->form->prepend($f);
-    }
-
-    if ($page->name == 'pg-animations') {
-      $childrenPageList = $this->form->get('ChildrenPageList');
-      $childrenPageList->addClass('pg-animation-list-wrap', 'wrapClass');
-
-      $f = $this->modules->get('InputfieldMarkup');
-      $f->id = 'stylelist-intro';
-      $f->value = "<style>#stylelist-intro{margin-top:0;}</style><p class='description'>An overview of all the animations you’ve created on your site.</p>";
-      $this->form->prepend($f);
-    }
-
-    $this->form->appendMarkup = "
-    <script>
-    function loadChildrenTab() {
-      $('#_ProcessPageEditChildren').trigger('click');
-    }
-</script>
-";
-
-    //remove children/page label
-    $childrenInputfield = $this->form->get('ProcessPageEditChildren');
-    $childrenList = $childrenInputfield->get('ChildrenPageList');
-    $childrenList->label = '';
   }
 
   //reinit PageFrontEdit for ajax items
