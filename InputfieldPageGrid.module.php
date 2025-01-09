@@ -804,6 +804,12 @@ class InputfieldPageGrid extends Inputfield {
             if ($classNames) $classes .= ' ' . $classNames;
         }
 
+        //attributes
+        $attributesFrontend = '';
+        if (isset($options['attributes'])) {
+            $attributesFrontend = $options['attributes'];
+        }
+
         //children
         if (isset($options['children']) && $options['children']) {
             if ($backend) {
@@ -839,7 +845,7 @@ class InputfieldPageGrid extends Inputfield {
             $layout .= $templateRender;
             $layout .= '</' . $tagName . '>';
         } else {
-            $layout = '<' . $tagName . ' class="' . $nestedClasses . $classes . '" ' . $attributes . '>' .  $templateRender . '</' . $tagName . '>';
+            $layout = '<' . $tagName . ' class="' . $nestedClasses . $classes . '" ' . $attributes . ' ' . $attributesFrontend . '>' .  $templateRender . '</' . $tagName . '>';
         }
 
         return $layout;

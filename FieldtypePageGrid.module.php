@@ -16,7 +16,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID'),
       'summary' => __('Commercial page builder module that renders block templates and adds drag and drop functionality in admin.', __FILE__),
-      'version' => '2.2.1',
+      'version' => '2.2.2',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -706,7 +706,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     $field->icon = 'th';
     $field->attr('id+name', 'blueprint');
     $field->label = $this->_("PAGEGRID Blueprint");
-    $field->description = 'Select a Blueprint, to connect this template to a PAGEGRID layout. To use this feature follow this [guide](https://page-grid.com/docs/#/developer/templates).';
+    $field->description = 'Select a Blueprint, to connect this template to a PAGEGRID layout. To use this feature follow this [guide](https://page-grid.com/docs/#/developer/templates?id=option-c).';
     $field->showRootPage = false;
     $field->collapsed = 2;
     foreach ($bpParent->children() as $bp) {
