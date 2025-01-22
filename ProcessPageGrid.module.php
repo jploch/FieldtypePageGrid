@@ -611,12 +611,15 @@ class ProcessPageGrid extends Process {
                 $pId = $p->id;
             }
 
+            $replaceClass = $newPageClass;
+            if ($type === 'addSymbol') $replaceClass = '';
+
             $response = array(
                 'newPageClass' => $newPageClass,
                 'markup' => $this->modules->get('InputfieldPageGrid')->renderItem($clone),
                 'pageId' => $pId,
                 'css' => $css,
-                'replaceClass' => $newPageClass
+                'replaceClass' => $replaceClass
             );
 
             return (json_encode($response));
