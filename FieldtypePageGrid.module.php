@@ -16,7 +16,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID'),
       'summary' => __('Commercial page builder module that renders block templates and adds drag and drop functionality in admin.', __FILE__),
-      'version' => '2.2.11',
+      'version' => '2.2.12',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -38,9 +38,10 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     $this->createModule();
   }
 
-  public function ___upgrade($fromVersion, $toVersion) {
-    $this->createModule();
-  }
+  //upgrade needs work
+  // public function ___upgrade($fromVersion, $toVersion) {
+  //   $this->createModule();
+  // }
 
   public function createModule() {
 
@@ -254,7 +255,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
 
     //create editor role
     //add role and permissions
-    if (!$this->roles->get('pagegrid-editor')->id) {
+    if (!$this->roles->get('pagegrid-editor') && $this->roles->get('pagegrid-editor')->id) {
       $erole = $this->roles->add("pagegrid-editor");
     } else {
       $erole = $this->roles->get('pagegrid-editor');
