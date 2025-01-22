@@ -16,7 +16,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID'),
       'summary' => __('Commercial page builder module that renders block templates and adds drag and drop functionality in admin.', __FILE__),
-      'version' => '2.2.9',
+      'version' => '2.2.11',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -29,12 +29,16 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
         'pagegrid-drag' => 'Drag PAGEGRID items',
         'pagegrid-resize' => 'Resize PAGEGRID items',
         'pagegrid-style-panel' => 'Enable styling of PAGEGRID items',
-        'pagegrid-add' => 'Use the sidebar to drag new items into the page (also needs pagegrid-drag permission to work)',
+        'pagegrid-add' => 'Use the sidebar to drag new items into the page (must also have pagegrid-drag permission)',
       ),
     );
   }
 
   public function install() {
+    $this->createModule();
+  }
+
+  public function ___upgrade($fromVersion, $toVersion) {
     $this->createModule();
   }
 
@@ -275,11 +279,22 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
       $permission->save();
     }
 
-
     //setup permission
     if (!$this->permissions->get('pagegrid-setup')->id) {
       $permission = $this->permissions->add("pagegrid-setup");
       $permission->title = 'Access PAGEGRID setup page';
+      $permission->save();
+    }
+
+    if (!$this->permissions->get('pagegrid-symbol-create')->id) {
+      $permission = $this->permissions->add("pagegrid-symbol-create");
+      $permission->title = 'Create PAGEGRID symbols (must also have page-create permission for the pg_container template)';
+      $permission->save();
+    }
+
+    if (!$this->permissions->get('pagegrid-symbol-add')->id) {
+      $permission = $this->permissions->add("pagegrid-symbol-add");
+      $permission->title = 'Add PAGEGRID symbols (must also have page-create permission for the pg_container template)';
       $permission->save();
     }
 

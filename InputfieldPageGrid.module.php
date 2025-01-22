@@ -379,7 +379,7 @@ class InputfieldPageGrid extends Inputfield {
 
     //optional $templatesArray
     public function renderAddItemBar($getSymbolsOnly = 0, $templatesArray = [], $quickAdd = 0) {
-
+        $user = $this->user;
 
         // render the 'Add New' buttons for each template
         if (!$quickAdd && (!$this->user->hasPermission('pagegrid-add') || !$this->user->hasPermission('pagegrid-drag'))) return;
@@ -424,7 +424,7 @@ class InputfieldPageGrid extends Inputfield {
                     if (!$template->id) continue;
                 }
 
-                if (!$this->user->isSuperuser() && $template->useRoles && !in_array($this->user->id, $template->createRoles)) continue;
+                if (!$user->isSuperuser() && $template->useRoles && !in_array($user->id, $template->createRoles)) continue;
 
                 // keep this line for future updates, makes it possible to add items via modal if link is clicked, maybe alternative for non super users oneday
                 // $url = $this->wire('config')->urls->admin . "page/add/?modal=1&template_id=$template->id&parent_id=$parentID&context=PageGrid";
@@ -478,8 +478,9 @@ class InputfieldPageGrid extends Inputfield {
                     $linkedPagesCount++;
                 }
             }
-
-            $addItems .= '<div class="pg-add pg-add-symbol" data-sync="' . $sync . '" data-id="' . $symbol->id . '" data-template-id="' . $symbol->template->id . '" template="' . $symbol->template->name . '">' . $tIcon . '<span class="ui-button-text"><span class="pg-symbol-title">' . $symbol->title . '</span><span class="pg-symbol-number">' . $linkedPagesCount . '</span></span></div>';
+            if ($user->isSuperuser() || $user->hasRole('pagegrid-admin') || $user->hasRole('pagegrid-designer') || $user->hasPermission('pagegrid-symbol-add')) {
+                $addItems .= '<div class="pg-add pg-add-symbol" data-sync="' . $sync . '" data-id="' . $symbol->id . '" data-template-id="' . $symbol->template->id . '" template="' . $symbol->template->name . '">' . $tIcon . '<span class="ui-button-text"><span class="pg-symbol-title">' . $symbol->title . '</span><span class="pg-symbol-number">' . $linkedPagesCount . '</span></span></div>';
+            }
         }
 
         $addItems .= '</div>';
@@ -992,7 +993,7 @@ class InputfieldPageGrid extends Inputfield {
                 //lock
                 $header .= '<pg-item-header-button class="pg-lock" href="#"><i class="fa fa-lock" title="' . $this->_('Unlock') . '"></i><i class="fa fa-unlock" title="' . $this->_('Lock') . '"></i></pg-item-header-button>';
             }
-            if (($user->isSuperuser() || $user->hasRole('pagegrid-admin') || $user->hasRole('pagegrid-designer')) && $isPgPage) {
+            if (($user->isSuperuser() || $user->hasPermission('pagegrid-symbol-create') || $user->hasRole('pagegrid-admin') || $user->hasRole('pagegrid-designer')) && $isPgPage) {
                 //symbol
                 $header .= '<pg-item-header-button class="pg-symbol" title="' . $this->_('Create Symbol') . '" href="#"><i class="fa fw fa-cube"></i></pg-item-header-button>';
             }
@@ -1027,6 +1028,7 @@ class InputfieldPageGrid extends Inputfield {
         if ($user->hasPermission('pagegrid-drag')) $statusClass .= " pg-item-draggable";
         if ($user->hasPermission('pagegrid-resize')) $statusClass .= " pg-item-resizable";
         if ($user->hasPermission('pagegrid-select'))  $statusClass .= " pg-permission-select";
+        if ($user->hasPermission('pagegrid-style-panel'))  $statusClass .= " pg-permission-style-panel";
         if ($user->hasPermission('page-add', $p)) $statusClass .= " pg-permission-add";
         if ($user->hasPermission('page-create', $p)) $statusClass .= " pg-permission-create";
         if ($user->hasPermission('page-delete', $p)) $statusClass .= " pg-permission-delete";
