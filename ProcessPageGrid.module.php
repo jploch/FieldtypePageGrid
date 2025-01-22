@@ -362,6 +362,7 @@ class ProcessPageGrid extends Process {
             if ($parentId) $p = $this->pages->findOne('name=' . $removeId . ', has_parent=' . $parentId);
 
             if (!$p || !$p->id) return;
+            if ($p->template->name == 'admin' || $p->template->name == 'pg_container') return;
 
             $p->removeStatus(Page::statusLocked);
             $p->save();
@@ -413,11 +414,11 @@ class ProcessPageGrid extends Process {
 
         if ($type === 'clone' && !empty($_POST['pageId'])) {
 
-            if ($pageId == 0 || $pageId == '0') {
-                return false;
-            }
-
+            if (!$pageId || $pageId == 0 || $pageId == '0') return false;
             $p = $this->pages->get($pageId);
+            if (!$p || !$p->id) return;
+            if ($p->template->name == 'admin' || $p->template->name == 'pg_container') return;
+
             $insertAfter = $this->pages->get($insertAfter);
             $newPages = array();
             $clone = $this->pages->clone($p);
@@ -507,11 +508,14 @@ class ProcessPageGrid extends Process {
 
 
         if ($type === 'add') {
+            $template =  $this->templates->get($templateId);
+            $parent = $this->pages->get($parentId);
+            if (!$parent || !$parent->id) return;
+            if (!$template || !$template->id) return;
+            if ($template->name == 'admin' || $template->name == 'pg_container') return;
 
             // create new page
             $p = new Page();
-            $template =  $this->templates->get($templateId);
-            $parent = $this->pages->get($parentId);
             $p->template = $template->name;
             $p->parent = $parent;
 
@@ -520,6 +524,7 @@ class ProcessPageGrid extends Process {
             $p->save();
 
             $insertAfter = $this->sanitizer->int($_POST['insertAfter']);
+            $replaceParentId = $this->sanitizer->int($_POST['replaceParentId']);
 
             if (isset($insertAfter) && $insertAfter != 0) {
                 $afterP = $this->pages->get($insertAfter);
@@ -538,9 +543,13 @@ class ProcessPageGrid extends Process {
             $p->setAndSave('title', $templateName . '-' . $p->id);
             $p->setAndSave('name', $templateName . '-' . $p->id);
 
+            $replacPage = $replaceParentId ? $this->pages->get($replaceParentId) : 0;
+            $updatePage = $replacPage && $replacPage->id && $replacPage->template->name != 'pg_container' ? $replacPage : $p;
+
             $response = array(
                 'newPageClass' => $p->name,
-                'markup' => $this->modules->get('InputfieldPageGrid')->renderItem($p)
+                'markup' => $this->modules->get('InputfieldPageGrid')->renderItem($updatePage),
+                'replaceClass' => $updatePage->name
             );
 
             return (json_encode($response));
@@ -552,6 +561,7 @@ class ProcessPageGrid extends Process {
             if (!$p || !$p->id) return;
             $parent = $this->pages->get($parentId);
             if (!$parent || !$parent->id) return;
+            if ($p->template->name == 'admin' || $p->template->name == 'pg_container') return;
 
             //return if parent is symbol to prevent nested symbols
             if (count($parent->parents('name=pg-symbols, template=pg_container'))) return;
@@ -582,6 +592,7 @@ class ProcessPageGrid extends Process {
             if ($type == 'addSymbol') $clone->meta()->set('pg_symbol', $p->id);
 
             //add non-synced symbols/patterns
+            $css = '';
             if ($type == 'addFromSymbol') {
                 $clone->meta()->remove('pg_symbol');
                 $css = $this->modules->get('InputfieldPageGrid')->renderStyles($clone);
@@ -604,7 +615,8 @@ class ProcessPageGrid extends Process {
                 'newPageClass' => $newPageClass,
                 'markup' => $this->modules->get('InputfieldPageGrid')->renderItem($clone),
                 'pageId' => $pId,
-                'css' => $css
+                'css' => $css,
+                'replaceClass' => $newPageClass
             );
 
             return (json_encode($response));

@@ -321,12 +321,32 @@ class InputfieldPageGrid extends Inputfield {
         }
         //END add blueprint select
 
+
+        $fId = $this->fields->get($this->name) ? $this->fields->get($this->name)->id : 0;
+        $wrapperPage = $itemsParent->get('name=pg-' . $fId . ', template=pg_container');
+        //create field container page if it doesn't exist
+        if ($fId && !$wrapperPage->id) {
+            $wrapperPage = new Page(); // create new page object
+            $wrapperPage->template = 'pg_container'; // set template
+            $wrapperPage->parent = $itemsParent->id; // set the parent
+            $wrapperPage->name = 'pg-' . $fId; // give it a name used in the url for the page
+            $wrapperPage->title = 'pg-' . $fId; // set page title (not neccessary but recommended)
+            $wrapperPage->save();
+        }
+
+        //quick add button for main container
+        $quickAddMain = '';
+        if ($user->hasPermission('page-add', $wrapperPage)) {
+            $quickAddButtons = $this->renderAddItemBar(0, [], 1);
+            $quickAddMain = '<div class="pg-quick-add pg-quick-add-main" data-id-original="' . $wrapperPage->id . '" data-id="' . $wrapperPage->id . '"><span class="pg-quick-add-icon" uk-tooltip="title:Add Item; pos:bottom; delay:100;"></span>' . $quickAddButtons . '</div>';
+        }
+
         $renderMarkup = $topNav . $settings . '<div class="pg-container pg-container-' . $this->name . '" data-page-title="' . $mainPage->title . '" data-page="' . $editID . '" data-id="' . $this->pages->get('pg-classes')->id . '" data-animations-id="' . $this->pages->get('pg-animations')->id . '" data-field="' . $this->name . '" data-site-url="' . $this->config->urls->site . '" data-module-url="' . $this->config->urls->siteModules . 'FieldtypePageGrid/" data-admin-url="' . $this->page->rootParent->url() . 'setup/pagegrid/" data-fallbackfonts="' . $this->ft->fallbackFonts . '">' . $addItems . $dataGlobal . $blueprintSelect;
         //loading animation
         $renderMarkup .= '<div class="pg-loading"><div class="fa fa-spin fa-spinner fa-fw"></div></div>';
         //container for item header (item header will be moved here with js)
         $renderMarkup .= $this->renderIconPicker();
-        $renderMarkup .= '<div class="pg-item-header-container"></div>';
+        $renderMarkup .= '<div class="pg-item-header-container">' . $quickAddMain . '</div>';
         $renderMarkup .= '<iframe data-field="' . $this->name . '" id="pg-iframe-canvas-' . $this->name . '" class="pg-iframe-canvas" src="' . wire('pages')->get($parentPageId)->url . '?backend=1&field=' . $this->name . '&page=' . $parentPage->id . '" loading="lazy" frameBorder="0" scrolling="no" style="width:100%; max-height:100vh; border:0;"></iframe>';
         $renderMarkup .= '</div>';
 
@@ -357,10 +377,33 @@ class InputfieldPageGrid extends Inputfield {
         return '<div class="pg-icon-picker-wrapper">' . $field->render() . '</div>' . $script;
     }
 
-    public function renderAddItemBar($getSymbolsOnly = 0) {
+    //optional $templatesArray
+    public function renderAddItemBar($getSymbolsOnly = 0, $templatesArray = [], $quickAdd = 0) {
+
 
         // render the 'Add New' buttons for each template
-        if (!$this->user->hasPermission('pagegrid-add') || !$this->user->hasPermission('pagegrid-drag')) return;
+        if (!$quickAdd && (!$this->user->hasPermission('pagegrid-add') || !$this->user->hasPermission('pagegrid-drag'))) return;
+
+        $templates = $this->rowTemplates;
+
+        // to render Quickadd bar from renderHeader function we need to get templates for all fields 
+        // support multiple fields with different templates set
+        if (!$templates && !count($templatesArray)) {
+            $templates = [];
+            $mainPage = $this->getPage();
+            if ($mainPage && $mainPage->id) {
+                $fields = $mainPage->fields->find('type=FieldtypePageGrid');
+                foreach ($fields as $f) {
+                    $templateArray = $f->template_id ? $f->template_id : [];
+                    foreach ($templateArray as $id) {
+                        $template = $this->wire('templates')->get($id);
+                        if ($template) $templates[$id] = $template;
+                    }
+                }
+            }
+        }
+
+        if (count($templatesArray)) $templates = $templatesArray;
 
         // $editID = (int) $this->wire('input')->get('id');
         // if (!$editID && $this->wire('process') instanceof WirePageEditor) $editID = $this->wire('process')->getPage()->id;
@@ -368,9 +411,18 @@ class InputfieldPageGrid extends Inputfield {
         $addItems = '';
 
         if (!$getSymbolsOnly) {
-            $addItems = '<div data-field=' . $this->name . ' class="pg-add-container pg-add-container-' . $this->name . '"><div class="pg-add-tabs"><div class="pg-add-tab pg-add-tab-items pg-add-tab-active"><i class="fa fw fa-th-large" title="fa-th-large"></i></div><div class="pg-add-tab pg-add-tab-symbols" uk-tooltip="title:Symbols; pos:right; delay:300;"><i class="fa fw fa-cube"></i></div></div><div class="pg-add-content">';
-            foreach ($this->rowTemplates as $template) {
+            $fieldName = $this->name ? $this->name : '';
+            $addItems = '<div data-field=' . $fieldName . ' class="pg-add-container pg-add-container-' . $fieldName . '">';
+            if ($quickAdd) $addItems = '<div class="pg-quick-add-container pg-quick-add-inner">'; //change wrapper for quick edit to preven events
+            $addItems .= '<div class="pg-add-tabs"><div class="pg-add-tab pg-add-tab-items pg-add-tab-active"><i class="fa fw fa-th-large" title="fa-th-large"></i></div><div class="pg-add-tab pg-add-tab-symbols" uk-tooltip="title:Symbols; pos:right; delay:300;"><i class="fa fw fa-cube"></i></div></div><div class="pg-add-content">';
+            $addItems .= '<div class="pg-add-item-container">';
+            foreach ($templates as $template) {
                 /** @var Template $template */
+
+                if ($template && is_string($template)) {
+                    $template = $this->templates->get($template);
+                    if (!$template->id) continue;
+                }
 
                 if (!$this->user->isSuperuser() && $template->useRoles && !in_array($this->user->id, $template->createRoles)) continue;
 
@@ -385,6 +437,7 @@ class InputfieldPageGrid extends Inputfield {
 
                 $addItems .= '<div class="pg-add ' . $template->name . '" data-template-id="' . $template->id . '" template="' . $template->name . '">' . $tIcon . '<span class="ui-button-text">' . $template->getLabel() . '</span></div>';
             }
+            $addItems .= '</div>';
         }
 
         //add symbols
@@ -492,16 +545,6 @@ class InputfieldPageGrid extends Inputfield {
         }
         //END make sure imported pages get new field container name/id
 
-        //create field container page if it doesn't exist
-        if (!$itemsParentNew->id) {
-            $itemsParentNew = new Page(); // create new page object
-            $itemsParentNew->template = 'pg_container'; // set template
-            $itemsParentNew->parent = $itemsParent->id; // set the parent
-            $itemsParentNew->name = 'pg-' . $field->id; // give it a name used in the url for the page
-            $itemsParentNew->title = $field->name; // set page title (not neccessary but recommended)
-            $itemsParentNew->save();
-        }
-
         //update older versions and move pages from page container to field container
         foreach ($itemsParent->children() as $p) {
             if ($p->template->name === 'pg_container') continue;
@@ -547,7 +590,7 @@ class InputfieldPageGrid extends Inputfield {
                     }
                 }
             }
-            // END trick inline editor to work for first items
+            // END trick inline editor to work for first item
 
             $statusClass = '';
 
@@ -897,15 +940,17 @@ class InputfieldPageGrid extends Inputfield {
     //function to render item header
     public function renderItemHeader($p, $title = '', $pOriginal = 0) {
 
+        //if frontend return empty string
+        if (!$this->isBackend()) return "";
+
         $header = "";
         $user = $this->user;
         $layoutTitle = $p->template->label ? $p->template->label : $p->template->name;
         $layoutTitle = $title ? $title : $layoutTitle;
         $statusClass = $this->getStatusClasses($p);
         $isPgPage = $p->parents('template=pg_container')->first();
-
-        //if frontend return empty string
-        if (!$this->isBackend()) return $header;
+        $options = $p->template->pgOptions ? json_decode($p->template->pgOptions, true) : [];
+        $addButton = isset($options['children']) && $options['children'] ? 1 : 0;
 
         //disbale inline edit on title field
         $p->edit(false);
@@ -925,9 +970,17 @@ class InputfieldPageGrid extends Inputfield {
 
         // use custom html element for header, to be able to nest inside "<a>"
         if ($p->editable() && $user->hasPermission('page-pagegrid-edit', $p)) {
-            $header .= '<span id="pg-item-header-' . $pOriginal->id . '" data-id="' . $p->id . '" data-id-original="' . $pOriginal->id . '" class="pg-item-header' . $statusClass . '">';
+            $header .= '<pg-item-header id="pg-item-header-' . $pOriginal->id . '" data-id="' . $p->id . '" data-id-original="' . $pOriginal->id . '" class="pg-item-header' . $statusClass . '">';
             $header .= '<span>' . $layoutTitle . '</span>';
 
+            //quick add button
+            // <i class="fa fw fa-plus" title="Add Item"></i>
+            // if ($addButton) $header .= '<a class="pg-quick-add pg-edit" href="#" data-url="/admin/page/add/?parent_id=' . $p->id . '&template_id=' . $this->templates->get('pg_editor')->id . '&pgquickadd=1&modal=1&pgmodal=1">+</a>';
+            if ($addButton && $user->hasPermission('page-add', $p)) {
+                $childrenTemplates = isset($options['children']) && is_array($options['children']) ? $options['children'] : [];
+                $quickAddButtons = $this->renderAddItemBar(0, $childrenTemplates, 1);
+                $header .= '<div class="pg-quick-add" data-id-original="' . $pOriginal->id . '" data-id="' . $p->id . '"><span class="pg-quick-add-icon" uk-tooltip="title:Add Item; pos:bottom; delay:100;"></span>' . $quickAddButtons . '</div>';
+            }
             //edit
             $header .= '<pg-item-header-button class="pg-edit" title="' . $this->_('Edit') . '" data-url="./?id=' . $p->id . '&amp;modal=1&pgmodal=1" href="#"><i class="fa fa-pencil"></i></pg-item-header-button>';
 
@@ -947,7 +1000,7 @@ class InputfieldPageGrid extends Inputfield {
                 //delete
                 $header .= '<pg-item-header-button class="pg-delete" title="' . $this->_('Mark for deletion') . '" href="#"><i class="fa fa-trash"></i></pg-item-header-button>';
             }
-            $header .= '</span>';
+            $header .= '</pg-item-header>';
         }
 
         //reanable inline edit on title field (if set)
@@ -1841,7 +1894,7 @@ class InputfieldPageGrid extends Inputfield {
     }
 
     //helper to return main page from item (argument: $page inside item template)
-    public function getPage($page) {
+    public function getPage($page = 0) {
 
         //This always returns mainpage on frontend
         $p = wire('page');

@@ -16,7 +16,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID'),
       'summary' => __('Commercial page builder module that renders block templates and adds drag and drop functionality in admin.', __FILE__),
-      'version' => '2.2.5',
+      'version' => '2.2.7',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -486,6 +486,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     $this->addHookAfter('Pages::added', $this, "activateLanguages");
     $this->addHookAfter("Pages::save", $this, "autoPuplish");
     $this->addHookAfter("ProcessPageEdit::buildForm", $this, "modalEdit");
+    $this->addHookBefore('ProcessPageAdd::buildForm', $this, "quickAdd");
     $this->addHookAfter('ProcessPageAdd::buildForm', $this, "pageAddForm");
     $this->addHookBefore('ProcessPageEdit::execute', $this, 'blueprintReady');
     $this->addHookAfter('ProcessTemplate::executeAdd', $this, "addTemplate");
@@ -529,6 +530,31 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     if (!$page->parents()->get('template=pg_container')) return;
     foreach ($this->wire->languages as $lang) $page->set("status$lang", 1);
     $page->save();
+  }
+
+  public function quickAdd($event) {
+    if (isset($_GET['pgquickadd']) && isset($_GET['template_id']) && isset($_GET['parent_id'])) {
+      // bd('quick-add');
+      $parent_id = $_GET['parent_id'] ? $_GET['parent_id'] : 0;
+      $template_id = $_GET['template_id'] ? $_GET['template_id'] : 0;
+      $template =  $this->templates->get($template_id);
+      $parent = $this->pages->get($parent_id);
+      if ($parent->id && $template->id) {
+        $p = new Page();
+        $p->template = $template->name;
+        $p->parent = $parent;
+        $p->save();
+
+        //set unique name
+        $templateName = str_replace('_', '-', $template->name);
+        $p->setAndSave('title', $templateName . '-' . $p->id);
+        $p->setAndSave('name', $templateName . '-' . $p->id);
+
+        //redirect to edit page
+        $editUrl = $p->editUrl();
+        $this->session->redirect($editUrl);
+      }
+    }
   }
 
   public function updateTemplateSettings($event) {
