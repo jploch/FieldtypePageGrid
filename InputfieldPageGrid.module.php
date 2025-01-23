@@ -524,6 +524,9 @@ class InputfieldPageGrid extends Inputfield {
 
         if (!$field || !$field->id) return;
 
+        //save main page to session so we can use it for getPage() when not set via ajax call
+        $this->session->set('pg_page', $mainPage);
+
         //NEW support for multiple fields
         // multiple fields: check if it's this field or return (prevents double rendering of fields in backend)
         if (isset($_GET['field']) && $_GET['field'] !== $field->name && $fieldCount > 1) return;
@@ -1902,8 +1905,13 @@ class InputfieldPageGrid extends Inputfield {
         $p = wire('page');
 
         //after ajax inside backend we get the admin page, so we need to find the edit page
+        if ($this->session->pg_page) $p = $this->session->pg_page;
+        if (!$p || !$p->id) return false;
+
         if ($p->template->name === 'admin' && isset($_GET['page'])) $p = $this->pages->get($_GET['page']);
-        if ($p->template->name === 'admin' || !$p->id) return false;
+        if (!$p || !$p->id) return false;
+
+        if ($p->template->name === 'admin') return false;
 
         return $p;
     }

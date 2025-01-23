@@ -21,8 +21,6 @@ class ProcessPageGrid extends Process {
             'version' => '0.0.4',
             'useNavJSON' => true,
             'permission' => 'pagegrid-process',
-            // page that you want created to execute this module
-            // page will be at /youradmin/setup/pagegrid/
             'page' => [
                 'name' => 'pagegrid',
                 'parent' => 'setup',
@@ -288,11 +286,16 @@ class ProcessPageGrid extends Process {
             //get symbol markup for add item bar
             $addBar = $this->modules->get('InputfieldPageGrid')->renderAddItemBar(1);
 
+            $cssFiles = $this->getBlockFiles($p->parent(), 'css');
+            $jsFiles = $this->getBlockFiles($p->parent(), 'js');
+
             $response = array(
                 'newPageClass' => $newPageClass,
                 'markup' => $this->modules->get('InputfieldPageGrid')->renderItem($p),
                 'css' => $css,
-                'addBar' => $addBar
+                'addBar' => $addBar,
+                'cssFiles' => $cssFiles,
+                'jsFiles' => $jsFiles
             );
 
             return (json_encode($response));
@@ -458,10 +461,15 @@ class ProcessPageGrid extends Process {
                 $css .= $this->modules->get('InputfieldPageGrid')->renderStyles($cloneChild);
             }
 
+            $cssFiles = $this->getBlockFiles($clone, 'css');
+            $jsFiles = $this->getBlockFiles($clone, 'js');
+
             $response = array(
                 'markup' => $this->modules->get('InputfieldPageGrid')->renderItem($clone),
                 'css' => $css,
-                'newPages' => $newPages
+                'newPages' => $newPages,
+                'cssFiles' => $cssFiles,
+                'jsFiles' => $jsFiles
             );
 
             return (json_encode($response));
@@ -543,13 +551,22 @@ class ProcessPageGrid extends Process {
             $p->setAndSave('title', $templateName . '-' . $p->id);
             $p->setAndSave('name', $templateName . '-' . $p->id);
 
+            //set the page that will be replaced by the returned markup
+            //refactor note: it might make sense to allways just replace parent if not root in the future
             $replacPage = $replaceParentId ? $this->pages->get($replaceParentId) : 0;
             $updatePage = $replacPage && $replacPage->id && $replacPage->template->name != 'pg_container' ? $replacPage : $p;
+
+            //get block CSS and JS files
+            $cssFiles = $this->getBlockFiles($updatePage, 'css');
+            $jsFiles = $this->getBlockFiles($updatePage, 'js');
+            //END get block CSS and JS files
 
             $response = array(
                 'newPageClass' => $p->name,
                 'markup' => $this->modules->get('InputfieldPageGrid')->renderItem($updatePage),
-                'replaceClass' => $updatePage->name
+                'replaceClass' => $updatePage->name,
+                'cssFiles' => $cssFiles,
+                'jsFiles' => $jsFiles
             );
 
             return (json_encode($response));
@@ -614,12 +631,17 @@ class ProcessPageGrid extends Process {
             $replaceClass = $newPageClass;
             if ($type === 'addSymbol') $replaceClass = '';
 
+            $cssFiles = $this->getBlockFiles($clone, 'css');
+            $jsFiles = $this->getBlockFiles($clone, 'js');
+
             $response = array(
                 'newPageClass' => $newPageClass,
                 'markup' => $this->modules->get('InputfieldPageGrid')->renderItem($clone),
                 'pageId' => $pId,
                 'css' => $css,
-                'replaceClass' => $replaceClass
+                'replaceClass' => $replaceClass,
+                'cssFiles' => $cssFiles,
+                'jsFiles' => $jsFiles
             );
 
             return (json_encode($response));
@@ -792,13 +814,20 @@ class ProcessPageGrid extends Process {
                     $p = $parent;
                 }
 
+                //get block CSS and JS files
+                $cssFiles = $this->getBlockFiles($parent, 'css');
+                $jsFiles = $this->getBlockFiles($parent, 'js');
+                //END get block CSS and JS files
+
                 $p->meta()->set('pg_ajax', true);
 
                 $response = array(
                     'newPageClass' => $p->name,
                     'newChildPageClass' => $this->pageContext->name,
                     'markup' => $this->modules->get('InputfieldPageGrid')->renderItem($p),
-                    'message' => $message
+                    'message' => $message,
+                    'cssFiles' => $cssFiles,
+                    'jsFiles' => $jsFiles
                 );
 
                 $p->meta()->set('pg_ajax', false);
@@ -807,6 +836,35 @@ class ProcessPageGrid extends Process {
             }
         }
     }
+
+
+    public function getBlockFileUrl($templateName, $type) {
+        //check if block css file exists
+        $fileUrl = '';
+        $sitePath = $this->config->paths->site;
+        $siteUrl = $this->config->urls->site;
+        $blockFile = 'templates/blocks/' . $templateName . '.' . $type;
+        $moduleFile = 'modules/PageGridBlocks/blocks/' . $templateName . '.' . $type;
+        if (file_exists($sitePath . $blockFile)) $fileUrl = $siteUrl . $blockFile;
+        if (!$fileUrl && file_exists($sitePath . $moduleFile)) $fileUrl = $siteUrl . $moduleFile;
+
+        return $fileUrl;
+    }
+
+    public function getBlockFiles($parent, $type) {
+        if (!$parent && !$parent->id) return [];
+
+        $files = [];
+        $fileUrl = $this->getBlockFileUrl($parent->template->name, $type);
+        if ($fileUrl) $files[] = $fileUrl;
+
+        foreach ($parent->find('') as $c) {
+            $fileUrl = $this->getBlockFileUrl($c->template->name, $type);
+            if ($fileUrl && !in_array($fileUrl, $files)) $files[] = $fileUrl;
+        }
+        return $files;
+    }
+
 
     /*
      * Borrowed from Fredi front end edit
