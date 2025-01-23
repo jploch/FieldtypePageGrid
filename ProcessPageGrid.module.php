@@ -839,7 +839,7 @@ class ProcessPageGrid extends Process {
 
 
     public function getBlockFileUrl($templateName, $type) {
-        //check if block css file exists
+        //check if block file exists
         $fileUrl = '';
         $sitePath = $this->config->paths->site;
         $siteUrl = $this->config->urls->site;
@@ -851,16 +851,21 @@ class ProcessPageGrid extends Process {
         return $fileUrl;
     }
 
+    //finding all files for $parent (page object) and its children
     public function getBlockFiles($parent, $type) {
         if (!$parent && !$parent->id) return [];
 
         $files = [];
+        $options = $parent->template->pgOptions ? json_decode($parent->template->pgOptions, true) : [];
+        $loadScript = isset($options['reloadScript']) && $options['reloadScript'] == false && $type == 'js' ? false : true;
         $fileUrl = $this->getBlockFileUrl($parent->template->name, $type);
-        if ($fileUrl) $files[] = $fileUrl;
+        if ($fileUrl && $loadScript) $files[] = $fileUrl;
 
         foreach ($parent->find('') as $c) {
+            $options = $c->template->pgOptions ? json_decode($c->template->pgOptions, true) : [];
+            $loadScript = isset($options['reloadScript']) && $options['reloadScript'] == false && $type == 'js' ? false : true;
             $fileUrl = $this->getBlockFileUrl($c->template->name, $type);
-            if ($fileUrl && !in_array($fileUrl, $files)) $files[] = $fileUrl;
+            if ($fileUrl && $loadScript && !in_array($fileUrl, $files)) $files[] = $fileUrl;
         }
         return $files;
     }
