@@ -38,5 +38,5 @@ If you have ideas for a feature or enhancement for PAGEGRID, please make a post 
 
 ---
 
-© 2024 Jan Ploch
+© 2025 Jan Ploch
 [page-grid.com](https://page-grid.com) · [License agreement](https://github.com/jploch/FieldtypePageGrid/blob/main/LICENSE.md)
