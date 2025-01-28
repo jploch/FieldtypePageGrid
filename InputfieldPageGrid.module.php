@@ -197,16 +197,11 @@ class InputfieldPageGrid extends Inputfield {
     }
 
     public function ___renderField() {
-        // $pagesToRender = $this->attr('value');
 
         //new pages to render based on items parent
         $editID = (int) $this->wire('input')->get('id');
         if (!$editID && $this->wire('process') instanceof WirePageEditor) $editID = $this->wire('process')->getPage()->id;
-
-        if ($editID) {
-        } else {
-            return false;
-        }
+        if (!$editID) return;
 
         $itemsParent = $this->pages->get('pg-' . $editID);
 
@@ -265,13 +260,6 @@ class InputfieldPageGrid extends Inputfield {
         $globalPageData = $this->getData();
         $dataGlobal = '<script>$(".pg-container").data("pg", ' . $globalPageData . ')</script>';
         //END make data available to js
-
-        // get parent page
-        $parentPageId = (int) wire('input')->get('id');
-        if ($parentPageId == 'undefined' || $parentPageId == null) {
-            $parentPageId = wire('page')->id;
-        }
-        $parentPage = $this->pages->get($parentPageId);
 
         //show animation button only if animations set
         $animationParent = $this->pages->get('name=pg-animations, template=pg_container');
@@ -341,13 +329,29 @@ class InputfieldPageGrid extends Inputfield {
             $quickAddMain = '<div class="pg-quick-add pg-quick-add-main" data-id-original="' . $wrapperPage->id . '" data-id="' . $wrapperPage->id . '"><span class="pg-quick-add-icon" uk-tooltip="title:Add Item; pos:bottom; delay:100;"></span>' . $quickAddButtons . '</div>';
         }
 
+        //render language tabs to switch iframe language
+        $languageTabs = '';
+        $iframeUrl = $mainPage->url();
+        if ($this->templates->get('language') && $this->templates->get('language')->id && $this->modules->isInstalled('LanguageSupport') && $this->modules->isInstalled('LanguageSupportPageNames') && count($this->languages)) {
+            $languageTabs = '<div class="pg-langTabs"><ul class="uk-tab">';
+            $activeLang = isset($_GET['pglang']) ? $_GET['pglang'] : $this->user->language->name;
+            foreach ($this->languages as $l) {
+                $activeClass = $activeLang == $l->name ? 'uk-active' : '';
+                if ($activeLang == $l->name) $iframeUrl = $mainPage->localUrl($l);
+                $languageTabs .= '<li class="' . $activeClass . '"><a class="" href="' . $mainPage->editUrl() . '&pglang=' . $l->name . '" >' . $l->title . '</a></li>';
+            }
+            $languageTabs .= '</ul></div>';
+        }
+
+
         $renderMarkup = $topNav . $settings . '<div class="pg-container pg-container-' . $this->name . '" data-page-title="' . $mainPage->title . '" data-page="' . $editID . '" data-id="' . $this->pages->get('pg-classes')->id . '" data-animations-id="' . $this->pages->get('pg-animations')->id . '" data-field="' . $this->name . '" data-site-url="' . $this->config->urls->site . '" data-module-url="' . $this->config->urls->siteModules . 'FieldtypePageGrid/" data-admin-url="' . $this->page->rootParent->url() . 'setup/pagegrid/" data-fallbackfonts="' . $this->ft->fallbackFonts . '">' . $addItems . $dataGlobal . $blueprintSelect;
         //loading animation
         $renderMarkup .= '<div class="pg-loading"><div class="fa fa-spin fa-spinner fa-fw"></div></div>';
         //container for item header (item header will be moved here with js)
         $renderMarkup .= $this->renderIconPicker();
         $renderMarkup .= '<div class="pg-item-header-container">' . $quickAddMain . '</div>';
-        $renderMarkup .= '<iframe data-field="' . $this->name . '" id="pg-iframe-canvas-' . $this->name . '" class="pg-iframe-canvas" src="' . wire('pages')->get($parentPageId)->url . '?backend=1&field=' . $this->name . '&page=' . $parentPage->id . '" loading="lazy" frameBorder="0" scrolling="no" style="width:100%; max-height:100vh; border:0;"></iframe>';
+        $renderMarkup .= $languageTabs;
+        $renderMarkup .= '<iframe data-field="' . $this->name . '" id="pg-iframe-canvas-' . $this->name . '" class="pg-iframe-canvas" src="' . $iframeUrl . '?backend=1&field=' . $this->name . '&page=' . $mainPage->id . '" loading="lazy" frameBorder="0" scrolling="no" style="width:100%; max-height:100vh; border:0;"></iframe>';
         $renderMarkup .= '</div>';
 
         //render delete button
