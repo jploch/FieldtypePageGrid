@@ -16,7 +16,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID'),
       'summary' => __('Commercial page builder module that renders block templates and adds drag and drop functionality in admin.', __FILE__),
-      'version' => '2.2.20',
+      'version' => '2.2.21',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -472,7 +472,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     //force inlineLimitPage setting for core PageFrontEdit module
     if ($this->modules->isInstalled('PageFrontEdit')) {
       $configCore = $this->modules->getConfig('PageFrontEdit');
-      if ($configCore['inlineLimitPage'] != '0') {
+      if (!array_key_exists('inlineLimitPage', $configCore) || $configCore['inlineLimitPage'] != '0') {
         $configCore['inlineLimitPage'] = '0';
         $this->modules->saveConfig('PageFrontEdit', $configCore);
       }
