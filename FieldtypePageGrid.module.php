@@ -16,7 +16,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID'),
       'summary' => __('Commercial page builder module that renders block templates and adds drag and drop functionality in admin.', __FILE__),
-      'version' => '2.2.19',
+      'version' => '2.2.20',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -95,8 +95,8 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
       $t->name = 'pagegrid-page';
       $t->fieldgroup = $fg; // add the field group
       $t->icon = 'th';
-      $t->noAppendTemplateFile = 1;
-      $t->noPrependTemplateFile = 1;
+      // $t->noAppendTemplateFile = 1;
+      // $t->noPrependTemplateFile = 1;
       // $t->tags = 'PageGrid'; do not set tag so template is shown on add new page screen
       $t->save();
 
@@ -422,23 +422,17 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     //make $pagegrid available to call functions from InputfieldPageGrid
     $this->fuel->set('pagegrid', $this->modules->get('InputfieldPageGrid'));
     $this->addHookAfter('AdminTheme::getExtraMarkup', $this, 'addBodyClasses');
-    $this->addHookBefore("PageFrontEdit::getPage", $this, "disableInlineEdit");
-    $this->config->styles->add($this->config->urls->InputfieldPageGrid . "css/AdminThemeCanvas-fix.css");
+    $this->addHookBefore('PageFrontEdit::getPage', $this, 'disableInlineEdit');
+    $this->addHookBefore('Page::render', $this, 'disableAppendFile');
+    $this->config->styles->add($this->config->urls->InputfieldPageGrid . 'css/AdminThemeCanvas-fix.css');
     $this->setBlueprintTemplate();
+    //if superuser and debug on allways allow module download for block dependencies
+    if ($this->user->isSuperuser() && $this->config->debug) {
+      $this->config->moduleInstall('download', true);
+    }
   }
 
   public function ready() {
-
-    //deactivate automatic appending of template file look for string
-    $p = $this->page;
-    if ($p->template->name !== 'admin' && $p->fields->get('type=FieldtypePageGrid')) {
-      $parsedTemplate = new TemplateFile($p->template->filename);
-      if (strpos($parsedTemplate->render(), '<!--pgNoAppendTemplateFile-->') !== false) {
-        $this->config->prependTemplateFile = false;
-        $this->config->appendTemplateFile = false;
-      }
-    }
-    //END deactivate automatic appending of template file
 
     //create pages und templates if they don't exist
     $container = $this->pages->get("name=pg-items, template=pg_container");
@@ -535,6 +529,20 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
       }
     }
     //END hide setup page for non superusers
+  }
+
+  // deactivate automatic appending of template file
+  public function disableAppendFile($event) {
+    $p = $event->object;
+
+    //deactivate automatic appending of template file look for string
+    if ($p->template->name !== 'admin' && $p->fields->get('type=FieldtypePageGrid')) {
+      $parsedTemplate = new TemplateFile($p->template->filename);
+      if (strpos($parsedTemplate->render(), '<!--pgNoAppendTemplateFile-->') !== false) {
+        $this->config->prependTemplateFile = false;
+        $this->config->appendTemplateFile = false;
+      }
+    }
   }
 
   // set all languages active automatically for new pg items
@@ -1382,7 +1390,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     $lKey = $this->lKey;
     $lUrl = $this->lUrl;
     $host = $_SERVER['HTTP_HOST'];
-    $host_e = pathinfo(parse_url($host, PHP_URL_PATH), PATHINFO_EXTENSION);
+    // $host_e = pathinfo(parse_url($host, PHP_URL_PATH), PATHINFO_EXTENSION);
     $validHost = false;
     $valid = false;
     $hash = hash('md2', $lKey);
