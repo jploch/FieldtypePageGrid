@@ -16,7 +16,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID'),
       'summary' => __('Commercial page builder module that renders block templates and adds drag and drop functionality in admin.', __FILE__),
-      'version' => '2.2.22',
+      'version' => '2.2.23',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -424,7 +424,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     $this->addHookBefore('Page::render', $this, 'disableAppendFile');
 
     //if user is not loggedin no need to run hooks (autoload needs to be true for blueprints to works, loading teplate file from module folder)
-    if (!$this->user->isLoggedin()) return;
+    if (wire('user') && !wire('user')->isLoggedin()) return;
 
     //these hooks are only needed when user is loggedin
     $this->setBlueprintTemplate();
@@ -432,7 +432,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     $this->addHookBefore('PageFrontEdit::getPage', $this, 'disableInlineEdit');
     $this->config->styles->add($this->config->urls->InputfieldPageGrid . 'css/AdminThemeCanvas-fix.css');
     //if superuser and debug on allways allow module download for block dependencies
-    if ($this->user->isSuperuser() && $this->config->debug) {
+    if (wire('user') && wire('user')->isSuperuser() && $this->config->debug) {
       $this->config->moduleInstall('download', true);
     }
   }
