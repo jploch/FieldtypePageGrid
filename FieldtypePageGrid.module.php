@@ -16,13 +16,13 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID'),
       'summary' => __('Commercial page builder module that renders block templates and adds drag and drop functionality in admin.', __FILE__),
-      'version' => '2.2.21',
+      'version' => '2.2.22',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
       'installs' => array('InputfieldPageGrid', 'ProcessPageGrid', 'PageFrontEdit', 'ProcessPageClone'),
       'requires' => array('ProcessWire>=3.0.210', 'PHP>=5.4.0'),
-      'autoload' => 'template=admin',
+      'autoload' => true,
       'permissions' => array(
         'pagegrid-process' => 'Allow PAGEGRID to process ajax calls',
         'page-pagegrid-edit' => 'Edit PAGEGRID items in modal (applies to all editable templates)',
@@ -421,11 +421,16 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
   public function init() {
     //make $pagegrid available to call functions from InputfieldPageGrid
     $this->fuel->set('pagegrid', $this->modules->get('InputfieldPageGrid'));
+    $this->addHookBefore('Page::render', $this, 'disableAppendFile');
+
+    //if user is not loggedin no need to run hooks (autoload needs to be true for blueprints to works, loading teplate file from module folder)
+    if (!$this->user->isLoggedin()) return;
+
+    //these hooks are only needed when user is loggedin
+    $this->setBlueprintTemplate();
     $this->addHookAfter('AdminTheme::getExtraMarkup', $this, 'addBodyClasses');
     $this->addHookBefore('PageFrontEdit::getPage', $this, 'disableInlineEdit');
-    $this->addHookBefore('Page::render', $this, 'disableAppendFile');
     $this->config->styles->add($this->config->urls->InputfieldPageGrid . 'css/AdminThemeCanvas-fix.css');
-    $this->setBlueprintTemplate();
     //if superuser and debug on allways allow module download for block dependencies
     if ($this->user->isSuperuser() && $this->config->debug) {
       $this->config->moduleInstall('download', true);
@@ -433,6 +438,9 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
   }
 
   public function ready() {
+
+    //if not inside admin no need to run ready function (good for performance)
+    if (wire('page')->template->name != 'admin') return;
 
     //create pages und templates if they don't exist
     $container = $this->pages->get("name=pg-items, template=pg_container");
