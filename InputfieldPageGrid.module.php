@@ -531,7 +531,8 @@ class InputfieldPageGrid extends Inputfield {
         if (!$field || !$field->id) return;
 
         //on frontend get cached markup if exists and return early
-        $cache = $this->cache->get('pgCache-markup-' . $mainPage->id . '-' . $field->id);
+        $lang = $this->user->language && $this->user->language->id ? '-' . $this->user->language->id : '';
+        $cache = $this->cache->get('pgCache-markup-' . $mainPage->id . '-' . $field->id . $lang);
         if ($cache && $this->user->isLoggedin()) $this->cache->delete("pgCache-*");
         if ($cache && !$backend) return $cache;
 
@@ -617,7 +618,7 @@ class InputfieldPageGrid extends Inputfield {
             $out = '<div class="pg-wrapper pg pg-main ' . $this->getCssClasses($itemsParent) . '">' . $layout . '</div>';
         }
 
-        if (!$backend) $this->cache->save('pgCache-markup-' . $mainPage->id . '-' . $field->id, $out);
+        if (!$backend) $this->cache->save('pgCache-markup-' . $mainPage->id . '-' . $field->id . $lang, $out);
         return $out;
     }
 
