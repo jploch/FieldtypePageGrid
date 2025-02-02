@@ -513,12 +513,6 @@ class InputfieldPageGrid extends Inputfield {
         if (!$mainPage->id)  return;
 
         $backend = $this->isBackend();
-
-        //on frontend get cached markup if exists and return early
-        $cache = $this->cache->get('pgCache-markup-' . $mainPage->id);
-        if ($cache && $this->user->isLoggedin()) $this->cache->delete("pgCache-*");
-        if ($cache && !$backend) return $cache;
-
         $statusClass = '';
         $itemsParent = $this->pages->get('pg-' . $mainPage->id);
         $layout = "";
@@ -535,6 +529,11 @@ class InputfieldPageGrid extends Inputfield {
         }
 
         if (!$field || !$field->id) return;
+
+        //on frontend get cached markup if exists and return early
+        $cache = $this->cache->get('pgCache-markup-' . $mainPage->id . '-' . $field->id);
+        if ($cache && $this->user->isLoggedin()) $this->cache->delete("pgCache-*");
+        if ($cache && !$backend) return $cache;
 
         //save main page id to session so we can use it for getPage() when not set via ajax call
         $this->session->set('pg_page', $mainPage->id);
@@ -618,7 +617,7 @@ class InputfieldPageGrid extends Inputfield {
             $out = '<div class="pg-wrapper pg pg-main ' . $this->getCssClasses($itemsParent) . '">' . $layout . '</div>';
         }
 
-        if (!$backend) $this->cache->save('pgCache-markup-' . $mainPage->id, $out);
+        if (!$backend) $this->cache->save('pgCache-markup-' . $mainPage->id . '-' . $field->id, $out);
         return $out;
     }
 
