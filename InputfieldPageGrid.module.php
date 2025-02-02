@@ -510,7 +510,15 @@ class InputfieldPageGrid extends Inputfield {
     }
 
     public function renderGrid($mainPage, $field = 0) {
+        if (!$mainPage->id)  return;
+
         $backend = $this->isBackend();
+
+        //on frontend get cached markup if exists and return early
+        $cache = $this->cache->get('pgCache-markup-' . $mainPage->id);
+        if ($cache && $this->user->isLoggedin()) $this->cache->delete("pgCache-*");
+        if ($cache && !$backend) return $cache;
+
         $statusClass = '';
         $itemsParent = $this->pages->get('pg-' . $mainPage->id);
         $layout = "";
@@ -568,7 +576,6 @@ class InputfieldPageGrid extends Inputfield {
         //END NEW support for multiple fields
 
         $pagesToRender = $itemsParent->children();
-
         foreach ($pagesToRender as $p) {
             $layout .= $this->renderItem($p);
         }
@@ -611,6 +618,7 @@ class InputfieldPageGrid extends Inputfield {
             $out = '<div class="pg-wrapper pg pg-main ' . $this->getCssClasses($itemsParent) . '">' . $layout . '</div>';
         }
 
+        if (!$backend) $this->cache->save('pgCache-markup-' . $mainPage->id, $out);
         return $out;
     }
 
@@ -1167,19 +1175,22 @@ class InputfieldPageGrid extends Inputfield {
     //add scripts with same name as block file
 
     public function scripts($mainPage, $updateAnimations = false) {
+        if (!$mainPage->id) return;
+
+        $backend = $this->isBackend();
+
+        //on frontend get cached markup if exists and return early
+        $cache = $this->cache->get('pgCache-js-' . $mainPage->id);
+        if ($cache && $this->user->isLoggedin()) $this->cache->delete("pgCache-*");
+        if ($cache && !$backend) return $cache;
+
         $arrayFiles = [];
         $jsFiles = "";
-        $backend = $this->isBackend();
         $customJs = $this->ft->customScript && !$backend ? '<script>' . $this->ft->customScript . '</script>' : '';
 
         //load js plugins
         foreach ($this->ft->plugins as $pluginName) {
             $jsFiles .= '<script type="text/javascript" src="' . $this->config->urls->InputfieldPageGrid . 'js/' . $pluginName . '.js"></script>';
-        }
-
-        if ($mainPage->id) {
-        } else {
-            return;
         }
 
         $items = new PageArray();
@@ -1306,10 +1317,13 @@ class InputfieldPageGrid extends Inputfield {
             }
         }
 
+        $scriptOutput = $jsAnimationData . $jsFiles . $customJs;
+        if (!$backend) $this->cache->save('pgCache-js-' . $mainPage->id, $scriptOutput);
+
         // if ($updateAnimations) bdb([$dataJson, $dataJsonSelectors]);
         //if $updateAnimations is true, no neeed to return js files
         if ($updateAnimations) return json_encode([$animationData, $animationsSelectors]);
-        echo $jsAnimationData . $jsFiles . $customJs;
+        return $scriptOutput;
     }
 
     public function fonts($p) {
@@ -1667,10 +1681,18 @@ class InputfieldPageGrid extends Inputfield {
 
     public function styles($mainPage, $loadDefaults = 1, $loadGlobalClasses = 1, $loadFiles = 1, $loadFonts = 1) {
 
+        if (!$mainPage->id) return;
+
+        $backend = $this->isBackend();
+
+        //on frontend get cached markup if exists and return early
+        $cache = $this->cache->get('pgCache-css-' . $mainPage->id);
+        if ($cache && $this->user->isLoggedin()) $this->cache->delete("pgCache-*");
+        if ($cache && !$backend) return $cache;
+
         $arrayFiles = [];
         $itemCss = '';
         $cssBackend = '';
-        $backend = $this->isBackend();
         $cssTemplates = '';
         $defaults = '';
         $fonts = '';
@@ -1680,12 +1702,6 @@ class InputfieldPageGrid extends Inputfield {
 
         // page array to hold items to load files
         $itemsArray = new PageArray();
-
-        if ($mainPage->id) {
-        } else {
-            return;
-        }
-
         $itemsParent = $this->pages->get('pg-' . $mainPage->id);
 
         //load backend css only if rendering page with pg field
@@ -1855,7 +1871,12 @@ class InputfieldPageGrid extends Inputfield {
             $itemCss = $cssMainPage . $itemCss . $animationsCss;
         }
 
-        return  $cssBackend . $cssTemplates . $defaults . $fonts . $itemCss . $customCss;
+        $cssOutput = $cssBackend . $cssTemplates . $defaults . $fonts . $itemCss . $customCss;
+
+        //cache output
+        if (!$backend) $this->cache->save('pgCache-css-' . $mainPage->id, $cssOutput);
+
+        return  $cssOutput;
     }
 
     public function getAnimationCss($animationPage) {
