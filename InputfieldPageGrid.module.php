@@ -995,7 +995,7 @@ class InputfieldPageGrid extends Inputfield {
             if ($addButton && $user->hasPermission('page-add', $p)) {
                 $childrenTemplates = isset($options['children']) && is_array($options['children']) ? $options['children'] : [];
                 $quickAddButtons = $this->renderAddItemBar(0, $childrenTemplates, 1);
-                $header .= '<div class="pg-quick-add" data-id-original="' . $pOriginal->id . '" data-id="' . $p->id . '"><span class="pg-quick-add-icon" uk-tooltip="title:Add Item; pos:bottom; delay:100;"></span>' . $quickAddButtons . '</div>';
+                $header .= '<div class="pg-quick-add" data-id-original="' . $pOriginal->id . '" data-id="' . $p->id . '"><span class="pg-quick-add-icon" uk-tooltip="title:Add Item to ' . $layoutTitle . '; pos:bottom; delay:100;"></span>' . $quickAddButtons . '</div>';
             }
             //edit
             $header .= '<pg-item-header-button class="pg-edit" title="' . $this->_('Edit') . '" data-url="./?id=' . $p->id . '&amp;modal=1&pgmodal=1" href="#"><i class="fa fa-pencil"></i></pg-item-header-button>';
