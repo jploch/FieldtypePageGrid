@@ -110,14 +110,16 @@ if ($this->modules->get('FieldtypePageGrid')->fallbackFonts) {
 }
 
 $defaultCss .= '
-.pg {
-  grid-column-end: -1;
-  grid-column-start: 1;
+.pg-item {
+  grid-column-end: span 1;
+  grid-row-end: span 1;
+  animation-fill-mode: forwards!important;
 } ';
 
 $defaultCss .= '
-.pg-item {
-  animation-fill-mode: forwards!important;
+.pg {
+  grid-column-end: -1;
+  grid-column-start: 1;
 } ';
 
 // $defaultCss .= '.pg-image, .pg-video {

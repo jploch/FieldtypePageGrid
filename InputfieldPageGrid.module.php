@@ -1200,6 +1200,8 @@ class InputfieldPageGrid extends Inputfield {
         if ($itemsParent->id) {
             //getAncestors returns parent and grandchildren. needed because of bug. $page->find('') is not returning all pages
             $items->add($this->getAncestors($itemsParent));
+            //on multilanguage pages sometimes don't return children
+            if (count($items) <= 1) $items->add($itemsParent->find(''));
         } else {
             //getAncestors returns parent and grandchildren. needed because of bug. $page->find('') is not returning all pages
             $items->add($this->getAncestors($mainPage));
