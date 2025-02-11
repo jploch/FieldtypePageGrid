@@ -591,6 +591,8 @@ class ProcessPageGrid extends Process {
             $clone->parent = $parent;
             $clone->save();
 
+            $itemData = $clone->meta()->pg_styles ? $clone->meta()->pg_styles : '';
+
             // bd($parent);
 
             $insertAfter = $this->sanitizer->int($_POST['insertAfter']);
@@ -598,20 +600,19 @@ class ProcessPageGrid extends Process {
             if (isset($insertAfter) && $insertAfter != 0) {
                 $afterP = $this->pages->get($insertAfter);
                 $this->pages->insertBefore($clone, $afterP);
-                // bd($afterP);
             }
 
             $newPageClass = $p->name;
-            $pId = $clone->id;
 
             //set meta symbol page
-            // $clone->meta()->set('pg_symbol', $p->id);
             if ($type == 'addSymbol') $clone->meta()->set('pg_symbol', $p->id);
 
             //add non-synced symbols/patterns
             $css = '';
+
             if ($type == 'addFromSymbol') {
                 $clone->meta()->remove('pg_symbol');
+
                 $css = $this->modules->get('InputfieldPageGrid')->renderStyles($clone);
 
                 foreach ($clone->find('') as $cloneItem) {
@@ -625,7 +626,6 @@ class ProcessPageGrid extends Process {
                     $css .= $this->modules->get('InputfieldPageGrid')->renderStyles($cloneItem);
                 }
                 $newPageClass = $clone->name;
-                $pId = $p->id;
             }
 
             $replaceClass = $newPageClass;
@@ -637,9 +637,10 @@ class ProcessPageGrid extends Process {
             $response = array(
                 'newPageClass' => $newPageClass,
                 'markup' => $this->modules->get('InputfieldPageGrid')->renderItem($clone),
-                'pageId' => $pId,
+                'pageId' => $clone->id,
                 'css' => $css,
                 'replaceClass' => $replaceClass,
+                'itemData' => $itemData,
                 'cssFiles' => $cssFiles,
                 'jsFiles' => $jsFiles
             );
