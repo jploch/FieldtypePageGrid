@@ -821,6 +821,9 @@ class InputfieldPageGrid extends Inputfield {
         //disable inline edit for frontend, when inlineEditorFrontDisable = true
         if (!$backend && $this->ft->inlineEditorFrontDisable) $p->edit(false);
 
+        //pass page to template be able to set render options specifically for this page
+        $p->template->page = $p;
+
         // parse template markup and inssert file uploader
         $templateRender = $parsedTemplate->render();
         $templateRender = $this->ft->enableInlineEditFile($templateRender, $p);
@@ -830,7 +833,8 @@ class InputfieldPageGrid extends Inputfield {
         $optionAutoTitle = 1; // deafult enable auto title and puplish of pg items via modal
 
         // GET RENDER OPTIONS set via block files
-        $options = $p->template->pgOptions ? json_decode($p->template->pgOptions, true) : [];
+        //we allow page specific option (e.g. need to link individuall groups)
+        $options = $p->pgOptions ? json_decode($p->pgOptions, true) : [];
 
         //some options we need to access in hooks so we save it as session
         if ($backend) {
@@ -849,6 +853,13 @@ class InputfieldPageGrid extends Inputfield {
 
             //allow tags to change
             if (isset($options['tags']) && $tagNameSaved !== 'div') $tagName = $tagNameSaved;
+
+            //prevent nested links, breaking layout in HTML
+            if ($tagName == 'a') {
+                if ($backend) $tagName = 'div';
+                $templateRender = str_replace("<a ", "<span ", $templateRender);
+                $templateRender = str_replace("</a>", "</span>", $templateRender);
+            }
 
             // replace p tag with custom el to prevent nesting bug with <p> and inline editor <div>
             if ($tagName == 'p') {
@@ -897,9 +908,8 @@ class InputfieldPageGrid extends Inputfield {
         //END force autonaming for all children if only one template selected
 
         if ($backend) {
-            $renderOptions = json_encode($options, JSON_FORCE_OBJECT);
             $renderOptionsTags = isset($options['tags']) ? $options['tags'] : '';
-            $layout .= "<" . $tagName . " id='" . $p->name . "' data-id='" . $p->id . "' data-id-original='" . $pOriginal->id . "' class='" . $classes . " " . $nestedClasses . $statusClass . "' data-template='" . $p->template->name . "' data-template-label='" . $p->template->label . "' data-field='" . $this->name . "' data-title='" . $p->getUnformatted('title') . "' data-name='" . $p->name . "' " . $attributes . " data-tags='" . $renderOptionsTags . "' data-pg-options='" . $renderOptions . "'>";
+            $layout .= "<" . $tagName . " id='" . $p->name . "' data-id='" . $p->id . "' data-id-original='" . $pOriginal->id . "' class='" . $classes . " " . $nestedClasses . $statusClass . "' data-template='" . $p->template->name . "' data-template-label='" . $p->template->label . "' data-field='" . $this->name . "' data-title='" . $p->getUnformatted('title') . "' data-name='" . $p->name . "' " . $attributes . " data-tags='" . $renderOptionsTags . "'>";
             $layout .= '<pg-icon>' . wireIconMarkup($p->template->icon) . '</pg-icon>';
             $layout .= $header;
             $layout .= $templateRender;
@@ -1727,8 +1737,18 @@ class InputfieldPageGrid extends Inputfield {
             //getAncestors returns parent and grandchildren. needed because of bug. $page->find('') is not returning all pages
             $pageItems = $this->getAncestors($itemsParent);
 
-            //for some multilang pages this is not returning the children, so get them as a backup like this
-            if (count($pageItems) <= 1) $pageItems = $itemsParent->find('');
+            // for some multilang pages getAncestors is not returning the children, so get them as a backup like this
+            // with multi lang we also need to make sure to get all containers (for some reason find is not returning all of them)
+            if (count($pageItems) <= 1) {
+                $pageItems = $itemsParent->find('');
+                $rootPath = $itemsParent->url('');
+                foreach ($mainPage->fields as $f) {
+                    if ($f->type instanceof FieldtypePageGrid) {
+                        $pgWrapper = $this->pages->get($rootPath . 'pg-' . $f->id . '/');
+                        $pageItems->add($pgWrapper);
+                    }
+                }
+            }
 
             $itemsArray->add($pageItems);
             //add symbol children, fix
@@ -1951,7 +1971,11 @@ class InputfieldPageGrid extends Inputfield {
         $t = $this->templates->get($templateName);
         if ($t->id) {
             $optionsJson = json_encode($options);
+            $p = $t->page;
+
             $t->pgOptions = $optionsJson;
+            //allow page specific options (we set page to the template object on render, so we can get it here)
+            if ($p && $p->id) $p->pgOptions = $optionsJson;
         }
     }
 

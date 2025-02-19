@@ -16,7 +16,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID'),
       'summary' => __('Commercial page builder module that renders block templates and adds drag and drop functionality in admin.', __FILE__),
-      'version' => '2.2.48',
+      'version' => '2.2.49',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -799,8 +799,10 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
   }
 
   public function pageAddForm($event) {
+
     // Retrieve the form
     $form = $event->return;
+
     // Retrieve GET input "parent_id"
     $parentIdInput = $this->wire('input')->get['parent_id'];
     // Sanitize GET input
@@ -811,8 +813,14 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     if (!$parentPage || !$parentPage->id) return;
     if ($parentPage->template->name === 'pg_container' && $parentPage->name !== 'pg-blueprints') return;
 
+    //check if inside pg modal
+    $isPageGridModal = false;
+    if (isset($_GET['pgmodal'])) $isPageGridModal = true;
+
     //get children settings for parent from template file
     $options = $parentPage->template->pgOptions ? json_decode($parentPage->template->pgOptions, true) : [];
+    $optionAutoTitle = 1;
+    if (isset($options['autoTitle'])) $optionAutoTitle = $options['autoTitle'];
 
     //check if pagegrid item page
     $isPageGrid = false;
@@ -820,86 +828,109 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
       $isPageGrid = true;
     }
 
+    if ($isPageGridModal && $isPageGrid) {
+      $form->prependFile = $this->config->styles->add($this->config->urls->InputfieldPageGrid . "css/main.css?v=333");
+      $form->addClass('pg-hide-language');
+      $form->addClass('pg-settings-body');
+    }
+
+    //hide title if auto publish
+    if ($isPageGrid && $isPageGridModal && $optionAutoTitle && isset($options['children'])) {
+      $form->appendMarkup('<style>#wrap_Inputfield_submit_save, #wrap_submit_publish, #wrap_Inputfield_title, #wrap_Inputfield__pw_page_name {display:none!important;}</style>');
+    }
+
     foreach ($form as $inputfield) {
 
-      if ($inputfield->name !== 'template') return;
-      $templates = $inputfield['options'];
-      if (!$templates) return;
-
-      foreach ($templates as $key => $value) {
-        $t = $this->templates->get($key);
-        $file = $this->config->paths->templates . 'blocks/' .  $t->name . '.php';
-        $fileModule = $this->config->paths->siteModules . 'PageGridBlocks/blocks/' . $t->name . '.php';
-        $isBlock = 0;
-
-        //allways filter out pg_container
-        if ($t->name == 'pg_container') unset($templates[$key]);
-
-        if (file_exists($file)) $isBlock = 1;
-        if (file_exists($fileModule)) $isBlock = 1;
-
-        //for normal pages hide block templates
-        if (!$isPageGrid && $isBlock) unset($templates[$key]);
-
-        //remove templates with tagname PageGrid (auto set via module)
-        if ($t && $t->id && $t->tags) {
-          if (!$isPageGrid && (strpos($t->tags, 'PageGrid') !== false)) unset($templates[$key]);
-          if (!$isPageGrid && (strpos($t->tags, 'pagegrid') !== false)) unset($templates[$key]);
-        }
-
-        //pagegrid page
-        //only show block templates
-        if ($isPageGrid && !$isBlock) unset($templates[$key]);
-        //check if allowed children option is set
-        if ($isPageGrid && $isBlock && isset($options['children']) && is_array($options['children']) && !in_array($t->name, $options['children'])) unset($templates[$key]);
+      //set auto publish title (catched later with ahook and converted to real title)
+      if ($inputfield->name == 'title' && $optionAutoTitle && $isPageGrid && $isPageGridModal) {
+        $inputfield->value = 'pg-autotitle';
       }
 
-      //for blueprint set blueprint template, and hide inputfield
-      if ($parentPage->name === 'pg-blueprints' && $parentPage->template->name === 'pg_container') {
-        $t = $this->templates->get('pg_blueprint');
-        $templates = [];
-        $templates[$t->id] = $t->name;
-        $inputfield->value = $t->id;
-        $inputfield->addClass('uk-hidden', 'wrapClass');
+      //set auto publish name (catched later with ahook and converted to real name)
+      if ($inputfield->name == '_pw_page_name' && $optionAutoTitle && $isPageGrid && $isPageGridModal) {
+        $inputfield->value = 'pg-autotitle-' . rand(1000, 9999);
+      }
 
-        //check if blueprintAdd is set
-        $addBlueprint = $this->wire('input')->get['addBlueprint'];
-        $addBlueprint = $this->wire('sanitizer')->int($addBlueprint);
-        $addBlueprintPage = $this->wire('pages')->get($addBlueprint);
+      //set allowed templates
+      if ($inputfield->name == 'template') {
+        $templates = $inputfield['options'];
+        if (!$templates) continue;
 
-        $f = $this->wire()->modules->get('InputfieldPageListSelect');
-        $f->label = $this->_("Create Blueprint from Page");
-        $f->description = $this->_("Choose a page if you don't want to start with an empty page.");
-        if ($addBlueprintPage && $addBlueprintPage->id) $f->description .= $this->_(" The last page you edited was selected automatically.");
-        $f->attr('name', 'blueprintPageId');
-        $f->columnWidth('100');
-        $f->parent_id = 1;
-        $f->collapsed = 2;
-        if ($addBlueprintPage && $addBlueprintPage->id) $f->attr('value', $addBlueprint);
-        $f->lazy = 0;
-        $f->appendMarkup = '<style>#wrap_Inputfield_blueprintPageId .PageListItem {display:none;} .PageListTemplate_admin {display:none!important;}</style>';
+        foreach ($templates as $key => $value) {
+          $t = $this->templates->get($key);
+          $file = $this->config->paths->templates . 'blocks/' .  $t->name . '.php';
+          $fileModule = $this->config->paths->siteModules . 'PageGridBlocks/blocks/' . $t->name . '.php';
+          $isBlock = 0;
 
-        //bug:field not respecting template, hide via css
-        foreach ($this->fields as $pgf) {
-          if ($pgf->type instanceof FieldtypePageGrid) {
-            $template_has_pg = $this->fields->get($pgf->name)->getFieldgroups()->implode('|', 'name');
-            $pgPages = $this->pages->find("template=$template_has_pg, has_parent!=2, include=all");
+          //allways filter out pg_container
+          if ($t->name == 'pg_container') unset($templates[$key]);
 
-            foreach ($pgPages as $item) {
-              $f->appendMarkup .= "<style>#wrap_Inputfield_blueprintPageId .PageListID$item->id {display:block;}</style>";
+          if (file_exists($file)) $isBlock = 1;
+          if (file_exists($fileModule)) $isBlock = 1;
+
+          //for normal pages hide block templates
+          if (!$isPageGrid && $isBlock) unset($templates[$key]);
+
+          //remove templates with tagname PageGrid (auto set via module)
+          if ($t && $t->id && $t->tags) {
+            if (!$isPageGrid && (strpos($t->tags, 'PageGrid') !== false)) unset($templates[$key]);
+            if (!$isPageGrid && (strpos($t->tags, 'pagegrid') !== false)) unset($templates[$key]);
+          }
+
+          //pagegrid page
+          //only show block templates
+          if ($isPageGrid && !$isBlock) unset($templates[$key]);
+          //check if allowed children option is set
+          if ($isPageGrid && $isBlock && isset($options['children']) && is_array($options['children']) && !in_array($t->name, $options['children'])) unset($templates[$key]);
+        }
+
+        //for blueprint set blueprint template, and hide inputfield
+        if ($parentPage->name === 'pg-blueprints' && $parentPage->template->name === 'pg_container') {
+          $t = $this->templates->get('pg_blueprint');
+          $templates = [];
+          $templates[$t->id] = $t->name;
+          $inputfield->value = $t->id;
+          $inputfield->addClass('uk-hidden', 'wrapClass');
+
+          //check if blueprintAdd is set
+          $addBlueprint = $this->wire('input')->get['addBlueprint'];
+          $addBlueprint = $this->wire('sanitizer')->int($addBlueprint);
+          $addBlueprintPage = $this->wire('pages')->get($addBlueprint);
+
+          $f = $this->wire()->modules->get('InputfieldPageListSelect');
+          $f->label = $this->_("Create Blueprint from Page");
+          $f->description = $this->_("Choose a page if you don't want to start with an empty page.");
+          if ($addBlueprintPage && $addBlueprintPage->id) $f->description .= $this->_(" The last page you edited was selected automatically.");
+          $f->attr('name', 'blueprintPageId');
+          $f->columnWidth('100');
+          $f->parent_id = 1;
+          $f->collapsed = 2;
+          if ($addBlueprintPage && $addBlueprintPage->id) $f->attr('value', $addBlueprint);
+          $f->lazy = 0;
+          $f->appendMarkup = '<style>#wrap_Inputfield_blueprintPageId .PageListItem {display:none;} .PageListTemplate_admin {display:none!important;}</style>';
+
+          //bug:field not respecting template, hide via css
+          foreach ($this->fields as $pgf) {
+            if ($pgf->type instanceof FieldtypePageGrid) {
+              $template_has_pg = $this->fields->get($pgf->name)->getFieldgroups()->implode('|', 'name');
+              $pgPages = $this->pages->find("template=$template_has_pg, has_parent!=2, include=all");
+
+              foreach ($pgPages as $item) {
+                $f->appendMarkup .= "<style>#wrap_Inputfield_blueprintPageId .PageListID$item->id {display:block;}</style>";
+              }
             }
           }
+
+          $form->prepend($f);
+
+          //set page headline
+          $form->appendMarkup('<style>#pw-content-head h1::after { content: " Blueprint";}</style>');
+          //set page headline
+          $form->appendMarkup('<style>#wrap_Inputfield__pw_page_name { display:none!important;}</style>');
         }
 
-        $form->prepend($f);
-
-        //set page headline
-        $form->appendMarkup('<style>#pw-content-head h1::after { content: " Blueprint";}</style>');
-        //set page headline
-        $form->appendMarkup('<style>#wrap_Inputfield__pw_page_name { display:none!important;}</style>');
+        $inputfield['options'] = $templates;
       }
-
-      $inputfield['options'] = $templates;
     }
 
     // Populate back argument
@@ -1209,10 +1240,10 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
 
     //check if pagegrid item page
     $isPageGrid = false;
-    if (count($page->parents('template=pg_container'))) {
-      $isPageGrid = true;
-    }
-    if (isset($_GET['pgmodal'])) $isPageGrid = true;
+    // if (count($page->parents('template=pg_container'))) {
+    //   $isPageGrid = true;
+    // }
+    if (isset($_GET['pgmodal']) || isset($_GET['modal'])) $isPageGrid = true;
     if (!$isPageGrid) return;
     //END check if pagegrid item page
 
@@ -1222,10 +1253,14 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     $childrenTab = $form->children->get('id=ProcessPageEditChildren');
     $settingsTab = $form->get("id=ProcessPageEditSettings");
 
-    // bd($this->session->get('pg_template_' . $page->template->name));
-
     //add css to modal
-    $form->prependFile = $this->config->styles->add($this->config->urls->InputfieldPageGrid . "css/main.css");
+    $form->prependFile = $this->config->styles->add($this->config->urls->InputfieldPageGrid . "css/main.css?v=333");
+    $form->addClass('pg-settings-body');
+
+    //if pg item hide language
+    if (count($page->parents('template=pg_container'))) {
+      $form->addClass('pg-hide-language');
+    }
 
     if ($page->template->name == 'pg_code') {
       $form->prependFile = $this->config->styles->add($this->config->urls->InputfieldPageGrid . "css/prism.css");
