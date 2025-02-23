@@ -784,7 +784,6 @@ class InputfieldPageGrid extends Inputfield {
 
         //Read item Settings
         $attributes = '';
-        $nestedClasses = '';
 
         $itemData = $p->meta()->pg_styles;
 
@@ -795,25 +794,9 @@ class InputfieldPageGrid extends Inputfield {
                 if (isset($PageGridItem['attributes'])) {
                     $attributes = $PageGridItem['attributes'];
                 }
-                if (isset($PageGridItem['children'])) {
-
-                    if ($backend) {
-                        $nestedClasses = 'pg pg-nested pg-droppable ';
-                    } else {
-                        $nestedClasses = 'pg ';
-                    }
-
-                    if ($this->user->hasPermission('pagegrid-drag')) {
-                        // $nestedClasses .= 'pg-sortable ';
-                    }
-                }
             }
         }
-
         //end Read item Settings
-
-        $header = $this->renderItemHeader($p, $p->template->label, $pOriginal);
-        $statusClass = $this->getStatusClasses($p);
 
         //make sure outpuformatting is on before render
         $p->of(true);
@@ -821,8 +804,11 @@ class InputfieldPageGrid extends Inputfield {
         //disable inline edit for frontend, when inlineEditorFrontDisable = true
         if (!$backend && $this->ft->inlineEditorFrontDisable) $p->edit(false);
 
+        //RENDER OPTIONS depricated
         //pass page to template be able to set render options specifically for this page
+        //render options are depricated and will be removed in future versions
         $p->template->page = $p;
+        //END RENDER OPTIONS depricated
 
         // parse template markup and inssert file uploader
         $templateRender = $parsedTemplate->render();
@@ -830,71 +816,120 @@ class InputfieldPageGrid extends Inputfield {
         $tagNameSaved = $this->getTagName($p);
         $tagName = $tagNameSaved;
         $classes = $this->getCssClasses($p);
+        $docClasses = '';
         $optionAutoTitle = 1; // deafult enable auto title and puplish of pg items via modal
+        $optionTags = '';
+        $optionChildren = '';
+        $optionChildrenTab = '';
+        $optionChildrenLabel = '';
 
-        // GET RENDER OPTIONS set via block files
-        //we allow page specific option (e.g. need to link individuall groups)
+        //RENDER OPTIONS depricated
         $options = $p->pgOptions ? json_decode($p->pgOptions, true) : [];
-
-        //some options we need to access in hooks so we save it as session
-        if ($backend) {
-            $oldSession = $this->session->get('pg_template_' . $p->template->name);
-            $jsonOptions = json_encode($options);
-            if ($oldSession != $jsonOptions) {
-                $this->session->set('pg_template_' . $p->template->name, $jsonOptions);
-                // bd('save');
-            }
-        }
-
-        //tagname
-        if (isset($options['tag'])) {
-            $tagName = $this->sanitizer->htmlClass($options['tag']);
-            $tagName = strtolower($tagName);
-
-            //allow tags to change
-            if (isset($options['tags']) && $tagNameSaved !== 'div') $tagName = $tagNameSaved;
-
-            //prevent nested links, breaking layout in HTML
-            if ($tagName == 'a') {
-                if ($backend) $tagName = 'div';
-                $templateRender = str_replace("<a ", "<span ", $templateRender);
-                $templateRender = str_replace("</a>", "</span>", $templateRender);
-            }
-
-            // replace p tag with custom el to prevent nesting bug with <p> and inline editor <div>
-            if ($tagName == 'p') {
-                if ($this->user->isLoggedin()) $tagName = 'pg-ptag';
-                if (!$backend && $this->ft->inlineEditorFrontDisable) $tagName = 'p';
-            }
-        }
-
-        //classes
         if (isset($options['classes'])) {
             $classNames = $this->sanitizer->htmlClasses($options['classes']);
             $classNames = strtolower($classNames);
             if ($classNames) $classes .= ' ' . $classNames;
         }
-
-        //attributes
-        $attributesFrontend = '';
-        if (isset($options['attributes'])) {
-            $attributesFrontend = $options['attributes'];
-        }
-
-        //children
         if (isset($options['children']) && $options['children']) {
-            if ($backend) {
-                $nestedClasses = 'pg pg-nested pg-droppable ';
-            } else {
-                $nestedClasses = 'pg ';
+            $optionChildren = true;
+        }
+        if ($backend) {
+            $oldSession = $this->session->get('pg_template_' . $p->template->name);
+            $jsonOptions = json_encode($options);
+            if ($oldSession != $jsonOptions) {
+                $this->session->set('pg_template_' . $p->template->name, $jsonOptions);
+            }
+        }
+        //END RENDER OPTIONS depricated
+
+        //NEW get wrapper tag and add classes and attributes via DOMDocument
+        $doc = new \DOMDocument();
+        @$doc->loadHTML('<?xml encoding="utf-8" ?><html>' . $templateRender . '</html>', LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+        $docWrapper = $doc->documentElement->firstElementChild;
+        $hasWrapper = $docWrapper && $docWrapper->hasAttribute('pg-wrapper') ? true : false;
+
+        //if first node is style or script tag look for other wrapper
+        if ($docWrapper && ($docWrapper->tagName == 'style' || $docWrapper->tagName == 'script')) {
+            foreach ($doc->documentElement->childNodes as $node) {
+                if (isset($node->tagName) && $node->hasAttribute('pg-wrapper')) {
+                    $hasWrapper = true;
+                    $docWrapper = $node;
+                }
             }
         }
 
-        //autoTitle
-        if (isset($options['autoTitle'])) {
-            $optionAutoTitle = $options['autoTitle'];
+        //if wrapper found parse markup and get classes and options set via attributes
+        if ($hasWrapper && isset($docWrapper->tagName)) {
+            $tagName = $docWrapper->tagName;
+            $docClasses = $docWrapper->getAttribute('class');
+
+            //get options set via attributes
+            $optionTags = $docWrapper->getAttribute('pg-tags');
+            $optionChildren = $docWrapper->getAttribute('pg-children');
+            $optionAutoTitle = $docWrapper->getAttribute('pg-autotitle');
+            $optionChildrenTab = $docWrapper->getAttribute('pg-children-tab');
+            $optionChildrenLabel = $docWrapper->getAttribute('pg-children-label');
+
+            //remove option attribute on frontend
+            if (!$backend) {
+                $docWrapper->removeAttribute('pg-wrapper');
+                $docWrapper->removeAttribute('pg-tags');
+                $docWrapper->removeAttribute('pg-children');
+                $docWrapper->removeAttribute('pg-autotitle');
+                $docWrapper->removeAttribute('pg-children-tab');
+                $docWrapper->removeAttribute('pg-children-label');
+            }
+
+            //get attributes
+            foreach ($docWrapper->attributes as $attr) {
+                $name = $attr->nodeName;
+                $value = $attr->nodeValue;
+                if ($name != 'class' || $name != 'id') $attributes .= $name . '="' . $value . '" ';
+            }
+
+            //get markup without the wrapper
+            foreach ($docWrapper->childNodes as $child) {
+                $clone = $child->cloneNode(true);
+                $docWrapper->parentNode->insertBefore($clone, $docWrapper);
+            }
+            //remove wrapper
+            $docWrapper->parentNode->removeChild($docWrapper);
+
+            $templateRender = $doc->saveHTML();
+            $templateRender = str_replace('<?xml encoding="utf-8" ?>', '', $templateRender);
+            $templateRender = str_replace("</html>", "", $templateRender);
+            $templateRender = str_replace("<html>", "", $templateRender);
         }
-        // END GET RENDER OPTIONS set via block files
+        //END NEW get wrapper tag and add classes and attributes via DOMDocument
+
+        //set children classes
+        if ($optionChildren) {
+            if ($backend) {
+                $classes .= ' pg pg-nested pg-droppable';
+            } else {
+                $classes .= ' pg';
+            }
+        }
+
+        //add doc classes in the end
+        if ($docClasses) $classes .= ' ' . $docClasses;
+
+        //tagname
+        //allow tags to change
+        if ($optionTags && $tagNameSaved !== 'div') $tagName = $tagNameSaved;
+
+        //prevent nested links, breaking layout in HTML
+        if ($tagName == 'a') {
+            if ($backend) $tagName = 'div';
+            $templateRender = str_replace("<a ", "<span ", $templateRender);
+            $templateRender = str_replace("</a>", "</span>", $templateRender);
+        }
+
+        // replace p tag with custom el to prevent nesting bug with <p> and inline editor <div>
+        if ($tagName == 'p') {
+            if ($this->user->isLoggedin()) $tagName = 'pg-ptag';
+            if (!$backend && $this->ft->inlineEditorFrontDisable) $tagName = 'p';
+        }
 
         //force autonaming/puplishing for all children if only one template selected
         //if autoTitle render option is set to true (default)
@@ -907,15 +942,37 @@ class InputfieldPageGrid extends Inputfield {
         }
         //END force autonaming for all children if only one template selected
 
+        //save render options to session
+        //some options we need to access in hooks so we save it as session
         if ($backend) {
-            $renderOptionsTags = isset($options['tags']) ? $options['tags'] : '';
-            $layout .= "<" . $tagName . " id='" . $p->name . "' data-id='" . $p->id . "' data-id-original='" . $pOriginal->id . "' class='" . $classes . " " . $nestedClasses . $statusClass . "' data-template='" . $p->template->name . "' data-template-label='" . $p->template->label . "' data-field='" . $this->name . "' data-title='" . $p->getUnformatted('title') . "' data-name='" . $p->name . "' " . $attributes . " data-tags='" . $renderOptionsTags . "'>";
+            $options = [];
+            $optionChildren = $optionChildren && $optionChildren != 'true' ? explode(' ', $optionChildren) : $optionChildren;
+            if ($optionChildren) $options['children'] = $optionChildren;
+            if ($optionTags) $options['tags'] = $optionTags;
+            if ($optionAutoTitle) $options['autoTitle'] = $optionAutoTitle;
+            if ($optionChildrenTab) $options['childrenTab'] = $optionChildrenTab;
+            if ($optionChildrenLabel) $options['childrenLabel'] = $optionChildrenLabel;
+
+            $oldSession = $this->session->get('pg_template_' . $p->template->name);
+            $jsonOptions = json_encode($options);
+            if ($oldSession != $jsonOptions) {
+                $this->session->set('pg_template_' . $p->template->name, $jsonOptions);
+            }
+
+            //add header and status classes needed for backend
+            $header = $this->renderItemHeader($p, $p->template->label, $pOriginal, $options);
+            $classes .= $this->getStatusClasses($p);
+        }
+
+        //render item
+        if ($backend) {
+            $layout = "<" . $tagName . " id='" . $p->name . "' data-id='" . $p->id . "' data-id-original='" . $pOriginal->id . "' class='" . $classes . "' data-template='" . $p->template->name . "' data-template-label='" . $p->template->label . "' data-field='" . $this->name . "' data-title='" . $p->getUnformatted('title') . "' data-name='" . $p->name . "' " . $attributes . ">";
             $layout .= '<pg-icon>' . wireIconMarkup($p->template->icon) . '</pg-icon>';
             $layout .= $header;
             $layout .= $templateRender;
             $layout .= '</' . $tagName . '>';
         } else {
-            $layout = '<' . $tagName . ' class="' . $nestedClasses . $classes . '" ' . $attributes . ' ' . $attributesFrontend . '>' .  $templateRender . '</' . $tagName . '>';
+            $layout = '<' . $tagName . ' class="' . $classes . '" ' . $attributes . '>' .  $templateRender . '</' . $tagName . '>';
         }
 
         return $layout;
@@ -965,7 +1022,7 @@ class InputfieldPageGrid extends Inputfield {
     }
 
     //function to render item header
-    public function renderItemHeader($p, $title = '', $pOriginal = 0) {
+    public function renderItemHeader($p, $title = '', $pOriginal = 0, $options = []) {
 
         //if frontend return empty string
         if (!$this->isBackend()) return "";
@@ -976,7 +1033,6 @@ class InputfieldPageGrid extends Inputfield {
         $layoutTitle = $title ? $title : $layoutTitle;
         $statusClass = $this->getStatusClasses($p);
         $isPgPage = $p->parents('template=pg_container')->first();
-        $options = $p->template->pgOptions ? json_decode($p->template->pgOptions, true) : [];
         $addButton = isset($options['children']) && $options['children'] ? 1 : 0;
 
         //disbale inline edit on title field
@@ -1965,6 +2021,7 @@ class InputfieldPageGrid extends Inputfield {
     }
 
     // pass options to template file before render
+    //render options are depricated and will be removed in future versions
     public function renderOptions($options = []) {
         //set options to template at runtime
         $templateName = basename(debug_backtrace()[0]['file'], '.php');

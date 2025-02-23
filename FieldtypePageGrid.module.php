@@ -16,7 +16,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID'),
       'summary' => __('Commercial page builder module that renders block templates and adds drag and drop functionality in admin.', __FILE__),
-      'version' => '2.2.53',
+      'version' => '2.2.54',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -821,6 +821,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     $options = $parentPage->template->pgOptions ? json_decode($parentPage->template->pgOptions, true) : [];
     $optionAutoTitle = 1;
     if (isset($options['autoTitle'])) $optionAutoTitle = $options['autoTitle'];
+    if ($optionAutoTitle == 'false') $optionAutoTitle = 0;
 
     //check if pagegrid item page
     $isPageGrid = false;
