@@ -822,6 +822,7 @@ class InputfieldPageGrid extends Inputfield {
         $optionChildren = '';
         $optionChildrenTab = '';
         $optionChildrenLabel = '';
+        $optionReloadScript = '';
 
         //RENDER OPTIONS depricated
         $options = $p->pgOptions ? json_decode($p->pgOptions, true) : [];
@@ -869,6 +870,7 @@ class InputfieldPageGrid extends Inputfield {
             $optionAutoTitle = $docWrapper->getAttribute('pg-autotitle');
             $optionChildrenTab = $docWrapper->getAttribute('pg-children-tab');
             $optionChildrenLabel = $docWrapper->getAttribute('pg-children-label');
+            $optionReloadScript = $docWrapper->getAttribute('pg-reload-script');
 
             //remove option attribute on frontend
             if (!$backend) {
@@ -878,6 +880,7 @@ class InputfieldPageGrid extends Inputfield {
                 $docWrapper->removeAttribute('pg-autotitle');
                 $docWrapper->removeAttribute('pg-children-tab');
                 $docWrapper->removeAttribute('pg-children-label');
+                $docWrapper->removeAttribute('pg-reload-script');
             }
 
             //get attributes
@@ -952,6 +955,7 @@ class InputfieldPageGrid extends Inputfield {
             if ($optionAutoTitle) $options['autoTitle'] = $optionAutoTitle;
             if ($optionChildrenTab) $options['childrenTab'] = $optionChildrenTab;
             if ($optionChildrenLabel) $options['childrenLabel'] = $optionChildrenLabel;
+            if ($optionReloadScript && $optionReloadScript == 'false') $options['reloadScript'] = false;
 
             $oldSession = $this->session->get('pg_template_' . $p->template->name);
             $jsonOptions = json_encode($options);
