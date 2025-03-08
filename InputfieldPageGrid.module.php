@@ -332,7 +332,7 @@ class InputfieldPageGrid extends Inputfield {
         //render language tabs to switch iframe language
         $languageTabs = '';
         $iframeUrl = $mainPage->url();
-        if ($this->templates->get('language') && $this->templates->get('language')->id && $this->modules->isInstalled('LanguageSupport') && $this->modules->isInstalled('LanguageSupportPageNames') && count($this->languages)) {
+        if ($this->templates->get('language') && $this->templates->get('language')->id && $this->modules->isInstalled('LanguageSupport') && $this->modules->isInstalled('LanguageSupportPageNames') && count($this->languages) > 1) {
             $languageTabs = '<div class="pg-langTabs"><ul class="uk-tab">';
             $activeLang = isset($_GET['pglang']) ? $_GET['pglang'] : $this->user->language->name;
             foreach ($this->languages as $l) {
