@@ -16,7 +16,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID'),
       'summary' => __('Commercial page builder module that renders block templates and adds drag and drop functionality in admin.', __FILE__),
-      'version' => '2.2.56',
+      'version' => '2.2.57',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -512,8 +512,10 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     $this->addHookBefore('ProcessTemplate::getListTableRow', $this, "setTemplateFile");
 
     //NEW add bluerint render template select
-    $this->addHookAfter('ProcessTemplate::buildEditForm', $this, 'addCustomTemplateSetting');
-    $this->addHookBefore('ProcessTemplate::executeSave', $this, 'saveCustomTemplateSetting');
+    if ($this->pages->get('template=pg_blueprint') && $this->pages->get('template=pg_blueprint')->id) {
+      $this->addHookAfter('ProcessTemplate::buildEditForm', $this, 'addCustomTemplateSetting');
+      $this->addHookBefore('ProcessTemplate::executeSave', $this, 'saveCustomTemplateSetting');
+    }
 
     //this is needed to keep module and field settings in sync
     $this->addHookAfter('ProcessField::fieldSaved', $this, "updateFieldSettings");
