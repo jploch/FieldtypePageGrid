@@ -445,6 +445,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		$fieldset1 = $this->modules->get('InputfieldFieldset');
 		$fieldset1->attr('id+name', 'fonts');
 		$fieldset1->label = $this->_('Fonts');
+		$fieldset1->showIf = 'stylePanel=1';
 		// $fieldset1->collapsed(1);
 		$fieldset1->icon = 'font';
 		// $fieldset1->themeOffset = 1;
@@ -569,6 +570,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		$fieldset1->label = $this->_('Colors');
 		$fieldset1->description = $this->_('Comma seperated list of hex values, eg. #FFFFFF, #000000');
 		// $fieldset1->collapsed(1);
+		$fieldset1->showIf = 'stylePanel=1';
 		$fieldset1->icon = 'adjust'; //or tint?
 		// $fieldset1->themeOffset = 1;
 
@@ -665,13 +667,30 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		$f->attr("onclick", "this.style.height = ''; this.style.height = this.scrollHeight +'px'"); // auto resize height based on content
 		$f->attr('style', 'font-family: monospace;');
 		$f->columnWidth('100');
-		$f->themeOffset = 1;
 		$f->icon = 'code';
 		$f->value($this->sanitizer->text($this->customStyles));
 		$f->attr('oninput', 'update(this.value, this); sync_scroll(this);');
 		$f->attr('onscroll', 'sync_scroll(this);');
 		$f->attr('onkeydown', 'check_tab(this, event);');
 		$f->addClass('input-prism');
+		$wrapper->append($f);
+
+		//styles help
+		$preStyle = " style='padding:10px;border:1px dashed #ccc;'";
+		$sanitizer = $this->wire('sanitizer');
+		$f = $this->modules->get('InputfieldMarkup');
+		$f->themeOffset = 0;
+		$f->collapsed = true;
+		$f->label = 'Default CSS';
+		$f->icon = 'paint-brush';
+		$f->description = 'PAGEGRID uses a 12 column CSS grid as a default. But you can change it by overwriting the CSS. Here are some examples:';
+		$f->value = "<pre$preStyle class='height-auto'><code class='language-css language-no-edit'>";
+		$f->value .= "/* Optional set main wrapper to use 6 equally sized grid columns (default is 12)*/\n";
+		$f->value .= ".pg-main{\n grid-template-columns: repeat(6, 1fr);\n}\n";
+		$f->value .= "/* Optional set main wrapper to display block (default is grid) */\n/* this will only allow vertical dragging/sorting of direct children */\n";
+		$f->value .= ".pg-main{\n display: block;\n}\n";
+		$f->value .= "</code></pre><style>.height-auto {height:auto!important;}</style>";
+		$f->notes = 'Copy these styles to the CSS code field above or load them inside your template file. [Learn more](https://page-grid.com/docs/#/developer/styles)';
 		$wrapper->append($f);
 
 		//custom js

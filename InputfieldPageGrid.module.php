@@ -1954,7 +1954,7 @@ class InputfieldPageGrid extends Inputfield {
             $itemCss = $cssMainPage . $itemCss . $animationsCss;
         }
 
-        $cssOutput = $cssBackend . $cssTemplates . $defaults . $fonts . $itemCss . $customCss;
+        $cssOutput = $cssBackend . $defaults . $fonts . $cssTemplates . $itemCss . $customCss;
 
         //cache output
         if (!$backend) $this->cache->save('pgCache-css-' . $mainPage->id, $cssOutput);

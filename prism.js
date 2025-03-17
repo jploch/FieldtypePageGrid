@@ -13,9 +13,9 @@ var markupCode = '<pre id="highlighting" aria-hidden="true"><code class="languag
 $(document).ready(function () {
   // init for custom styles
   $(markupCSS).insertBefore("#wrap_Inputfield_customStyles textarea");
-  $("code.language-css").append($("#wrap_Inputfield_customStyles textarea").html());
-  $("code.language-css").parent().css('height', $("#wrap_Inputfield_customStyles textarea").css('height'));
-  $("code.language-css").parent().css('width', $("#wrap_Inputfield_customStyles textarea").css('width'));
+  $("code.language-css:not(.language-no-edit)").append($("#wrap_Inputfield_customStyles textarea").html());
+  $("code.language-css:not(.language-no-edit)").parent().css('height', $("#wrap_Inputfield_customStyles textarea").css('height'));
+  $("code.language-css:not(.language-no-edit)").parent().css('width', $("#wrap_Inputfield_customStyles textarea").css('width'));
 
   //init for custom js
   $(markupJS).insertBefore("#wrap_Inputfield_customScript textarea");
@@ -35,10 +35,10 @@ $(document).ready(function () {
 
   //account for scrolling inside add item bar
   $(document).on('mousemove keydown', 'body', function () {
-    $("code.language-css").parent().css('height', $("#wrap_Inputfield_customStyles textarea").css('height'));
+    $("code.language-css:not(.language-no-edit)").parent().css('height', $("#wrap_Inputfield_customStyles textarea").css('height'));
     $("code.language-js").parent().css('height', $("#wrap_Inputfield_customScript textarea").css('height'));
     $("code.language-markup").parent().css('height', $("textarea#Inputfield_pg_code").css('height'));
-    $("code.language-css").parent().css('width', $("#wrap_Inputfield_customStyles textarea").css('width'));
+    $("code.language-css:not(.language-no-edit)").parent().css('width', $("#wrap_Inputfield_customStyles textarea").css('width'));
     $("code.language-js").parent().css('width', $("#wrap_Inputfield_customScript textarea").css('width'));
     $("code.language-markup").parent().css('width', $("textarea#Inputfield_pg_code").css('width'));
   });
