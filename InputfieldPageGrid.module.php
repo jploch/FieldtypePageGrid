@@ -351,7 +351,7 @@ class InputfieldPageGrid extends Inputfield {
         $renderMarkup .= $this->renderIconPicker();
         $renderMarkup .= '<div class="pg-item-header-container"></div>';
         $renderMarkup .= $languageTabs;
-        $renderMarkup .= '<iframe data-field="' . $this->name . '" id="pg-iframe-canvas-' . $this->name . '" class="pg-iframe-canvas" src="' . $iframeUrl . '?backend=1&field=' . $this->name . '&page=' . $mainPage->id . '" loading="lazy" frameBorder="0" scrolling="no" style="width:100%; max-height:100vh; border:0;"></iframe>';
+        $renderMarkup .= '<iframe data-field="' . $this->name . '" id="pg-iframe-canvas-' . $this->name . '" class="pg-iframe-canvas" src="' . $iframeUrl . '?backend=1&field=' . $this->name . '&page=' . $mainPage->id . '" loading="lazy" frameBorder="0" scrolling="no" style="width:100%; border:0;"></iframe>';
         $renderMarkup .= $quickAddMain;
         $renderMarkup .= '</div>';
 
