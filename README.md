@@ -3,7 +3,7 @@
 ### PAGEGRID is a friendly pagebuilder for ProcessWire CMS.
 Design fully responsive websites (or parts of them) without writing any code. Rearrange and resize items in a visual way and quickly edit the content of your website. 
 
-Use and customise our [ready-made blocks](https://processwire.com/modules/page-grid-blocks/), or create your own block templates using ProcessWire's native templates (and fields).
+Use and customise our [ready-made blocks](https://github.com/jploch/PageGridBlocks/), or create your own block templates using ProcessWire's native templates (and fields).
 
 Don't want to give your client all that power? Use ProcessWire’s powerful permission system to control what your clients can edit. You can then also grant access individually to the style panel, resize or drag functionality using ProcessWire's build in permission system.
 
