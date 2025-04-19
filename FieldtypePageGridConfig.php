@@ -220,7 +220,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		$validateNote = "License is invalid " . '🙁';
 		$collapsed = 0;
 		$statusClass = 'InputfieldIsError';
-		$description = $this->_('Please enter your PageGrid License Key.');
+		$description = $this->_('Please [buy a license](https://pagegrid.gumroad.com/l/pagegrid?wanted=true) before you launch your project and enter your PAGEGRID license key. For test and staging domains you don’t need a license.');
 
 		if ($valid == 1) {
 			$validateNote = "License is valid!";
@@ -233,12 +233,10 @@ class FieldtypePageGridConfig extends ModuleConfig {
 			$validateNote = "License is valid for testing!";
 			$collapsed = 8;
 			$statusClass = 'InputfieldIsWarning';
-			$description = "Please [buy a license](https://page-grid.com/buy/) before you launch your project. For test and staging domains you don’t need a license.";
 		}
 
 		if ($valid == 3) {
 			$validateNote = "License is already in use!";
-			$description = "Please [buy a license](https://page-grid.com/buy/) before you launch your project.";
 		}
 
 		$f = $this('modules')->get('InputfieldText');
@@ -689,8 +687,11 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		$f->value .= ".pg-main{\n grid-template-columns: repeat(6, 1fr);\n}\n";
 		$f->value .= "/* Optional set main wrapper to display block (default is grid) */\n/* this will only allow vertical dragging/sorting of direct children */\n";
 		$f->value .= ".pg-main{\n display: block;\n}\n";
+		$f->value .= "/* Disable manual positioning of grid items */\n";
+		$f->value .= "/* let grid items only take the available space */\n";
+		$f->value .= ".pg .pg-item{\n grid-row-start: auto;\n}\n";
 		$f->value .= "</code></pre><style>.height-auto {height:auto!important;}</style>";
-		$f->notes = 'Copy these styles to the CSS code field above or load them inside your template file. [Learn more](https://page-grid.com/docs/#/developer/styles)';
+		$f->notes = 'To change the defaults copy these styles to the CSS code field above or load them inside your template file. [Learn more](https://page-grid.com/docs/#/developer/styles)';
 		$wrapper->append($f);
 
 		//custom js
