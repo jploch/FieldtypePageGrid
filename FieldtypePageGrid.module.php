@@ -16,7 +16,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID'),
       'summary' => __('Commercial page builder module that renders block templates and adds drag and drop functionality in admin.', __FILE__),
-      'version' => '2.2.69',
+      'version' => '2.2.70',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -547,8 +547,9 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
 
     //deactivate automatic appending of template file look for string
     if ($p->template->name !== 'admin' && $p->fields->get('type=FieldtypePageGrid')) {
-      $parsedTemplate = new TemplateFile($p->template->filename);
-      if (strpos($parsedTemplate->render(), '<!--pgNoAppendTemplateFile-->') !== false) {
+      // $parsedTemplate = new TemplateFile($p->template->filename);
+      $parsedTemplate = file_get_contents($p->template->filename);
+      if (strpos($parsedTemplate, '$pagegrid->noAppendFile') !== false) {
         $this->config->prependTemplateFile = false;
         $this->config->appendTemplateFile = false;
       }

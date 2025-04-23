@@ -584,29 +584,49 @@ class InputfieldPageGrid extends Inputfield {
         if ($backend) {
 
             // trick inline editor to work for first items
+            // $PageFrontEditData = $this->modules->getConfig('PageFrontEdit');
+            // $dummies = '';
+
+            // if (isset($PageFrontEditData['inlineEditFields'])) {
+            //     $PageFrontEditFields = $PageFrontEditData['inlineEditFields'];
+            //     $templates = $this->fields->get('type=FieldtypePageGrid')->template_id;
+            //     if ($templates !== null && count($templates)) {
+            //         foreach ($templates as $tId) {
+            //             $t = $this->templates->get($tId);
+            //             if (isset($t) == 0) continue;
+            //             foreach ($t->fields as $f) {
+            //                 if (in_array($f->id, $PageFrontEditFields)) {
+            //                     $dummy = $this->pages->get("$f->id!=''");
+            //                     if ($dummy->id) {
+            //                         $this->ft->readyFrontEdit($dummy);
+            //                         $dummies .= $dummy->$f;
+            //                     }
+            //                 }
+            //             }
+            //         }
+            //     }
+            // }
+            // END trick inline editor to work for first item
+
+            //new dummy render save resources
             $PageFrontEditData = $this->modules->getConfig('PageFrontEdit');
             $dummies = '';
 
             if (isset($PageFrontEditData['inlineEditFields'])) {
                 $PageFrontEditFields = $PageFrontEditData['inlineEditFields'];
-                $templates = $this->fields->get('type=FieldtypePageGrid')->template_id;
-                if ($templates !== null && count($templates)) {
-                    foreach ($templates as $tId) {
-                        $t = $this->templates->get($tId);
-                        if (isset($t) == 0) continue;
-                        foreach ($t->fields as $f) {
-                            if (in_array($f->id, $PageFrontEditFields)) {
-                                $dummy = $this->pages->get("$f->id!=''");
-                                if ($dummy->id) {
-                                    $this->ft->readyFrontEdit($dummy);
-                                    $dummies .= $dummy->$f;
-                                }
-                            }
+                // bd($PageFrontEditFields);
+                foreach ($PageFrontEditFields as $f) {
+                    $dummy = $this->pages->get("$f!=''");
+                    if ($dummy->id) {
+                        if (count($dummy->parents('template=pg_container'))) {
+                            // bd($dummy->name);
+                            $this->ft->readyFrontEdit($dummy);
+                            $dummies .= $dummy->$f;
                         }
                     }
                 }
             }
-            // END trick inline editor to work for first item
+            //END new dummy render save resources
 
             $statusClass = '';
 
@@ -1762,6 +1782,8 @@ class InputfieldPageGrid extends Inputfield {
         $cache = $this->cache->get('pgCache-css-' . $mainPage->id);
         if ($cache && $this->user->isLoggedin()) $this->cache->delete("pgCache-*");
         if ($cache && !$backend) return $cache;
+
+        // bd('styles');
 
         $arrayFiles = [];
         $itemCss = '';
