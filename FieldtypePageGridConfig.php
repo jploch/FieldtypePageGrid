@@ -780,18 +780,32 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		}
 
 		//select/install default block module
+		$refreshModules = 0;
 		if ($installed && isset($_GET['selectDefaultBlocks']) && isset($_GET['field'])) {
 			$value = [];
-			$defaultBlocks = ['pg_text', 'pg_editor', 'pg_image', 'pg_video', 'pg_gallery', 'pg_gallery_video', 'pg_iframe', 'pg_group', 'pg_navigation', 'pg_slider', 'pg_accordion', 'pg_datalist', 'pg_prev_next', 'pg_spacer', 'pg_code'];
-			foreach ($defaultBlocks as $tName) {
-				$t = $this->templates->get($tName);
+			// $defaultBlocks = ['pg_text', 'pg_editor', 'pg_image', 'pg_video', 'pg_gallery', 'pg_gallery_video', 'pg_iframe', 'pg_group', 'pg_navigation', 'pg_slider', 'pg_accordion', 'pg_datalist', 'pg_prev_next', 'pg_spacer', 'pg_code'];
+			$defaultBlocks = ['pg_text', 'pg_editor', 'pg_image', 'pg_video', 'pg_gallery', 'pg_gallery_video', 'pg_iframe', 'pg_group', 'pg_slider', 'pg_accordion', 'pg_datalist', 'pg_prev_next', 'pg_spacer', 'pg_code'];
+			foreach ($defaultBlocks as $templateName) {
+				$t = $this->templates->get($templateName);
+				$className = str_replace('pg_', '', $templateName);
+				$className = str_replace('_', '', ucwords($className, '_'));
+				$className = 'Blocks' . $className;
+				$installedBlock = $this->modules->isInstalled($className);
+				$info = $this->modules->getModuleInfoVerbose($className);
+
+				//check if modules are installed
+				if ($info['name'] && !$installedBlock) {
+					$this->modules->install($className);
+					 $refreshModules = 1;
+				}
+
+				//set template id
 				if ($t && $t->id) $value[] = $t->id;
 			}
 			$data['template_id_' . $_GET['field']] = $value;
 			$this->modules->saveConfig('FieldtypePageGrid', $data);
-			$this->session->redirect($this->config->urls->admin . 'module/edit?name=FieldtypePageGrid&collapse_info=1');
+			$this->session->redirect($this->config->urls->admin . 'module/edit?name=FieldtypePageGrid&collapse_info=1&refreshModules=' . $refreshModules);
 		}
-
 
 		$value = $this['template_id_' . $field->id];
 		if (!is_array($value)) $value = $value ? array($value) : array();
@@ -806,8 +820,20 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		// $f->required = true;
 		$f->description = $this->_('The block template files must be placed in **site/templates/blocks/** folder. [Learn more](https://page-grid.com/docs/#/developer/blocks?id=create-a-new-block)');
 		if (!$installed && !$downloaded) $f->notes = 'Alternatively you can also download our [block modules](' . $downloadLink . ')';
-		if ($installed && $downloaded) $f->notes .= 'The selected block templates will be created/installed automatically.';
-		if ($installed && $downloaded && !$hasItems) $f->notes .= ' [Select default blocks](' . $selectAllLink . ')';
+		if ($installed && $downloaded) $f->notes .= 'Select the block templates for this field. The selected templates will be created/installed automatically.';
+		// if ($installed && $downloaded && !$hasItems) $f->notes .= ' [Select/install default blocks](' . $selectAllLink . ')';
+		if ($installed && $downloaded && !$hasItems) {
+			$refreshButtonText = '<i class="fa fw fa-plug"></i>  Install default block modules';
+			$refreshNoteSuccess = 'Block modules found. Click this button to install/select them all at once.';
+			$buttonClass = 'uk-button-secondary';
+			if(isset($_GET['refreshModules']) && $_GET['refreshModules']) {
+				$refreshButtonText = '<i class="fa fw fa-refresh"></i>  Select default blocks';
+				$buttonClass = '';
+				$refreshNoteSuccess = 'Modules Installed succesful!';
+			}
+			$f->appendMarkup('<br><a href=' . $selectAllLink . ' class="uk-button '. $buttonClass .'">' . $refreshButtonText . '</a><p class="notes">'.$refreshNoteSuccess.'</p>');
+		}
+
 
 		//look in site/templates folder first
 		$path = wire('config')->paths->templates . 'blocks/';
@@ -875,7 +901,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		}
 
 		// $this['template_id_' . $field->id] = $value;
-		$f->attr('value', $value);
+		// $f->attr('value', $value);
 		return $f;
 	}
 
