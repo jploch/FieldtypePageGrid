@@ -825,13 +825,13 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		if ($installed && $downloaded && !$hasItems) {
 			$refreshButtonText = '<i class="fa fw fa-plug"></i>  Install default block modules';
 			$refreshNoteSuccess = 'Block modules found. Click this button to install/select them all at once.';
-			$buttonClass = 'uk-button-secondary';
+			$buttonClass = 'ui-priority-secondary';
 			if(isset($_GET['refreshModules']) && $_GET['refreshModules']) {
 				$refreshButtonText = '<i class="fa fw fa-refresh"></i>  Select default blocks';
 				$buttonClass = '';
 				$refreshNoteSuccess = 'Modules Installed succesful!';
 			}
-			$f->appendMarkup('<br><a href=' . $selectAllLink . ' class="uk-button '. $buttonClass .'">' . $refreshButtonText . '</a><p class="notes">'.$refreshNoteSuccess.'</p>');
+			$f->appendMarkup('<br><a href=' . $selectAllLink . ' class="ui-button ui-widget ui-corner-all ui-state-default '. $buttonClass .'">' . $refreshButtonText . '</a><p class="notes">'.$refreshNoteSuccess.'</p>');
 		}
 
 
