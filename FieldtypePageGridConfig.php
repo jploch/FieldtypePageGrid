@@ -185,6 +185,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 			'customScript' => '',
 			'fontColor' => '',
 			'bgColor' => '',
+			'deleteFonts' => '',
 			'fontPrivacy' => 1,
 			'fallbackFonts' => 'Helvetica, Arial, sans-serif',
 			'stylePanel' => 1,
@@ -371,6 +372,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		$f->name = 'interface';
 		$f->icon = 'eye-slash';
 		$f->label = $this->_('Interface');
+		$f->description = "Optimizations for the page editor interface. Disable these checkboxes to keep ProcessWire's default interface.";
 		$f->table = true;
 		$f->collapsed(in_array($f->name, $collapsed) ? 1 : 0);
 		$f->themeOffset = 1;
@@ -539,7 +541,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 
 			//delete marked fonts
 			$wrapper->processInput($this->input->post);
-			$files = $wrapper->get('deleteFonts')->value;
+			$files = $_POST['deleteFonts'];
 			$filesArray = array_filter(explode(" ", $files));
 
 			foreach ($filesArray as $file) {
