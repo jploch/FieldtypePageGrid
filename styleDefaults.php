@@ -29,6 +29,8 @@ if ($this->user->isLoggedin() && $inlineEdit) {
   $defaultCss .= '.tox .tox-collection__item-label h4 {font-size:21px!important;}';
   $defaultCss .= '.tox .tox-collection__item-label h5 {font-size:18px!important;}';
   $defaultCss .= '.tox .tox-collection__item-label h6 {font-size:15px!important;}';
+  $defaultCss .= ' .tox .tox-menu {background-color: #fff!important;}';
+  $defaultCss .= ' .AdminThemeUikit .tox {--blocks-background-color: #fff; --blocks-text-color: #000; --blocks-border-color: #ccc; --text-color:#000;}';
   $defaultCss .= '.pw-edit-buttons {z-index:999999!important;}';
   $defaultCss .= '.pw-edit:has(.pw-edit-orig > br[data-mce-bogus]) {display: none;}'; // hide empty edit tags without placeholder
 }

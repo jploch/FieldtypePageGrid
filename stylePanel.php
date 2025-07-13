@@ -857,6 +857,10 @@ $field->addClass('label-left', 'wrapClass');
 $field->columnWidth = 100;
 $fieldsetSub->append($field);
 
+//text-indent
+$field = createUnitField('text-indent', 'Text Indent', 100, '', 'none');
+$fieldsetSub->append($field);
+
 //Lists
 $field = $this->modules->get('InputfieldSelect');
 $field->name = "list-style-type";

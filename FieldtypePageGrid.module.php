@@ -15,8 +15,8 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
 
     return array(
       'title' => __('PAGEGRID'),
-      'summary' => __('Commercial page builder module that renders block templates and adds drag and drop functionality in admin.', __FILE__),
-      'version' => '2.2.77',
+      'summary' => __('A flexible block based drag-and-drop page builder with exceptional design control.', __FILE__),
+      'version' => '2.2.79',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
