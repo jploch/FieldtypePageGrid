@@ -1298,17 +1298,7 @@ class InputfieldPageGrid extends Inputfield {
             $items->add($this->getAncestors($mainPage));
         }
 
-        $classNames = '';
         foreach ($items as $item) {
-
-            //build classes array to check for animations
-            $itemData = $item->meta()->pg_styles;
-            if (isset($itemData)) {
-                foreach ($itemData as $data) {
-                    if (isset($data['cssClasses'])) $classNames .= $data['cssClasses'];
-                }
-            }
-            //END build classes array to check for animations
 
             $filename = wire('config')->paths->templates . 'blocks/' . $item->template->name . '.js';
             $filenameUrl = wire('config')->urls->templates . 'blocks/' . $item->template->name . '.js';
@@ -1330,7 +1320,14 @@ class InputfieldPageGrid extends Inputfield {
             }
         }
 
-        //aaaa
+        //add animation for classes
+        $classNames = '';
+
+        //new load all classes
+        $classesParent = $this->pages->get('name=pg-classes, template=pg_container');
+        foreach ($classesParent->children() as $p) {
+            $classNames .= $p->name . '|';
+        }
         //animation data to access with js on frontend if animation found
         $jsAnimationData = "";
         $animationData = [];
@@ -1348,17 +1345,25 @@ class InputfieldPageGrid extends Inputfield {
 
             //get items to init animations for
             foreach ($animationItems as $item) {
+
                 //check if animation exists on page
+                // if ($item->name == 'button') {
+                //      $itemData = $item->meta()->pg_styles;
+                //     bdb($itemData);
+                // }
+
                 //look for all breakpoints
                 $itemData = $item->meta()->pg_styles;
                 if (isset($itemData)) {
                     foreach ($itemData as $childData) {
+
                         if (isset($childData['id']) && isset($childData['breakpoints'])) {
                             foreach ($childData['breakpoints'] as $breakpoint) {
                                 if (!isset($childData['breakpoints'][$breakpoint['name']]['css']['--pg-animation'])) continue;
                                 $animationNames .= $childData['breakpoints'][$breakpoint['name']]['css']['--pg-animation'] . ',';
                                 $selector = '.';
                                 $selector2 = '.';
+
                                 if (isset($childData['tagName']) && $childData['tagName'] === $item->name) {
                                     //we have a tag so we remove "."
                                     $selector = '';
@@ -1384,6 +1389,8 @@ class InputfieldPageGrid extends Inputfield {
                 $animationsSelectors = array_unique($animationsSelectors);
                 $animationNames = explode(',', $animationNames);
 
+                // bdb($animationNames);
+
                 foreach ($animationNames as $animationName) {
                     if (!$animationName) continue;
                     $animationPage = $animationsParent->findOne('name=' . $animationName);
@@ -1393,7 +1400,7 @@ class InputfieldPageGrid extends Inputfield {
                     if (isset($itemData)) {
                         foreach ($itemData as $childData) {
                             if (isset($childData['id'])) {
-                                if (isset($childData['keyframe'])) {
+                                if (isset($childData['keyframe']) && str_starts_with($childData['id'], 'pg-keyframe-')) {
                                     $animationData[$animationPage->name]['keyframes'][$childData['keyframe']] = $childData;
                                 } else {
                                     $animationData[$animationPage->name][$childData['id']] = $childData;
@@ -1413,6 +1420,9 @@ class InputfieldPageGrid extends Inputfield {
 
         $scriptOutput = $jsAnimationData . $jsFiles . $customJs;
         if (!$backend) $this->cache->save('pgCache-js-' . $mainPage->id, $scriptOutput);
+
+        // bd($animationsSelectors);
+        // $updateAnimations = 1;
 
         // if ($updateAnimations) bdb([$dataJson, $dataJsonSelectors]);
         //if $updateAnimations is true, no neeed to return js files
