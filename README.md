@@ -1,4 +1,6 @@
-[<img src="https://pg.uber.space/github-assets/pagegrid-logo.png" width="300" />](https://page-grid.com)
+<!-- [<img src="https://pg.uber.space/github-assets/pagegrid-logo.png" width="300" />](https://page-grid.com) -->
+
+<img src="https://pg.uber.space/github-assets/pagegrid-logo-icon.png" width="300"/>
 
 ### PAGEGRID is a friendly pagebuilder for ProcessWire CMS.
 Design fully responsive websites (or parts of them) without writing any code. Rearrange and resize items in a visual way and quickly edit the content of your website. 
@@ -7,7 +9,7 @@ Use and customise our [ready-made blocks](https://github.com/jploch/PageGridBloc
 
 Don't want to give your client all that power? Use ProcessWire’s powerful permission system to control what your clients can edit. You can then also grant access individually to the style panel, resize or drag functionality using ProcessWire's build in permission system.
 
-<img src="https://pg.uber.space/github-assets/pagegrid-logo-icon.png" />
+<img src="https://pg.uber.space/github-assets/pagegrid-screen.png" />
 
 ### Try PAGEGRID for free  
 
