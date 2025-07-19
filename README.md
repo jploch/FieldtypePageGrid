@@ -1,6 +1,6 @@
 <!-- [<img src="https://pg.uber.space/github-assets/pagegrid-logo.png" width="300" />](https://page-grid.com) -->
 
-<img src="https://pg.uber.space/github-assets/pagegrid-logo-icon.png" width="100"/>
+[<img src="https://pg.uber.space/github-assets/pagegrid-logo-icon.png" width="100"/>](https://page-grid.com)
 
 ### PAGEGRID is a friendly pagebuilder for ProcessWire CMS.
 Design fully responsive websites (or parts of them) without writing any code. Rearrange and resize items in a visual way and quickly edit the content of your website. 
