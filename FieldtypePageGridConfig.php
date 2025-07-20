@@ -425,6 +425,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		$fieldset->label = $this->_('Style Panel');
 		$fieldset->collapsed(in_array($fieldset->name, $collapsed) ? 1 : 0);
 		$fieldset->icon = 'paint-brush';
+		$fieldset->description = $this->_("The style panel can be used to edit the styles of pagegrid blocks directly on the page. It's enabled for superusers and user with the permission **pagegrid-style-panel**. [Learn more](https://page-grid.com/docs/#/stylepanel)");
 		// $fieldset->themeOffset = 1;
 		$wrapper->add($fieldset);
 
@@ -437,6 +438,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		if ($this->stylePanel) {
 			$f->attr('checked', 'checked');
 		}
+		$f->appendMarkup('<style>#wrap_Inputfield_stylePanel .InputfieldHeader{display:none;}#wrap_Inputfield_stylePanel .InputfieldContent{padding-top:23px;}</style>');
 		$fieldset->append($f);
 
 		//------------------------------------------
@@ -599,6 +601,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		$fieldset->collapsed(in_array($fieldset->name, $collapsed) ? 1 : 0);
 		$fieldset->icon = 'edit';
 		$fieldset->themeOffset = 1;
+		$fieldset->description = 'The inline editor allows you to edit text and file fields directly on the page. It is enabled for superusers and users with the permission **page-edit-front**.';
 		$wrapper->add($fieldset);
 
 		// enable/disable frontend
@@ -610,6 +613,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		if ($this->inlineEditorFrontDisable) {
 			$f->attr('checked', 'checked');
 		}
+		$f->appendMarkup('<style>#wrap_Inputfield_inlineEditorFrontDisable .InputfieldHeader{display:none;}#wrap_Inputfield_inlineEditorFrontDisable .InputfieldContent{padding-top:23px;}</style>');
 		$fieldset->append($f);
 
 		//get core front end edit config for text fields
@@ -798,7 +802,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 				//check if modules are installed
 				if ($info['name'] && !$installedBlock) {
 					$this->modules->install($className);
-					 $refreshModules = 1;
+					$refreshModules = 1;
 				}
 
 				//set template id
@@ -828,12 +832,12 @@ class FieldtypePageGridConfig extends ModuleConfig {
 			$refreshButtonText = '<i class="fa fw fa-plug"></i>  Install default block modules';
 			$refreshNoteSuccess = 'Block modules found. Click this button to install/select them all at once.';
 			$buttonClass = 'ui-priority-secondary';
-			if(isset($_GET['refreshModules']) && $_GET['refreshModules']) {
+			if (isset($_GET['refreshModules']) && $_GET['refreshModules']) {
 				$refreshButtonText = '<i class="fa fw fa-refresh"></i>  Select default blocks';
 				$buttonClass = '';
 				$refreshNoteSuccess = 'Modules Installed succesful!';
 			}
-			$f->appendMarkup('<br><a href=' . $selectAllLink . ' class="ui-button ui-widget ui-corner-all ui-state-default '. $buttonClass .'">' . $refreshButtonText . '</a><p class="notes">'.$refreshNoteSuccess.'</p>');
+			$f->appendMarkup('<br><a href=' . $selectAllLink . ' class="ui-button ui-widget ui-corner-all ui-state-default ' . $buttonClass . '">' . $refreshButtonText . '</a><p class="notes">' . $refreshNoteSuccess . '</p>');
 		}
 
 
