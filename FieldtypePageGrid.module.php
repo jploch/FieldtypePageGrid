@@ -16,7 +16,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID'),
       'summary' => __('A flexible drag-and-drop page builder with exceptional design control.', __FILE__),
-      'version' => '2.2.87',
+      'version' => '2.2.89',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -1252,14 +1252,24 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     //END check if pagegrid item page
 
     $options = $this->session->get('pg_template_' . $page->template->name) ? json_decode($this->session->get('pg_template_' . $page->template->name), true) : [];
+    $parentOptions = [];
     $form = $event->return;
     $contentTab = $form->children->get('id=ProcessPageEditContent');
     $childrenTab = $form->children->get('id=ProcessPageEditChildren');
     $settingsTab = $form->get("id=ProcessPageEditSettings");
 
+    if ($page->parent() && $page->parent()->id) {
+      $parentOptions = $this->session->get('pg_template_' . $page->parent()->template->name) ? json_decode($this->session->get('pg_template_' . $page->parent()->template->name), true) : [];
+    }
+
     //add css to modal
     $form->prependFile = $this->config->styles->add($this->config->urls->InputfieldPageGrid . "css/main.css?v=333");
     $form->addClass('pg-settings-body');
+
+    //show title if autoTitle is set to 'false' in parent template
+    if ($parentOptions && isset($parentOptions['autoTitle']) && $parentOptions['autoTitle'] == 'false') {
+      $form->addClass('pg-show-title');
+    }
 
     //if pg item hide language
     if (count($page->parents('template=pg_container'))) {

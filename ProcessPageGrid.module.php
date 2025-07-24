@@ -347,9 +347,11 @@ class ProcessPageGrid extends Process {
                 $parent = $first->parent();
                 $this->pages->sort($parent, true);
                 if ($returnMarkup) {
+                    $jsFiles = $this->getBlockFiles($parent, 'js');
                     $response = array(
                         'pageId' => $parent->id,
-                        'markup' => $this->modules->get('InputfieldPageGrid')->renderItem($parent)
+                        'markup' => $this->modules->get('InputfieldPageGrid')->renderItem($parent),
+                        'jsFiles' => $jsFiles
                     );
                     return (json_encode($response));
                 }

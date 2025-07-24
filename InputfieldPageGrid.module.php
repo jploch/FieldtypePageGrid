@@ -1086,6 +1086,19 @@ class InputfieldPageGrid extends Inputfield {
             // if ($addButton) $header .= '<a class="pg-quick-add pg-edit" href="#" data-url="/admin/page/add/?parent_id=' . $p->id . '&template_id=' . $this->templates->get('pg_editor')->id . '&pgquickadd=1&modal=1&pgmodal=1">+</a>';
             if ($addButton && $user->hasPermission('page-add', $p)) {
                 $childrenTemplates = isset($options['children']) && is_array($options['children']) ? $options['children'] : [];
+                // if template->childTemplate is set via admin and not superuser, use settings
+                if ($p->template->childTemplates && !$user->isSuperuser()) {
+                    $childrenTemplates = $p->template->childTemplates;
+                    foreach ($childrenTemplates as $childTemplate) {
+                        $childTemplate = $this->templates->get($childTemplate);
+                        if ($childTemplate->id) {
+                            // bd($childTemplate->name);
+                            $childrenTemplates = [];
+                            $childrenTemplates[] = $childTemplate->name;
+                        }
+                    }
+                }
+                // bd($childrenTemplates);
                 $quickAddButtons = $this->renderAddItemBar(0, $childrenTemplates, 1);
                 $header .= '<div class="pg-quick-add" data-id-original="' . $pOriginal->id . '" data-id="' . $p->id . '"><span class="pg-quick-add-icon" uk-tooltip="title:Add Item to ' . $layoutTitle . '; pos:bottom; delay:100;"></span>' . $quickAddButtons . '</div>';
             }
