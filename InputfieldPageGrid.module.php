@@ -279,13 +279,13 @@ class InputfieldPageGrid extends Inputfield {
             <i class="pg-undo fa fa-fw fa-reply" data-name="fa-reply" uk-tooltip="title:Undo; pos:bottom; delay:300;"></i>
             <i class="pg-redo pg-topnav-margin fa fa-fw fa-share" data-name="fa-share" uk-tooltip="title:Redo; pos:bottom; delay:300;"></i>';
                 if ($hasAnimations) $topNav .= '<i class="pg-play pg-topnav-margin fa fw fa-play" uk-tooltip="title:Play Animations; pos:bottom; delay:300;"></i>';
-                $topNav .= '<div id="breakpoints-nav" class="pg-topnav-margin">';
+                $topNav .= '<div id="breakpoints-nav">';
                 $topNav .= '<div class="breakpoint-icon breakpoint-icon-s" value="@media (max-width: 640px)" breakpoint="s" uk-tooltip="title:Breakpoint Small < 640px; pos:bottom; delay:300;">' . file_get_contents($modulePath . '/img/phone-portrait-outline.svg') . '</div>';
                 $topNav .= '<div class="breakpoint-icon breakpoint-icon-m" value="@media (max-width: 960px)" breakpoint="m" uk-tooltip="title:Breakpoint Medium < 960px; pos:bottom; delay:300;">' . file_get_contents($modulePath . '/img/phone-landscape-outline.svg') . '</div>';
                 $topNav .= '<div class="breakpoint-icon breakpoint-icon-base" value="@media (min-width: 640px)" breakpoint="base" uk-tooltip="title:Breakpoint Base; pos:bottom; delay:300;">' . file_get_contents($modulePath . '/img/laptop-outline.svg') . '</div>';
                 $topNav .= '<div class="breakpoint-icon breakpoint-icon-l" value="@media (min-width: 1600px)" breakpoint="l" uk-tooltip="title:Breakpoint Large > 1600px; pos:bottom; delay:300;">' . file_get_contents($modulePath . '/img/desktop-outline.svg') . '</div>';
                 $topNav .= '</div>';
-                if ($user->admin_theme != 'AdminThemeCanvas') $topNav .= '<a class="pg-view" href="' . $mainPage->url() . '" target="_blank" uk-tooltip="View page in new tab"><i class="fa fw fa-eye"></i></a>';
+                // if ($user->admin_theme != 'AdminThemeCanvas') $topNav .= '<a class="pg-view" href="' . $mainPage->url() . '" target="_blank" uk-tooltip="View page in new tab"><i class="fa fw fa-eye"></i></a>';
                 $topNav .= '</div>';
             }
         }
