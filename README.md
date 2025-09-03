@@ -2,7 +2,7 @@
 
 [<img src="https://pg.uber.space/github-assets/pagegrid-logo-icon.png" width="100"/>](https://page-grid.com)
 
-### PAGEGRID is a friendly pagebuilder for ProcessWire CMS.
+### PAGEGRID is a friendly page builder for ProcessWire CMS.
 Design fully responsive websites (or parts of them) without writing any code. Rearrange and resize items in a visual way and quickly edit the content of your website. 
 
 Use and customise our [ready-made blocks](https://github.com/jploch/PageGridBlocks/), or create your own block templates using ProcessWire's native templates (and fields).
