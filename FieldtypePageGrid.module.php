@@ -16,7 +16,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID'),
       'summary' => __('A flexible drag-and-drop page builder with exceptional design control.', __FILE__),
-      'version' => '2.2.97',
+      'version' => '2.2.98',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -1141,6 +1141,8 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     $page = $event->arguments(0);
     $pages = $event->wire('pages');
     $input = $this->input;
+
+    if($page->_cloning && $page->_cloning->id) return; //skip if page is cloned
 
     //create blueprint
     if ($page->template->name === 'pg_blueprint') {
