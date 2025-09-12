@@ -653,7 +653,8 @@ class InputfieldPageGrid extends Inputfield {
 
     //for items we never want prepending/appending of template file so disable it in DB
     public function noAppendFileSave($p) {
-        if (!$p->template->noAppendTemplateFile) {
+        $isPgPage = $p->parents('template=pg_container')->first();
+        if ($isPgPage && $isPgPage->id && !$p->template->noAppendTemplateFile) {
             $p->template->noAppendTemplateFile = 1;
             $p->template->noPrependTemplateFile = 1;
             $p->template->appendFile = "";

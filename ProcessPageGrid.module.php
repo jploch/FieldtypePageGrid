@@ -168,18 +168,18 @@ class ProcessPageGrid extends Process {
 
             //create page for class if not already
             if ($settingsPage->name == 'pg-classes' || $settingsPage->name == 'pg-animations') {
-
                 $parent = $settingsPage;
                 $parentID = $parent->id;
                 $className = $dataItem['cssClass'];
-                $settingsPage = $this->pages->get("name=$className, template=pg_container, has_parent=$parentID");
+                $classNameSanitized = $this->sanitizer->pageName($className, true);
+                $settingsPage = $this->pages->get("name=$classNameSanitized, template=pg_container, parent=$parentID");
 
                 if ($settingsPage && $settingsPage->id) {
                 } else {
                     $settingsPage = new Page(); // create new page object
                     $settingsPage->template = 'pg_container'; // set template
                     $settingsPage->parent = $parentID; // set the parent
-                    $settingsPage->name = $className; // give it a name used in the url for the page
+                    $settingsPage->name = $classNameSanitized; // give it a name used in the url for the page
                     $settingsPage->title = $className; // set page title (not neccessary but recommended)
                     // $settingsPage->addStatus(Page::statusHidden);
                     $settingsPage->save();
