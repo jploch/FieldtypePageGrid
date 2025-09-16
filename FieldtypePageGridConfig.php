@@ -458,7 +458,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		$f->attr('name', 'fontPrivacy');
 		$f->label = $this->_('Google Fonts');
 		$f->checkboxLabel = $this->_('Privacy friendly Google Fonts');
-		$f->description = $this->_("Check this option to request Google Fonts from BunnyCDN instead of the Google server. BunnyCDN has logging disabled, and will not log any user information. [More information](https://github.com/coollabsio/fonts)");
+		$f->description = $this->_("Check this option to request Google Fonts from BunnyCDN instead of the Google server. BunnyCDN has logging disabled, and will not log any user information. [More information](https://bunny.net/gdpr/)");
 		$f->attr('value', $this->fontPrivacy);
 		$f->icon = 'google';
 		if ($this->fontPrivacy) {

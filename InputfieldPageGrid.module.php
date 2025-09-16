@@ -1987,8 +1987,8 @@ class InputfieldPageGrid extends Inputfield {
         //load google fonts
         if ($fonts) {
             if ($this->ft->fontPrivacy) {
-                $preconnect = '<link rel="preconnect" href="https://api.fonts.coollabs.io" crossorigin>';
-                $fonts = $preconnect . '<link rel="stylesheet" type="text/css" href="https://api.fonts.coollabs.io/css2?' . $fonts . '">';
+                $preconnect = '<link rel="preconnect" href="https://fonts.bunny.net" crossorigin>';
+                $fonts = $preconnect . '<link rel="stylesheet" type="text/css" href="https://fonts.bunny.net/css2?' . $fonts . '">';
             } else {
                 $preconnect = '<link rel="preconnect" href="https://fonts.googleapis.com">';
                 $preconnect .= '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>';
