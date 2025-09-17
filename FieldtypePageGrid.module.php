@@ -16,7 +16,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID'),
       'summary' => __('A flexible drag-and-drop page builder with exceptional design control.', __FILE__),
-      'version' => '2.2.101',
+      'version' => '2.2.102',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -1142,7 +1142,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     $pages = $event->wire('pages');
     $input = $this->input;
 
-    if($page->_cloning && $page->_cloning->id) return; //skip if page is cloned
+    if ($page->_cloning && $page->_cloning->id) return; //skip if page is cloned
 
     //create blueprint
     if ($page->template->name === 'pg_blueprint') {
@@ -1223,8 +1223,9 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
   public function autoPuplish($event) {
     // remove statusTemp (flash icon on page)
     $page = $event->arguments(0);
+    $isPgPage = count($page->parents('template=pg_container'));
 
-    if ($page->title == 'pg-autotitle') {
+    if ($page->title == 'pg-autotitle' && $isPgPage) {
       $event->arguments(0)->status = 1;
       $templateName = str_replace('_', '-', $page->template->name);
       $page->of(false);
@@ -1232,6 +1233,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
       $page->set('name', $templateName . '-' . $page->id);
       $page->removeStatus('unpublished');
       $page->save();
+      $this->session->redirect($page->editUrl() . '&modal=1&pgmodal=1'); //test
     }
   }
 
@@ -1290,6 +1292,21 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
         if ($value == 'pg_container' || $value == 'pg_blueprint') $form->find("id=ProcessPageEditSettings")->first()->template->removeOption($key);
       }
     }
+
+    // render back button
+    // check if referrer is parent page
+    $refParts = parse_url($_SERVER['HTTP_REFERER']);
+    parse_str($refParts['query'], $refPartsQuery);
+    $refPageId = isset($refPartsQuery['id']) ? (int) $refPartsQuery['id'] : 0;
+
+    if ($refPageId && $page->parent()->id == $refPageId) {
+      $f = $this->modules->get('InputfieldMarkup');
+      $f->id = 'pg-back-button-field';
+      $f->value = "<div title='" . __('Back to the previous page') . "' id='pg-back-button' data-page='" . $page->parent->id . "' data-href='" . $_SERVER['HTTP_REFERER'] . "'>←</div>";
+      $form->prepend($f);
+    }
+
+    // END render back button
 
     if ($childrenTab && $childrenTab->id) {
       $addBtn = $form->get('AddPageBtn');

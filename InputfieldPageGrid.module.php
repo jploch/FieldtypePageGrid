@@ -653,8 +653,8 @@ class InputfieldPageGrid extends Inputfield {
 
     //for items we never want prepending/appending of template file so disable it in DB
     public function noAppendFileSave($p) {
-        $isPgPage = $p->parents('template=pg_container')->first();
-        if ($isPgPage && $isPgPage->id && !$p->template->noAppendTemplateFile) {
+        $isPgPage = count($p->parents('template=pg_container'));
+        if ($isPgPage && !$p->template->noAppendTemplateFile) {
             $p->template->noAppendTemplateFile = 1;
             $p->template->noPrependTemplateFile = 1;
             $p->template->appendFile = "";
@@ -1060,7 +1060,7 @@ class InputfieldPageGrid extends Inputfield {
         $layoutTitle = $p->template->label ? $p->template->label : $p->template->name;
         $layoutTitle = $title ? $title : $layoutTitle;
         $statusClass = $this->getStatusClasses($p);
-        $isPgPage = $p->parents('template=pg_container')->first();
+        $isPgPage = count($p->parents('template=pg_container'));
         $addButton = isset($options['children']) && $options['children'] ? 1 : 0;
 
         //disbale inline edit on title field
@@ -1106,23 +1106,23 @@ class InputfieldPageGrid extends Inputfield {
                 $header .= '<div class="pg-quick-add" data-id-original="' . $pOriginal->id . '" data-id="' . $p->id . '"><span class="pg-quick-add-icon" uk-tooltip="title:Add Item to ' . $layoutTitle . '; pos:bottom; delay:100;"></span>' . $quickAddButtons . '</div>';
             }
             //edit
-            $header .= '<pg-item-header-button class="pg-edit" title="' . $this->_('Edit') . '" data-url="./?id=' . $p->id . '&amp;modal=1&pgmodal=1" href="#"><i class="fa fa-pencil"></i></pg-item-header-button>';
+            $header .= '<pg-item-header-button class="pg-edit" uk-tooltip="' . $this->_('Edit') . '" data-url="./?id=' . $p->id . '&amp;modal=1&pgmodal=1" href="#"><i class="fa fa-pencil"></i></pg-item-header-button>';
 
             if ($user->hasPermission('page-clone', $p) && $isPgPage) {
                 //clone
-                $header .= '<pg-item-header-button class="pg-clone" data-template="' . $p->template->name . '" data-parent="' . $p->parent()->id . '"><i class="fa fa-fw fa-clone" data-name="fa-clone" title="Clone"></i></pg-item-header-button>';
+                $header .= '<pg-item-header-button class="pg-clone" uk-tooltip="' . $this->_('Clone') . '" data-template="' . $p->template->name . '" data-parent="' . $p->parent()->id . '"><i class="fa fa-fw fa-clone" data-name="fa-clone"></i></pg-item-header-button>';
             }
             if ($user->hasPermission('page-lock', $p) && $isPgPage) {
                 //lock
-                $header .= '<pg-item-header-button class="pg-lock" href="#"><i class="fa fa-lock" title="' . $this->_('Unlock') . '"></i><i class="fa fa-unlock" title="' . $this->_('Lock') . '"></i></pg-item-header-button>';
+                $header .= '<pg-item-header-button class="pg-lock" uk-tooltip="' . $this->_('Lock') . '" href="#"><i class="fa fa-lock"></i><i class="fa fa-unlock"></i></pg-item-header-button>';
             }
             if (($user->isSuperuser() || $user->hasPermission('pagegrid-symbol-create') || $user->hasRole('pagegrid-admin') || $user->hasRole('pagegrid-designer')) && $isPgPage) {
                 //symbol
-                $header .= '<pg-item-header-button class="pg-symbol" title="' . $this->_('Create Symbol') . '" href="#"><i class="fa fw fa-cube"></i></pg-item-header-button>';
+                $header .= '<pg-item-header-button class="pg-symbol" uk-tooltip="' . $this->_('Create Symbol') . '" href="#"><i class="fa fw fa-cube"></i></pg-item-header-button>';
             }
             if ($user->hasPermission('page-add', $p->parent()) && $user->hasPermission('page-delete', $p) && $isPgPage) {
                 //delete
-                $header .= '<pg-item-header-button class="pg-delete" title="' . $this->_('Mark for deletion') . '" href="#"><i class="fa fa-trash"></i></pg-item-header-button>';
+                $header .= '<pg-item-header-button class="pg-delete" uk-tooltip="' . $this->_('Mark for deletion') . '" href="#"><i class="fa fa-trash"></i></pg-item-header-button>';
             }
             $header .= '</pg-item-header>';
         }
