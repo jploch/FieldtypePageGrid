@@ -16,7 +16,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID'),
       'summary' => __('A flexible drag-and-drop page builder with exceptional design control.', __FILE__),
-      'version' => '2.2.102',
+      'version' => '2.2.103',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -1248,9 +1248,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
 
     //check if pagegrid item page
     $isPageGrid = false;
-    // if (count($page->parents('template=pg_container'))) {
-    //   $isPageGrid = true;
-    // }
+    if (isset($_GET['modal']) && count($page->parents('template=pg_container'))) $isPageGrid = true;
     if (isset($_GET['pgmodal'])) $isPageGrid = true;
     if (!$isPageGrid) return;
     //END check if pagegrid item page

@@ -56,6 +56,9 @@ class InputfieldPageGrid extends Inputfield {
     }
 
     public function ___render() {
+        // don't render inside modal
+        if (isset($_GET['modal'])) return;
+        
         $user = wire('user');
         $this->ft->createDummies();
         $this->config->styles->add($this->config->urls->InputfieldPageGrid . "css/main.css?v=" . $this->modules->getModuleInfo('FieldtypePageGrid')['version']);
