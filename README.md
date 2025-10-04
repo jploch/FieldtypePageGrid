@@ -9,7 +9,7 @@ Use and customise our [ready-made blocks](https://github.com/jploch/PageGridBloc
 
 Don't want to give your client all that power? Use ProcessWire’s powerful permission system to control what your clients can edit. You can then also grant access individually to the style panel, resize or drag functionality using ProcessWire's build in permission system.
 
-<img src="https://pg.uber.space/github-assets/pagegrid-screen.png" />
+<img src="https://pg.uber.space/github-assets/pagegrid-screen-new.jpg" />
 
 ### Try PAGEGRID for free  
 
