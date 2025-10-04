@@ -625,7 +625,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		$fieldset->add($coreInputfields);
 
 		//NEW placeholder text per field
-		$PageFrontEditFields = $this->modules->getConfig('PageFrontEdit')['inlineEditFields'];
+		$PageFrontEditFields = isset($this->modules->getConfig('PageFrontEdit')['inlineEditFields']) ? $this->modules->getConfig('PageFrontEdit')['inlineEditFields'] : 0;
 		if ($PageFrontEditFields && count($PageFrontEditFields)) {
 			$fieldsetSub = $this->wire('modules')->get('InputfieldFieldset');
 			$fieldsetSub->label = $this->_('Placeholder text for empty text fields');
