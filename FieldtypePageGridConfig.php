@@ -766,7 +766,8 @@ class FieldtypePageGridConfig extends ModuleConfig {
 	}
 
 	public function getBlockSettings($field) {
-
+		// $defaultBlocks = ['pg_text', 'pg_editor', 'pg_image', 'pg_video', 'pg_gallery', 'pg_gallery_video', 'pg_iframe', 'pg_group', 'pg_navigation', 'pg_slider', 'pg_accordion', 'pg_datalist', 'pg_prev_next', 'pg_spacer', 'pg_code'];
+		$defaultBlocks = ['pg_text', 'pg_editor', 'pg_image', 'pg_video', 'pg_gallery', 'pg_gallery_video', 'pg_iframe', 'pg_group', 'pg_slider', 'pg_accordion', 'pg_datalist', 'pg_prev_next', 'pg_spacer', 'pg_code'];
 		$info = $this->modules->getModuleInfoVerbose('PageGridBlocks');
 		$downloaded = $this->modules->get('PageGridBlocks') ? 1 : 0;
 		$installed = $this->modules->isInstalled('PageGridBlocks');
@@ -789,8 +790,6 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		$refreshModules = 0;
 		if ($installed && isset($_GET['selectDefaultBlocks']) && isset($_GET['field'])) {
 			$value = [];
-			// $defaultBlocks = ['pg_text', 'pg_editor', 'pg_image', 'pg_video', 'pg_gallery', 'pg_gallery_video', 'pg_iframe', 'pg_group', 'pg_navigation', 'pg_slider', 'pg_accordion', 'pg_datalist', 'pg_prev_next', 'pg_spacer', 'pg_code'];
-			$defaultBlocks = ['pg_text', 'pg_editor', 'pg_image', 'pg_video', 'pg_gallery', 'pg_gallery_video', 'pg_iframe', 'pg_group', 'pg_slider', 'pg_accordion', 'pg_datalist', 'pg_prev_next', 'pg_spacer', 'pg_code'];
 			foreach ($defaultBlocks as $templateName) {
 				$t = $this->templates->get($templateName);
 				$className = str_replace('pg_', '', $templateName);
@@ -836,6 +835,24 @@ class FieldtypePageGridConfig extends ModuleConfig {
 				$refreshButtonText = '<i class="fa fw fa-refresh"></i>  Select default blocks';
 				$buttonClass = '';
 				$refreshNoteSuccess = 'Modules Installed succesful!';
+
+				//fix set inline fields again, needed when all blocks are installed at once
+				foreach ($defaultBlocks as $templateName) {
+					$t = $this->templates->get($templateName);
+					$className = str_replace('pg_', '', $templateName);
+					$className = str_replace('_', '', ucwords($className, '_'));
+					$className = 'Blocks' . $className;
+					$installedBlock = $this->modules->isInstalled($className);
+					$info = $this->modules->getModuleInfoVerbose($className);
+
+					//check if modules are installed
+					if ($info['name'] && !$installedBlock) {
+						$this->modules->install($className);
+						$refreshModules = 1;
+					}
+
+					if ($this->modules->isInstalled($className)) $this->modules->get($className)->createBlock();
+				}
 			}
 			$f->appendMarkup('<br><a href=' . $selectAllLink . ' class="ui-button ui-widget ui-corner-all ui-state-default ' . $buttonClass . '">' . $refreshButtonText . '</a><p class="notes">' . $refreshNoteSuccess . '</p>');
 		}
