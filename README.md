@@ -18,7 +18,6 @@ Whether you’re prototyping, creating full pages, or empowering clients with dr
 
 <img src="https://pg.uber.space/github-assets/pagegrid-screen-new.jpg" />
 
----
 
 ## Core Concepts
 
@@ -68,6 +67,8 @@ PAGEGRID is not free software. However, you can try PAGEGRID on your local machi
 
 ### Get up and running
 - [Quick start](https://page-grid.com/docs/developer/start/)
+  
+---
 
 ### Contribute
 
@@ -77,7 +78,10 @@ Please post all bug reports in our [issue tracker](https://github.com/jploch/Fie
 **Suggest a feature**  
 If you have ideas for a feature or enhancement for PAGEGRID, please make a post on the [PAGEGRID forum](https://processwire.com/talk/forum/64-pagegrid/).
 
-## What's PAGEGRID?
+---
+
+## Resources
+
 - **[page-grid.com](https://page-grid.com)** – Get to know PAGEGRID.
 - **[Documentation](https://page-grid.com/docs/)** – Read the official documentation.
 - **[Issues](https://github.com/jploch/FieldtypePageGrid/issues/)** – Report bugs and other problems.
