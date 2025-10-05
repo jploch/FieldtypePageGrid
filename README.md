@@ -51,7 +51,7 @@ Everything stays native, and developers maintain full control.
 
 ### Ready-made blocks
 
-Use and customise our [ready-made blocks](https://github.com/jploch/PageGridBlocks/), or create your own block templates using ProcessWire's native templates (and fields).
+Get up and running fast! Use and customise our [ready-made blocks](https://github.com/jploch/PageGridBlocks/), or create your own block templates using ProcessWire's native templates (and fields).
 
 ---
 
