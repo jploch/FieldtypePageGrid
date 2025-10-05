@@ -14,9 +14,9 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
   public static function getModuleInfo() {
 
     return array(
-      'title' => __('PAGEGRID'),
-      'summary' => __('A flexible drag-and-drop page builder with exceptional design control.', __FILE__),
-      'version' => '2.2.111',
+      'title' => __('PAGEGRID Page Builder'),
+      'summary' => __('Easily create rich, responsive websites without coding. Developers retain full control over markup and structure, while designers and editors can build and update layouts visually.', __FILE__),
+      'version' => '2.2.112',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
