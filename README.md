@@ -9,11 +9,11 @@ It works seamlessly with ProcessWire’s native templates and fields, giving dev
 
 Whether you’re prototyping, creating full pages, or empowering clients with drag-and-drop editing, PAGEGRID adapts to your workflow — all while retaining full access to the underlying code and structure.
 
-* **Developers** retain full control over code, templates, and fields; Visual tools are optional and you can handle layouts entirely via your own CSS or framework.
+<!-- * **Developers** retain full control over code, templates, and fields; Visual tools are optional and you can handle layouts entirely via your own CSS or framework.
 
 * **Designers** can visually layout pages and apply styles without writing code.
 
-* **Editors** get an intuitive drag-and-drop interface that’s easy to learn and prevents mistakes. As a developer, you decide what they can move, style, or change using ProcessWire’s native roles and permissions.
+* **Editors** get an intuitive drag-and-drop interface that’s easy to learn and prevents mistakes. As a developer, you decide what they can move, style, or change using ProcessWire’s native roles and permissions. -->
 
 
 <img src="https://pg.uber.space/github-assets/pagegrid-screen-new.jpg" />
