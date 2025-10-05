@@ -19,7 +19,7 @@ Whether you’re prototyping, creating full pages, or empowering clients with dr
 <img src="https://pg.uber.space/github-assets/pagegrid-screen-new.jpg" />
 
 
-## Core Concepts
+### Core Concepts
 
 PAGEGRID builds on ProcessWire’s flexibility without adding abstraction.
 Everything stays native, and developers maintain full control. 
@@ -80,7 +80,7 @@ If you have ideas for a feature or enhancement for PAGEGRID, please make a post 
 
 ---
 
-## Resources
+### Resources
 
 - **[page-grid.com](https://page-grid.com)** – Get to know PAGEGRID.
 - **[Documentation](https://page-grid.com/docs/)** – Read the official documentation.
