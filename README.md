@@ -5,9 +5,8 @@
 ### PAGEGRID is a visual page builder for ProcessWire CMS.
 
 PAGEGRID lets you design responsive, visually rich websites without writing a single line of code.
-It works seamlessly with ProcessWire’s native templates and fields, giving developers full control over the underlying code and structure while designers and editors can build and update layouts visually.
 
-Whether you’re prototyping, creating full pages, or empowering clients with drag-and-drop editing, PAGEGRID adapts to your workflow — all while retaining full access to the underlying code and structure.
+It works seamlessly with ProcessWire’s native templates and fields, giving developers full control over the underlying code and structure while designers and editors can build and update layouts visually. 
 
 <!-- * **Developers** retain full control over code, templates, and fields; Visual tools are optional and you can handle layouts entirely via your own CSS or framework.
 
@@ -24,14 +23,15 @@ Whether you’re prototyping, creating full pages, or empowering clients with dr
 PAGEGRID builds on ProcessWire’s flexibility without adding abstraction.
 Everything stays native, and developers maintain full control. 
 
-* **Your Markup**
-  Unlike many other site builders, PAGEGRID gives you complete control over your markup and frontend structure.
-  Use it to design specific sections of a custom-coded site, or as a full site builder that works without any coding.
-  It adapts to your workflow — not the other way around.
+* **PAGEGRID is a Field**
+  PAGEGRID is a visual field for ProcessWire that lets you build and manage layouts right inside the CMS. You can use it it to design specific sections of a custom-coded site, or as a full site builder that works without any coding. 
 
 * **Everything Is a Page**
   Every item in PAGEGRID is a ProcessWire page, defined through native templates and fields.
   Your layouts are built with real ProcessWire data — fully queryable, reusable, and compatible with your existing API and templates.
+
+* **Your Markup**
+  Unlike many other site builders, PAGEGRID gives you complete control over your markup and frontend structure. It adapts to your workflow — not the other way around.
 
 * **Control What Clients Can Edit**
   Clients get an intuitive visual editor that’s easy to learn.
