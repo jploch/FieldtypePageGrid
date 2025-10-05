@@ -23,33 +23,27 @@ It works seamlessly with ProcessWire’s native templates and fields, giving dev
 PAGEGRID builds on ProcessWire’s flexibility without adding abstraction.
 Everything stays native, and developers maintain full control. 
 
-* **PAGEGRID is a Field**
- 
+* **PAGEGRID is a Field:**
   PAGEGRID is a visual field for ProcessWire that lets you build and manage layouts right inside the CMS. You can use it it to design specific sections of a custom-coded site, or as a full site builder that works without any coding. 
 
-* **Everything Is a Page**
- 
+* **Everything Is a Page:**
   Every item in PAGEGRID is a ProcessWire page, defined through native templates and fields.
   Your layouts are built with real ProcessWire data — fully queryable, reusable, and compatible with your existing API and templates.
 
-* **Your Markup**
- 
+* **Your Markup:**
   Unlike many other site builders, PAGEGRID gives you complete control over your markup and frontend structure. It adapts to your workflow — not the other way around.
 
-* **Control What Clients Can Edit**
- 
+* **Control What Clients Can Edit:**
   Clients get an intuitive visual editor that’s easy to learn.
   As a developer, you decide what they can move, style, or change using ProcessWire’s native roles and permissions.
   Give them creative freedom while keeping the structure safe.
 
-* **Your CSS**
- 
+* **Your CSS:**
   PAGEGRID works with your existing CSS — no assumptions or frameworks required.
   Write styles in your code editor or bring your own framework.
   Beyond grids, it supports Flexbox, Block, and Inline-block layouts.
 
-* **Nesting**
- 
+* **Nesting:**
   PAGEGRID supports nested blocks — a powerful but optional feature.
   Define which templates can be used as children to create grouped or structured layouts such as sliders, galleries, or repeatable content sections.
 
