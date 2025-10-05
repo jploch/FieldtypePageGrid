@@ -57,7 +57,7 @@ Get up and running fast! Use and customise our [ready-made blocks](https://githu
 
 ### Try PAGEGRID for free  
 
-PAGEGRID is not free software. However, you can try PAGEGRID on your local machine or on a test server as long as you need to make sure it is the right tool for your next project. … and when you’re convinced, [buy your license](https://page-grid.com/buy).
+PAGEGRID is not free software. However, you can try PAGEGRID on your local machine or on a test server as long as you need to make sure it is the right tool for your next project. … and when you’re convinced, [buy your license](https://pagegrid.gumroad.com/l/pagegrid?wanted=true&amp;variant=1%20License&amp;referrer=https://page-grid.com/buy).
 
 ### Requirements
 - Process Wire 3.0.229 or greater
