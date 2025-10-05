@@ -4,9 +4,7 @@
 
 ### PAGEGRID is a visual page builder for ProcessWire CMS.
 
-PAGEGRID lets you design responsive, visually rich websites without writing a single line of code.
-
-It works seamlessly with ProcessWire’s native templates and fields, giving developers full control over the underlying code and structure while designers and editors can build and update layouts visually. 
+PAGEGRID lets you design responsive, visually rich websites without writing a single line of code. It works seamlessly with ProcessWire’s native templates and fields, giving developers full control over the underlying code and structure while designers and editors can build and update layouts visually. 
 
 <!-- * **Developers** retain full control over code, templates, and fields; Visual tools are optional and you can handle layouts entirely via your own CSS or framework.
 
