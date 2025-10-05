@@ -15,7 +15,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
 
     return array(
       'title' => __('PAGEGRID Page Builder'),
-      'summary' => __('PAGEGRID is a visual, no-code page builder for ProcessWire, letting developers keep full control while designers and editors can build layouts and update content visually.', __FILE__),
+      'summary' => __('PAGEGRID is a visual page builder for ProcessWire that gives developers full control while enabling designers and editors to create responsive layouts without coding.', __FILE__),
       'version' => '2.2.113',
       'author' => 'Jan Ploch',
       'icon' => 'th',
