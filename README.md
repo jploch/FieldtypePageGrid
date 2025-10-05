@@ -6,13 +6,6 @@
 
 PAGEGRID lets you design responsive, visually rich websites without writing a single line of code. It works seamlessly with ProcessWire’s native templates and fields, giving developers full control over the underlying code and structure while designers and editors can build and update layouts visually. 
 
-<!-- * **Developers** retain full control over code, templates, and fields; Visual tools are optional and you can handle layouts entirely via your own CSS or framework.
-
-* **Designers** can visually layout pages and apply styles without writing code.
-
-* **Editors** get an intuitive drag-and-drop interface that’s easy to learn and prevents mistakes. As a developer, you decide what they can move, style, or change using ProcessWire’s native roles and permissions. -->
-
-
 <img src="https://pg.uber.space/github-assets/pagegrid-screen-new.jpg" />
 
 
