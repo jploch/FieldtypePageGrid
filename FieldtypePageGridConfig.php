@@ -330,7 +330,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 			$f->icon = 'cube';
 			// $f->columnWidth('50');
 			$f->label = 'Add field to templates';
-			$f->description = 'The template files must be placed in **site/templates/** folder. [Learn more](https://page-grid.com/docs/#/developer/functions)';
+			$f->description = 'The template files must be placed in **site/templates/** folder. [Learn more](https://page-grid.com/docs/developer/functions/)';
 
 			foreach ($this->templates as $t) {
 				if ($t->name == 'admin') continue;
@@ -425,7 +425,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		$fieldset->label = $this->_('Style Panel');
 		$fieldset->collapsed(in_array($fieldset->name, $collapsed) ? 1 : 0);
 		$fieldset->icon = 'paint-brush';
-		$fieldset->description = $this->_("The style panel can be used to edit the styles of pagegrid blocks directly on the page. It's enabled for superusers and user with the permission **pagegrid-style-panel**. [Learn more](https://page-grid.com/docs/#/stylepanel)");
+		$fieldset->description = $this->_("The style panel can be used to edit the styles of pagegrid blocks directly on the page. It's enabled for superusers and user with the permission **pagegrid-style-panel**. [Learn more](https://page-grid.com/docs/stylepanel/)");
 		// $fieldset->themeOffset = 1;
 		$wrapper->add($fieldset);
 
@@ -697,7 +697,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		$f->value .= "/* let grid items only take the available space */\n";
 		$f->value .= ".pg .pg-item{\n grid-row-start: auto;\n}\n";
 		$f->value .= "</code></pre><style>.height-auto {height:auto!important;}</style>";
-		$f->notes = 'To change the defaults copy these styles to the CSS code field above or load them inside your template file. [Learn more](https://page-grid.com/docs/#/developer/styles)';
+		$f->notes = 'To change the defaults copy these styles to the CSS code field above or load them inside your template file. [Learn more](https://page-grid.com/docs/developer/styles/)';
 		$wrapper->append($f);
 
 		//custom js
@@ -823,7 +823,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		$f->addClass('links-target-self', 'wrapClass');
 
 		// $f->required = true;
-		$f->description = $this->_('The block template files must be placed in **site/templates/blocks/** folder. [Learn more](https://page-grid.com/docs/#/developer/blocks?id=create-a-new-block)');
+		$f->description = $this->_('The block template files must be placed in **site/templates/blocks/** folder. [Learn more](https://page-grid.com/docs/developer/blocks/#create-a-custom-block-template)');
 		if (!$installed && !$downloaded) $f->notes = 'Alternatively you can also download our [block modules](' . $downloadLink . ')';
 		if ($installed && $downloaded) $f->notes .= 'Select the block templates for this field. The selected templates will be created/installed automatically.';
 		// if ($installed && $downloaded && !$hasItems) $f->notes .= ' [Select/install default blocks](' . $selectAllLink . ')';
