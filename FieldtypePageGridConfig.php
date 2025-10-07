@@ -186,6 +186,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 			'fontColor' => '',
 			'bgColor' => '',
 			'deleteFonts' => '',
+			'googleFonts' => 1,
 			'fontPrivacy' => 1,
 			'fallbackFonts' => 'Helvetica, Arial, sans-serif',
 			'stylePanel' => 1,
@@ -453,18 +454,38 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		// $fieldset1->themeOffset = 1;
 		$fieldset->add($fieldset1);
 
+		//google fonts
+		$fieldset2 = $this->modules->get('InputfieldFieldset');
+		$fieldset2->attr('id+name', 'googleFontsFieldset');
+		$fieldset2->label = $this->_('Google Fonts');
+		$fieldset2->showIf = 'stylePanel=1';
+		// $fieldset1->collapsed(1);
+		$fieldset2->icon = 'google';
+		// $fieldset1->themeOffset = 1;
+		$fieldset2->description = $this->_("If enabled users can select Google Fonts using the font picker, with fonts automatically loaded via CDN.");
+		$fieldset1->add($fieldset2);
+
+		// enable google fonts
+		$f = $this('modules')->get('InputfieldCheckbox');
+		$f->attr('name', 'googleFonts');
+		$f->label = $this->_('Enable Google Fonts');
+		$f->attr('value', $this->googleFonts);
+		if ($this->googleFonts) {
+			$f->attr('checked', 'checked');
+		}
+		$fieldset2->append($f);
+
 		// google font DVGO option
 		$f = $this('modules')->get('InputfieldCheckbox');
 		$f->attr('name', 'fontPrivacy');
-		$f->label = $this->_('Google Fonts');
-		$f->checkboxLabel = $this->_('Privacy friendly Google Fonts');
-		$f->description = $this->_("Check this option to request Google Fonts from BunnyCDN instead of the Google server. BunnyCDN has logging disabled, and will not log any user information. [More information](https://bunny.net/gdpr/)");
+		$f->label = $this->_('Privacy friendly Google Fonts');
+		$f->showIf = 'googleFonts=1';
+		$f->notes = $this->_("Check this option to request Google Fonts from BunnyCDN instead of the Google server. BunnyCDN has logging disabled, and will not log any user information. [More information](https://bunny.net/gdpr/)");
 		$f->attr('value', $this->fontPrivacy);
-		$f->icon = 'google';
 		if ($this->fontPrivacy) {
 			$f->attr('checked', 'checked');
 		}
-		$fieldset1->append($f);
+		$fieldset2->append($f);
 
 		//custom font
 		//list files

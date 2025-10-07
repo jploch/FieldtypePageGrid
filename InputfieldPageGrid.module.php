@@ -58,7 +58,7 @@ class InputfieldPageGrid extends Inputfield {
     public function ___render() {
         // don't render inside modal
         if (isset($_GET['modal'])) return;
-        
+
         $user = wire('user');
         $this->ft->createDummies();
         $this->config->styles->add($this->config->urls->InputfieldPageGrid . "css/main.css?v=" . $this->modules->getModuleInfo('FieldtypePageGrid')['version']);
@@ -1449,7 +1449,9 @@ class InputfieldPageGrid extends Inputfield {
         return $scriptOutput;
     }
 
-    public function fonts($p) {
+    public function getGooglefonts($p) {
+
+        if (!$this->ft->googleFonts) return '';
 
         $items = json_encode($p->meta()->pg_styles);
         $items = json_decode($items, false); //convert to object
@@ -1929,7 +1931,7 @@ class InputfieldPageGrid extends Inputfield {
             $itemCss .= $this->renderStyles($item);
 
             //render google fonts
-            $font = $this->fonts($item);
+            $font = $this->getGooglefonts($item);
             if ($loadFonts && $font) {
                 $fonts .= '&family=' . $font;
             }
