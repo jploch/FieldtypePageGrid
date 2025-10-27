@@ -528,6 +528,8 @@ class ProcessPageGrid extends Process {
             $p = new Page();
             $p->template = $template->name;
             $p->parent = $parent;
+            $p->name = $template->name . time(); // temporary name to pass unique name requirement
+            $p->title = $template->name . time(); // temporary name to pass unique name requirement
 
             $p->save();
             $p->setOutputFormatting(false);
