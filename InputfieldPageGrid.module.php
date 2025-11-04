@@ -1751,7 +1751,7 @@ class InputfieldPageGrid extends Inputfield {
                         if ($keyframeClass) {
                             $cssSelector = '.' . $item['id'];
                             //last keyframe needs to be more specific
-                            if ($item['keyframe'] === '100')  $cssSelector = '.pg .' . $item['id'];
+                            if ($item['keyframe'] === '100')  $cssSelector = 'html .' . $item['id'];
                         } else {
                             $cssSelector = $item['keyframe'] . '%';
                         }
