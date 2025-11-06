@@ -305,7 +305,7 @@ class ProcessPageGrid extends Process {
         // change parent
         if (!empty($_POST['newParent'])) {
 
-            // // // // bd('parent change');
+            // bd('parent change');
 
             $p = $this->pages->get($_POST['pageId']);
             $insertAfter = $this->pages->get($_POST['insertAfter']);
@@ -530,9 +530,6 @@ class ProcessPageGrid extends Process {
             $p->parent = $parent;
             $p->name = $template->name . time(); // temporary name to pass unique name requirement
             $p->title = $template->name . time(); // temporary name to pass unique name requirement
-
-            $p->save();
-            $p->setOutputFormatting(false);
             $p->save();
 
             $insertAfter = $this->sanitizer->int($_POST['insertAfter']);
@@ -552,6 +549,7 @@ class ProcessPageGrid extends Process {
 
             // set title after save to get unique id
             $templateName = str_replace('_', '-', $template->name);
+            $p->of(false);
             $p->setAndSave('title', $templateName . '-' . $p->id);
             $p->setAndSave('name', $templateName . '-' . $p->id);
 
