@@ -252,7 +252,7 @@
       "Description": "Specifies the text writing direction of a block-level element."
    },
    "display": {
-      "Description": "<strong>Block</strong> elements start on a new line and take up the full available width. <br><br><strong>Grid</strong> lets you place child elements within rows and columns. <br><br> <strong>Flex</strong> lays out it's child elements on a horizontal or vertical axis. <br><br> <strong>Inline</strong> is the default for text content. Font size and line height determine it's size. <br><br> <strong>Inline-block</strong> behaves like inline, but accepts width and height properties. <br><br> <strong>None</strong> hides the element."
+      "Description": "<b>Block</b> elements start on a new line and take up the full available width. <br><br><b>Grid</b> lets you place child elements within rows and columns. <br><br> <b>Flex</b> lays out it's child elements on a horizontal or vertical axis. <br><br> <b>Inline</b> is the default for text content. Font size and line height determine it's size. <br><br> <b>Inline-block</b> behaves like inline, but accepts width and height properties. <br><br> <b>None</b> hides the element."
    },
    "empty-cells": {
       "Description": "Specifies whether empty table cell borders will be displayed."

@@ -67,7 +67,7 @@ if ($this->modules->get('InputfieldTextTags')) {
   $field->addClass('label-left', 'wrapClass');
   $field->set('name', __('data-classes'));
   $field->attr('placeholder', 'Add class…');
-  createTooltip($field, "CSS classes enable you to make style changes across multiple elements. <br><br>To <strong>create a class</strong> type a class name in the selector field and press the “return” key. <br><br>To <strong>apply styles to a class</strong>, click on a class. Styles that you apply now are saved to this class. <br><br>To <strong>reuse a class</strong> add the class to other elements.");
+  createTooltip($field, "CSS classes enable you to make style changes across multiple elements. <br><br>To <b>create a class</b> type a class name in the selector field and press the “return” key. <br><br>To <b>apply styles to a class</b>, click on a class. Styles that you apply now are saved to this class. <br><br>To <b>reuse a class</b> add the class to other elements.");
   $field->columnWidth = 100;
   $fieldset->append($field);
 

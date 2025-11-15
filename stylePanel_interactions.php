@@ -28,7 +28,7 @@ if ($this->modules->get('InputfieldTextTags')) {
   $field->name = '--pg-animation';
   $field->columnWidth = 100;
   $field->attr('placeholder', 'Type to create an animation…');
-  createTooltip($field, 'To <strong>create an animation</strong> type a name in the animation field and press the "return" key. <br><br>To <strong>delete an animation</strong>, right click on an animation and select "delete animation". <br><br>To <strong>reuse an animation</strong> add the animation to other elements.');
+  createTooltip($field, 'To <b>create an animation</b> type a name in the animation field and press the "return" key. <br><br>To <b>delete an animation</b>, right click on an animation and select "delete animation". <br><br>To <b>reuse an animation</b> add the animation to other elements.');
   $fieldset->append($field);
 
   $animationParent = $this->pages->get('name=pg-animations, template=pg_container');
