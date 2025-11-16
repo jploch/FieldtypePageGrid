@@ -320,7 +320,7 @@ class ProcessPageGrid extends Process {
                 if ($insertAfter->id && $insertAfter->template->name != 'pg_container') {
                     $this->pages->insertBefore($p, $insertAfter);
                 } else {
-                    if ($top->id) $this->pages->insertBefore($p, $top);
+                    if ($top && $top->id) $this->pages->insertBefore($p, $top);
                 }
             }
             return;
