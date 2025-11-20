@@ -540,8 +540,9 @@ class InputfieldPageGrid extends Inputfield {
         //on frontend get cached markup if exists and return early
         $lang = $this->user->language && $this->user->language->id ? '-' . $this->user->language->id : '';
         $cache = $this->cache->get('pgCache-markup-' . $mainPage->id . '-' . $field->id . $lang);
+        $hasGet = count($_GET) > 0 ? true : false;
         if ($cache && $this->user->isLoggedin()) $this->cache->delete("pgCache-*");
-        if ($cache && !$backend) return $cache;
+        if ($cache && !$backend && !$hasGet) return $cache;
 
         //save main page id to session so we can use it for getPage() when not set via ajax call
         $this->session->set('pg_page', $mainPage->id);
@@ -1292,8 +1293,9 @@ class InputfieldPageGrid extends Inputfield {
 
         //on frontend get cached markup if exists and return early
         $cache = $this->cache->get('pgCache-js-' . $mainPage->id);
+        $hasGet = count($_GET) > 0 ? true : false;
         if ($cache && $this->user->isLoggedin()) $this->cache->delete("pgCache-*");
-        if ($cache && !$backend) return $cache;
+        if ($cache && !$backend && !$hasGet) return $cache;
 
         $arrayFiles = [];
         $jsFiles = "";
@@ -1812,8 +1814,9 @@ class InputfieldPageGrid extends Inputfield {
 
         //on frontend get cached markup if exists and return early
         $cache = $this->cache->get('pgCache-css-' . $mainPage->id);
+        $hasGet = count($_GET) > 0 ? true : false;
         if ($cache && $this->user->isLoggedin()) $this->cache->delete("pgCache-*");
-        if ($cache && !$backend) return $cache;
+        if ($cache && !$backend && !$hasGet) return $cache;
 
         // bd('styles');
 
