@@ -646,7 +646,7 @@ class InputfieldPageGrid extends Inputfield {
             $out = '<div class="pg-wrapper pg pg-main ' . $this->getCssClasses($itemsParent) . '">' . $layout . '</div>';
         }
 
-        if (!$backend) $this->cache->save('pgCache-markup-' . $mainPage->id . '-' . $field->id . $lang, $out);
+        if (!$backend && !$hasGet) $this->cache->save('pgCache-markup-' . $mainPage->id . '-' . $field->id . $lang, $out);
         return $out;
     }
 
@@ -1440,7 +1440,7 @@ class InputfieldPageGrid extends Inputfield {
         }
 
         $scriptOutput = $jsAnimationData . $jsFiles . $customJs;
-        if (!$backend) $this->cache->save('pgCache-js-' . $mainPage->id, $scriptOutput);
+        if (!$backend && !$hasGet) $this->cache->save('pgCache-js-' . $mainPage->id, $scriptOutput);
 
         // bd($animationsSelectors);
         // $updateAnimations = 1;
@@ -2014,7 +2014,7 @@ class InputfieldPageGrid extends Inputfield {
         $cssOutput = $cssBackend . $defaults . $fonts . $cssTemplates . $itemCss . $customCss;
 
         //cache output
-        if (!$backend) $this->cache->save('pgCache-css-' . $mainPage->id, $cssOutput);
+        if (!$backend && !$hasGet) $this->cache->save('pgCache-css-' . $mainPage->id, $cssOutput);
 
         return  $cssOutput;
     }
