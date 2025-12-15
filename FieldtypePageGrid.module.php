@@ -16,7 +16,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID Page Builder'),
       'summary' => __('PAGEGRID is a visual page builder for ProcessWire that gives developers full control while enabling designers and editors to create responsive layouts without coding.', __FILE__),
-      'version' => '2.2.130',
+      'version' => '2.2.132',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -29,7 +29,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
         'pagegrid-drag' => 'Drag PAGEGRID items',
         'pagegrid-resize' => 'Resize PAGEGRID items',
         'pagegrid-style-panel' => 'Enable styling of PAGEGRID items',
-        'pagegrid-add' => 'Use the sidebar to drag new items into the page (must also have pagegrid-drag permission)',
+        'pagegrid-add' => 'Use the sidebar to drag new PAGEGRID items to the page (also needs pagegrid-drag permission to work)',
       ),
     );
   }
@@ -44,6 +44,8 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
   // }
 
   public function createModule() {
+
+    // bd('create module');
 
     $fields = wire('fields');
     $adminPage = wire('pages')->get('name=pagegrid, template=admin');
@@ -289,13 +291,13 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
 
     if (!$this->permissions->get('pagegrid-symbol-create')->id) {
       $permission = $this->permissions->add("pagegrid-symbol-create");
-      $permission->title = 'Create PAGEGRID symbols (must also have page-create permission for the pg_container template)';
+      $permission->title = 'Create PAGEGRID symbols';
       $permission->save();
     }
 
     if (!$this->permissions->get('pagegrid-symbol-add')->id) {
       $permission = $this->permissions->add("pagegrid-symbol-add");
-      $permission->title = 'Add PAGEGRID symbols (must also have page-create permission for the pg_container template)';
+      $permission->title = 'Add PAGEGRID symbols';
       $permission->save();
     }
 
@@ -310,7 +312,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
 
     if (!$this->permissions->get('pagegrid-process')->id) {
       $permission = $this->permissions->add("pagegrid-process");
-      $permission->title = 'Allow PAGEGRID to process ajax calls';
+      $permission->title = 'Allow PAGEGRID to process ajax calls (needed for PAGEGRID to work)';
       $permission->save();
     } else {
       $permission = $this->permissions->get('pagegrid-process');
@@ -348,8 +350,10 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
       $htemplate->set("editRoles", $editRoles);
       $htemplate->save();
     }
-
     //END create editor role
+
+    // create symbol permissions
+    $this->createSymbolPermissions();
   }
 
   public function uninstall() {
@@ -539,6 +543,9 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
       }
     }
     //END hide setup page for non superusers
+
+    //create symbol permissions (if not already)
+    if (wire('page')->name == 'roles') $this->createSymbolPermissions();
   }
 
   // deactivate automatic appending of template file
@@ -1094,6 +1101,11 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     $page = $event->arguments(0);
     if ($page->template->name === 'admin') return;
     $hasField = $page->fields->get('type=FieldtypePageGrid') ? 1 : 0;
+
+    //delete symbol permission if it exists
+    $permission = $this->permissions->get("pagegrid-symbol-add-$page->id");
+    if ($permission && $permission->id) $this->permissions->delete($permission);
+
     //blueprint page has no field (added at runtime) so set var in this case
     if ($page->template->name === 'pg_blueprint') $hasField = 1;
     if (!$hasField) return;
@@ -1454,6 +1466,28 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
               $dummy->save();
             }
           }
+        }
+      }
+    }
+  }
+
+  function createSymbolPermissions() {
+
+    //create symbol permissions
+    $symbolContainer = $this->pages->get("name=pg-symbols, template=pg_container");
+    foreach ($symbolContainer->children() as $p) {
+      if (!$this->permissions->get("pagegrid-symbol-add-$p->id")->id) {
+        $sync = $p->meta()->pg_sync === 0 ? '' : '(synchronized)';
+        $permission = $this->permissions->add("pagegrid-symbol-add-$p->id");
+        $permission->title = "Add  $p->title $sync";
+        $permission->save();
+
+        //enable new permissions as default
+        foreach ($this->roles as $role) {
+          if (!$role->hasPermission('pagegrid-symbol-add')) continue;
+          $role->addPermission($permission->name);
+          $role->of(false);
+          $role->save();
         }
       }
     }

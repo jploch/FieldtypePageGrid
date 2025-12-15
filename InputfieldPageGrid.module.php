@@ -331,7 +331,17 @@ class InputfieldPageGrid extends Inputfield {
         //quick add button for main container
         $quickAddMain = '';
         if ($user->hasPermission('page-add', $wrapperPage)) {
-            $quickAddButtons = $this->renderAddItemBar(0, [], 1);
+
+            $childrenTemplatesArray = [];
+            if ($wrapperPage->template->childTemplates && !$user->isSuperuser()) {
+                $childrenTemplates = $wrapperPage->template->childTemplates;
+                foreach ($childrenTemplates as $childTemplate) {
+                    $childTemplate = $this->templates->get($childTemplate);
+                    if ($childTemplate->id)  $childrenTemplatesArray[] = $childTemplate;
+                }
+            }
+
+            $quickAddButtons = $this->renderAddItemBar(0, $childrenTemplatesArray, 1);
             $quickAddMain = '<div class="pg-quick-add pg-quick-add-main" data-id-original="' . $wrapperPage->id . '" data-id="' . $wrapperPage->id . '"><span class="pg-quick-add-icon" uk-tooltip="title:Add Item; pos:bottom; delay:100;"></span>' . $quickAddButtons . '</div>';
         }
 
@@ -388,13 +398,14 @@ class InputfieldPageGrid extends Inputfield {
         return '<div class="pg-icon-picker-wrapper">' . $field->render() . '</div>' . $script;
     }
 
-    //optional $templatesArray
+    //optional $templatesArray of template objects to render only specific templates
     public function renderAddItemBar($getSymbolsOnly = 0, $templatesArray = [], $quickAdd = 0) {
         $user = $this->user;
 
-        // render the 'Add New' buttons for each template
-        if (!$quickAdd && (!$this->user->hasPermission('pagegrid-add') || !$this->user->hasPermission('pagegrid-drag'))) return;
+        //if no quick add and no permissions not allow add item bar for dragging
+        if (!$quickAdd && (!$user->hasPermission('pagegrid-add') || !$user->hasPermission('pagegrid-drag'))) return;
 
+        // render the 'Add New' buttons for each template
         $templates = $this->rowTemplates;
 
         // to render Quickadd bar from renderHeader function we need to get templates for all fields 
@@ -432,10 +443,19 @@ class InputfieldPageGrid extends Inputfield {
 
                 if ($template && is_string($template)) {
                     $template = $this->templates->get($template);
-                    if (!$template->id) continue;
                 }
 
-                if (!$user->isSuperuser() && $template->useRoles && !in_array($user->id, $template->createRoles)) continue;
+                if (!$template) continue;
+                if (!$template->id) continue;
+                if ($template->name == 'pg_container' || $template->name == 'admin' || $template->name == 'home') continue;
+
+                if (!$user->isSuperuser() && $template->useRoles) {
+                    $canCreate = 0;
+                    foreach ($user->roles as $role) {
+                        if (in_array($role->id, $template->createRoles)) $canCreate = 1;
+                    }
+                    if (!$canCreate) continue;
+                }
 
                 // keep this line for future updates, makes it possible to add items via modal if link is clicked, maybe alternative for non super users oneday
                 // $url = $this->wire('config')->urls->admin . "page/add/?modal=1&template_id=$template->id&parent_id=$parentID&context=PageGrid";
@@ -464,6 +484,8 @@ class InputfieldPageGrid extends Inputfield {
         $unSyncedSymbols = new PageArray();
 
         foreach ($symbols as $symbol) {
+            if (!$user->hasPermission("pagegrid-symbol-add-$symbol->id")) continue;
+
             $sync = $symbol->meta()->pg_sync === 0 ? 0 : 1;
             if ($sync) $syncedSymbols->add($symbol);
             if (!$sync) $unSyncedSymbols->add($symbol);
@@ -1092,21 +1114,18 @@ class InputfieldPageGrid extends Inputfield {
             // <i class="fa fw fa-plus" title="Add Item"></i>
             // if ($addButton) $header .= '<a class="pg-quick-add pg-edit" href="#" data-url="/admin/page/add/?parent_id=' . $p->id . '&template_id=' . $this->templates->get('pg_editor')->id . '&pgquickadd=1&modal=1&pgmodal=1">+</a>';
             if ($addButton && $user->hasPermission('page-add', $p)) {
-                $childrenTemplates = isset($options['children']) && is_array($options['children']) ? $options['children'] : [];
+                $childrenTemplatesArray = isset($options['children']) && is_array($options['children']) ? $options['children'] : [];
                 // if template->childTemplate is set via admin and not superuser, use settings
+                // $childrenTemplatesArray = [];
                 if ($p->template->childTemplates && !$user->isSuperuser()) {
                     $childrenTemplates = $p->template->childTemplates;
                     foreach ($childrenTemplates as $childTemplate) {
                         $childTemplate = $this->templates->get($childTemplate);
-                        if ($childTemplate->id) {
-                            // bd($childTemplate->name);
-                            $childrenTemplates = [];
-                            $childrenTemplates[] = $childTemplate->name;
-                        }
+                        if ($childTemplate->id)  $childrenTemplatesArray[] = $childTemplate;
                     }
                 }
                 // bd($childrenTemplates);
-                $quickAddButtons = $this->renderAddItemBar(0, $childrenTemplates, 1);
+                $quickAddButtons = $this->renderAddItemBar(0, $childrenTemplatesArray, 1);
                 $header .= '<div class="pg-quick-add" data-id-original="' . $pOriginal->id . '" data-id="' . $p->id . '"><span class="pg-quick-add-icon" uk-tooltip="title:Add Item to ' . $layoutTitle . '; pos:bottom; delay:100;"></span>' . $quickAddButtons . '</div>';
             }
             //edit

@@ -105,6 +105,16 @@ class ProcessPageGrid extends Process {
         $type = isset($_POST['type']) ? $_POST['type'] : '';
         $getToolTip = isset($_POST['getToolTip']) ? $_POST['getToolTip'] : '';
 
+        // return early if admin page or other critical pages
+        $p1 = $pageId ? $this->pages->get($pageId) : 0;
+        $p2 = $insertAfter ? $this->pages->get($insertAfter) : 0;
+        $p3 = $removeId ? $this->pages->get($removeId) : 0;
+        if ($p1 && $p1->id && $p1->template->name == 'admin') return;
+        if ($p2 && $p2->id && $p2->template->name == 'admin') return;
+        if ($p3 && $p3->id && $p3->template->name == 'admin') return;
+        if ($p3 && $p3->id && $p3->template->name == 'pg_container') return;
+        if ($p3 && $p3->id && $p3->template->name == 'home') return;
+
         // function to get tooltip help text from MDN CSS docs
         if ($getToolTip) {
             $url = "https://developer.mozilla.org/en-US/docs/Web/CSS/$getToolTip/index.json";
@@ -267,6 +277,22 @@ class ProcessPageGrid extends Process {
                 $clone->name = $symbolName . '-' . $p->id;
                 $clone->parent = $symbolParent;
                 $clone->save();
+
+                //create symbol permission
+                if (!$this->permissions->get("pagegrid-symbol-add-$clone->id")->id) {
+                    $syncText = $sync ? '(synchronized)' : '';
+                    $permission = $this->permissions->add("pagegrid-symbol-add-$clone->id");
+                    $permission->title = "Add $clone->title $syncText";
+                    $permission->save();
+
+                    //enable new permissions as default
+                    foreach ($this->roles as $role) {
+                        if (!$role->hasPermission('pagegrid-symbol-add')) continue;
+                        $role->addPermission($permission->name);
+                        $role->of(false);
+                        $role->save();
+                    }
+                }
 
                 //set meta symbol page
                 if ($sync) $p->meta()->set('pg_symbol', $clone->id);
