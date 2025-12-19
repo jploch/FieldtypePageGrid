@@ -520,6 +520,14 @@ class ProcessPageGrid extends Process {
                 $pItems = $this->pages->get("pg-$p->id");
 
                 if ($pItems && $pItems->id && $blueprintItemsPage && $blueprintItemsPage->id) {
+
+                    //unlock old pages before deleting
+                    foreach ($pItems->find("status=" . Page::statusLocked) as $locked) {
+                        $locked->removeStatus(Page::statusLocked);
+                        $locked->save();
+                    }
+                    //END unlock old pages before deleting
+
                     //remove old items page
                     $pItems->delete(true);
                     $cloneItems = $this->pages->clone($blueprintItemsPage);
