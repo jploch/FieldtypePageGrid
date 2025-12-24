@@ -16,7 +16,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID Page Builder'),
       'summary' => __('PAGEGRID is a visual page builder for ProcessWire that gives developers full control while enabling designers and editors to create responsive layouts without coding.', __FILE__),
-      'version' => '2.2.134',
+      'version' => '2.2.135',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -24,7 +24,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
       'requires' => array('ProcessWire>=3.0.210', 'PHP>=5.4.0'),
       'autoload' => true,
       'permissions' => array(
-        'pagegrid-process' => 'Allow PAGEGRID to process ajax calls',
+        'pagegrid-process' => 'Allow PAGEGRID to process ajax calls. This permission is needed to edit/save pages with PAGEGRID!',
         'page-pagegrid-edit' => 'Edit PAGEGRID items in modal (applies to all editable templates)',
         'pagegrid-drag' => 'Drag PAGEGRID items',
         'pagegrid-resize' => 'Resize PAGEGRID items',
@@ -269,6 +269,14 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     $erole->addPermission("profile-edit");
 
     //add permissions
+
+    //rename for old installations
+    if ($this->permissions->get('pagegrid-process')->id) {
+      $permission = $this->permissions->get("pagegrid-process");
+      $permission->title = 'Allow PAGEGRID to process ajax calls. This permission is needed to edit/save pages with PAGEGRID!';
+      $permission->save();
+    }
+
     //play animation
     if (!$this->permissions->get('page-pagegrid-play')->id) {
       $permission = $this->permissions->add("page-pagegrid-play");
