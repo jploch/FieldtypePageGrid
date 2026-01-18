@@ -112,7 +112,6 @@ class ProcessPageGrid extends Process {
         if ($p1 && $p1->id && $p1->template->name == 'admin') return;
         if ($p2 && $p2->id && $p2->template->name == 'admin') return;
         if ($p3 && $p3->id && $p3->template->name == 'admin') return;
-        if ($p3 && $p3->id && $p3->template->name == 'pg_container') return;
         if ($p3 && $p3->id && $p3->template->name == 'home') return;
 
         // function to get tooltip help text from MDN CSS docs
@@ -386,14 +385,16 @@ class ProcessPageGrid extends Process {
         }
         // END change sort order of groups
 
-        if ($type === 'delete' && !empty($removeId)) {
+        if ($type === 'delete' && $removeId) {
 
             //get page, for classes and animations use name and parent selector
             $p = $this->pages->get($removeId);
             if ($parentId) $p = $this->pages->findOne('name=' . $removeId . ', has_parent=' . $parentId);
 
             if (!$p || !$p->id) return;
-            if ($p->template->name == 'admin' || $p->template->name == 'pg_container') return;
+            if ($p->template->name == 'admin') return;
+            if ($p->template->name == 'home') return;
+            if ($p->template->name == 'pg_container' && $p->parent()->name != 'pg-animations' && $p->parent()->name != 'pg-classes' && $p->parent()->name != 'pg-symbols') return;
 
             $p->removeStatus(Page::statusLocked);
             $p->save();

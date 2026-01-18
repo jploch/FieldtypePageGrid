@@ -1376,7 +1376,7 @@ class InputfieldPageGrid extends Inputfield {
         $classNames = trim($classNames);
         $classNames = str_replace(' ', '|', $classNames);
 
-        if ($classNames && $animationsParent->findOne('')) {
+        if ($classNames && $animationsParent->id && count($animationsParent->children())) {
             $cssClassesParent = $this->pages->get('name=pg-classes, template=pg_container');
             $animationItems = new PageArray();
             $animationItems->add($cssClassesParent->find("name=$classNames"));
