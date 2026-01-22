@@ -2097,6 +2097,9 @@ class InputfieldPageGrid extends Inputfield {
 
         if ($p->template->name === 'admin') return false;
 
+        //make sure output formatting is off
+        $p->of(false);
+
         return $p;
     }
 
