@@ -283,7 +283,7 @@ class InputfieldPageGrid extends Inputfield {
             <i class="pg-redo fa fa-fw fa-share" data-name="fa-share" uk-tooltip="title:Redo; pos:bottom; delay:300;"></i></div>';
                 if ($hasAnimations) $topNav .= '<i class="pg-play fa fw fa-play" uk-tooltip="title:Play Animations; pos:bottom; delay:300;"></i>';
                 $topNav .= '<div id="breakpoints-nav-wrapper">';
-                $topNav .= '<div id="breakpoint-icon-selected" class="breakpoint-icon">' . file_get_contents($modulePath . '/img/laptop-outline.svg') . '</div>';
+                $topNav .= '<div id="breakpoint-icon-selected">' . file_get_contents($modulePath . '/img/laptop-outline.svg') . '</div>';
                 $topNav .= '<div id="breakpoints-nav">';
                 $topNav .= '<div class="breakpoint-icon breakpoint-icon-s" value="@media (max-width: 640px)" breakpoint="s" uk-tooltip="title:Breakpoint Small < 640px; pos:right; delay:300;">' . file_get_contents($modulePath . '/img/phone-portrait-outline.svg') . '</div>';
                 $topNav .= '<div class="breakpoint-icon breakpoint-icon-m" value="@media (max-width: 960px)" breakpoint="m" uk-tooltip="title:Breakpoint Medium < 960px; pos:right; delay:300;">' . file_get_contents($modulePath . '/img/phone-landscape-outline.svg') . '</div>';
