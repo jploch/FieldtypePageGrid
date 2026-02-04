@@ -458,7 +458,7 @@ $field->set('name', __('z-index'));
 $field->attr('placeholder', 'auto');
 $field->addClass('label-left', 'wrapClass');
 $field->columnWidth = 100;
-$field->min = 0;
+$field->min = -99;
 $field->max = 99;
 $fieldset->append($field);
 
