@@ -16,7 +16,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID Page Builder'),
       'summary' => __('PAGEGRID is a visual page builder for ProcessWire that gives developers full control while enabling designers and editors to create responsive layouts without coding.', __FILE__),
-      'version' => '2.2.146',
+      'version' => '2.2.147',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -257,18 +257,33 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
 
     //create editor role
     //add role and permissions
+
+    // pagegrid-editor role
     if (!$this->roles->get('pagegrid-editor') || !$this->roles->get('pagegrid-editor')->id) {
       $erole = $this->roles->add("pagegrid-editor");
     } else {
       $erole = $this->roles->get('pagegrid-editor');
     }
 
-    $erole->addPermission("page-view");
-    $erole->addPermission("page-edit");
-    // $erole->addPermission("page-sort");
-    $erole->addPermission("profile-edit");
+    // pagegrid-designer role
+    if (!$this->roles->get('pagegrid-designer') || !$this->roles->get('pagegrid-designer')->id) {
+      $drole = $this->roles->add("pagegrid-designer");
+    } else {
+      $drole = $this->roles->get('pagegrid-designer');
+    }
 
     //add permissions
+    $erole->addPermission("page-view");
+    $erole->addPermission("page-edit");
+    $erole->addPermission("profile-edit");
+
+    $drole->addPermission("page-view");
+    $drole->addPermission("page-edit");
+    $drole->addPermission("profile-edit");
+    $drole->addPermission("page-sort");
+    if ($this->permissions->get('pagegrid-drag')->id) $drole->addPermission("pagegrid-drag");
+    if ($this->permissions->get('pagegrid-resize')->id) $drole->addPermission("pagegrid-resize");
+    if ($this->permissions->get('pagegrid-add')->id) $drole->addPermission("pagegrid-add");
 
     //rename for old installations
     if ($this->permissions->get('pagegrid-process')->id) {
@@ -276,6 +291,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
       $permission->of(false);
       $permission->title = 'Allow PAGEGRID to process ajax calls. This permission is needed to edit/save pages with PAGEGRID!';
       $permission->save();
+      $drole->addPermission($permission->name);
     }
 
     //play animation
@@ -290,6 +306,14 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
       $permission->title = 'User can select editable elements by click instead of hover';
       $permission->save();
     }
+
+    //breakpoints
+    if (!$this->permissions->get('pagegrid-breakpoints')->id) {
+      $permission = $this->permissions->add("pagegrid-breakpoints");
+      $permission->title = 'Manage PAGEGRID breakpoints';
+      $permission->save();
+    }
+    $drole->addPermission($permission->name);
 
     //setup permission
     if (!$this->permissions->get('pagegrid-setup')->id) {
@@ -318,6 +342,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
       $permission = $this->permissions->get('page-edit-front');
     }
     $erole->addPermission($permission->name);
+    $drole->addPermission($permission->name);
 
     if (!$this->permissions->get('pagegrid-process')->id) {
       $permission = $this->permissions->add("pagegrid-process");
@@ -327,35 +352,44 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
       $permission = $this->permissions->get('pagegrid-process');
     }
     $erole->addPermission($permission->name);
+    $drole->addPermission($permission->name);
 
+    //save editor
     $erole->of(false);
     $erole->save();
 
+    //save designer
+    $drole->of(false);
+    $drole->save();
+
+    //guest
     $grole = $this->roles->get('guest');
 
     // add template permissions fpr pg container
     $etemplate = $this->templates->get("pg_container");
 
     $addRoles = $etemplate->get("addRoles");
-    $addRoles[] = $erole->id;
+    $addRoles[] = $drole->id;
 
     $editRoles = $etemplate->get("editRoles");
     $editRoles[] = $erole->id;
+    $editRoles[] = $drole->id;
 
     $createRoles = $etemplate->get("createRoles");
-    $createRoles[] = $erole->id;
+    $createRoles[] = $drole->id;
 
     $etemplate->useRoles = 1;
-    $etemplate->set("roles", array($grole->id, $erole->id));
-    // $etemplate->set("addRoles", $addRoles);
+    $etemplate->set("roles", array($grole->id, $erole->id, $drole->id));
+    $etemplate->set("addRoles", $addRoles);
     $etemplate->set("editRoles", $editRoles);
-    // $etemplate->set("createRoles", $createRoles);
+    $etemplate->set("createRoles", $createRoles);
     $etemplate->save();
 
     $htemplate = $this->templates->get('home');
     if ($htemplate) {
       $editRoles = $htemplate->get("editRoles");
       $editRoles[] = $erole->id;
+      $editRoles[] = $drole->id;
       $htemplate->set("editRoles", $editRoles);
       $htemplate->save();
     }
