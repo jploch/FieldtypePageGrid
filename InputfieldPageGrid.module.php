@@ -660,6 +660,7 @@ class InputfieldPageGrid extends Inputfield {
                 $PageFrontEditFields = $PageFrontEditData['inlineEditFields'];
                 // bd($PageFrontEditFields);
                 foreach ($PageFrontEditFields as $f) {
+                    if (!$this->fields->get($f)) continue;
                     $dummy = $this->pages->get("$f!=''");
                     if ($dummy->id) {
                         if (count($dummy->parents('template=pg_container'))) {
