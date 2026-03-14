@@ -2105,7 +2105,7 @@ class InputfieldPageGrid extends Inputfield {
         $p = wire('page');
 
         //after ajax inside backend we get the admin page, so we need to find the edit page
-        if ($this->session->pg_page) $p = $this->pages->get($this->session->pg_page);
+        if ($this->isBackend() && $this->session->pg_page) $p = $this->pages->get($this->session->pg_page);
         if (!$p || !$p->id) return false;
 
         if ($p->template->name === 'admin' && isset($_GET['page'])) $p = $this->pages->get($_GET['page']);
