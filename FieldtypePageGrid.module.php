@@ -477,7 +477,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     $this->setBlueprintTemplate();
     $this->addHookAfter('AdminTheme::getExtraMarkup', $this, 'addBodyClasses');
     $this->addHookBefore('PageFrontEdit::getPage', $this, 'disableInlineEdit');
-    $this->config->styles->add($this->config->urls->InputfieldPageGrid . 'css/AdminThemeCanvas-fix.css');
+    $this->config->styles->add($this->config->urls->InputfieldPageGrid . 'css/admin.css');
     //if superuser and debug on allways allow module download for block dependencies
     if (wire('user') && wire('user')->isSuperuser() && $this->config->debug) {
       $this->config->moduleInstall('download', true);

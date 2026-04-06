@@ -841,6 +841,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		$f->attr('name', 'template_id');
 		$f->label = $this->_('Block templates');
 		$f->icon = 'cubes';
+		$f->addClass('pg-blocks-select', 'wrapClass');
 		$f->addClass('links-target-self', 'wrapClass');
 
 		// $f->required = true;
@@ -933,7 +934,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 			if (!$installedBlock && in_array($templateName, $value)) $this->modules->install($className);
 
 			$attrs = [];
-			$attrs['data-desc'] = $info['title'];
+			$attrs['data-desc'] = isset($info['pg_description']) ? $info['pg_description'] : $info['title'];
 			$attrs['data-handle'] = wireIconMarkup($info['icon'], 'fw');
 			$templateId = $templateName;
 			$templateLabel = str_replace('Block', '', $info['title']);
