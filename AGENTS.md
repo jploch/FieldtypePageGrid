@@ -20,3 +20,18 @@ PageGrid is a visual page-builder field for ProcessWire. Blocks are standard Pro
 - **[page-designer.md](ai-docs/page-designer.md)** — building and modifying layouts: helpers, block templates, styles, rules, migration boilerplate
 - **[block-creator.md](ai-docs/block-creator.md)** — creating custom block templates and registering them with a PageGrid field
 - **[reference.md](ai-docs/reference.md)** — deep reference: all helper variants, global classes, full block list, CSS rules
+
+---
+
+## Next Steps
+
+**Stop here and ask the user what they'd like to do.** Do not summarise this file. Use something like:
+
+> "What would you like to do? For example: design a new PageGrid page, or create a new block template?"
+
+Based on the user's answer, identify which doc applies, tell the user which one you'll read, then read it before proceeding:
+- Designing / building a layout → read `ai-docs/page-designer.md`
+- Creating a custom block template → read `ai-docs/block-creator.md`
+- Writing a site template → read `ai-docs/site-template.md`
+- Importing a Figma design → suggest installing the **PageGridFigmaImport** module
+- Anything else → read `ai-docs/reference.md`, then proceed based on what the user describes
