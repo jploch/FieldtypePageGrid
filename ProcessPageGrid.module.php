@@ -10,6 +10,11 @@
 class ProcessPageGrid extends Process {
 
 
+    /**
+     * Returns module metadata for ProcessWire.
+     *
+     * @return array Module info array with title, summary, version, permissions, and install info.
+     */
     public static function getModuleinfo() {
         return [
             'title' => 'PageGrid Process',
@@ -29,6 +34,12 @@ class ProcessPageGrid extends Process {
         ];
     }
 
+    /**
+     * Builds and returns JSON navigation data for the admin sidebar menu. Hookable.
+     *
+     * @param array $options Optional overrides for URL, label, icon, and list items.
+     * @return string JSON-encoded navigation data.
+     */
     public function ___executeNavJSON(array $options = array()) {
 
         // $options['add'] = false;
@@ -81,6 +92,11 @@ class ProcessPageGrid extends Process {
 
 
 
+    /**
+     * Handles all AJAX requests for PageGrid operations such as add, clone, save, delete, and sort. Hookable.
+     *
+     * @return string|void JSON response string, or void for non-returning operations or non-AJAX requests.
+     */
     public function ___execute() {
 
         if (!$this->config->ajax) {
@@ -239,10 +255,10 @@ class ProcessPageGrid extends Process {
                 if (!$originalP || !$originalP->id) return;
 
                 //clone symbol back to page
-                $templateName = str_replace('_', '-', $p->template->name);
+                $pagegrid = $this->modules->get('InputfieldPageGrid');
                 $clone = $this->pages->clone($p);
-                $clone->title = $templateName . '-' . $clone->id;
-                $clone->name = $templateName . '-' . $clone->id;
+                $clone->title = $pagegrid->itemName($p->template->name, $clone->id);
+                $clone->name = $pagegrid->itemName($p->template->name, $clone->id);
                 $this->pages->insertAfter($clone, $originalP);
                 $clone->save();
                 $clone->meta()->remove('pg_symbol');
@@ -255,9 +271,8 @@ class ProcessPageGrid extends Process {
                 //rename children to prevent duplicated classes
                 foreach ($clone->find('') as $cloneItem) {
                     $cloneItem->of(false);
-                    $templateName = str_replace('_', '-', $cloneItem->template->name);
-                    $cloneItem->title = $templateName . '-' . $cloneItem->id;
-                    $cloneItem->name = $templateName . '-' . $cloneItem->id;
+                    $cloneItem->title = $pagegrid->itemName($cloneItem->template->name, $cloneItem->id);
+                    $cloneItem->name = $pagegrid->itemName($cloneItem->template->name, $cloneItem->id);
                     $cloneItem->save();
                     $cloneItem->of(true);
                 }
@@ -466,15 +481,15 @@ class ProcessPageGrid extends Process {
                 }
             }
 
-            $templateName = str_replace('_', '-', $p->template->name);
-            $clone->setAndSave('name', $templateName . '-' . $clone->id);
-            $clone->setAndSave('title', $templateName . '-' . $clone->id);
+            $pagegrid = $this->modules->get('InputfieldPageGrid');
+            $clone->setAndSave('name', $pagegrid->itemName($p->template->name, $clone->id));
+            $clone->setAndSave('title', $pagegrid->itemName($p->template->name, $clone->id));
 
             // $newPages array to keep a refernce to old pages
             $newPages[$p->id] = $clone->id;
 
             //add css for clone
-            $css = $this->modules->get('InputfieldPageGrid')->renderStyles($clone);
+            $css = $pagegrid->renderStyles($clone);
 
             //set page id as meta for children to load data from original via $newPages
             foreach ($p->find('') as $pChild) {
@@ -483,18 +498,17 @@ class ProcessPageGrid extends Process {
 
             // rename children, for unique ID
             foreach ($clone->find('') as $cloneChild) {
-                $templateName = str_replace('_', '-', $cloneChild->template->name);
-                $cloneChild->setAndSave('name', $templateName . '-' . $cloneChild->id);
-                $cloneChild->setAndSave('title', $templateName . '-' . $cloneChild->id);
+                $cloneChild->setAndSave('name', $pagegrid->itemName($cloneChild->template->name, $cloneChild->id));
+                $cloneChild->setAndSave('title', $pagegrid->itemName($cloneChild->template->name, $cloneChild->id));
                 $newPages[$cloneChild->meta('old_id')] = $cloneChild->id;
-                $css .= $this->modules->get('InputfieldPageGrid')->renderStyles($cloneChild);
+                $css .= $pagegrid->renderStyles($cloneChild);
             }
 
             $cssFiles = $this->getBlockFiles($clone, 'css');
             $jsFiles = $this->getBlockFiles($clone, 'js');
 
             $response = array(
-                'markup' => $this->modules->get('InputfieldPageGrid')->renderItem($clone),
+                'markup' => $pagegrid->renderItem($clone),
                 'css' => $css,
                 'newPages' => $newPages,
                 'cssFiles' => $cssFiles,
@@ -559,34 +573,24 @@ class ProcessPageGrid extends Process {
             if (!$template || !$template->id) return;
             if ($template->name == 'admin' || $template->name == 'pg_container') return;
 
-            // create new page
-            $p = new Page();
-            $p->template = $template->name;
-            $p->parent = $parent;
-            $p->name = $template->name . time(); // temporary name to pass unique name requirement
-            $p->title = $template->name . time(); // temporary name to pass unique name requirement
-            $p->save();
+            // create new block page (two-step naming handled by addItem)
+            $p = $this->modules->get('InputfieldPageGrid')->addItem($template->name, $parent);
+            if (!$p) return;
 
             $insertAfter = $this->sanitizer->int($_POST['insertAfter']);
             $replaceParentId = $this->sanitizer->int($_POST['replaceParentId']);
 
-            if (isset($insertAfter) && $insertAfter != 0) {
+            if ($insertAfter) {
                 $afterP = $this->pages->get($insertAfter);
                 if ($afterP->id) $this->pages->insertBefore($p, $afterP);
             }
 
-            //test: sometimes parent is not set correctly after insertAfter, so set it here again
+            // parent sometimes wrong after insertBefore — re-assert it
             if ($parent && $parent->id && $p->parent()->id != $parent->id) {
                 $p->of(false);
                 $p->parent = $parent;
                 $p->save();
             }
-
-            // set title after save to get unique id
-            $templateName = str_replace('_', '-', $template->name);
-            $p->of(false);
-            $p->setAndSave('title', $templateName . '-' . $p->id);
-            $p->setAndSave('name', $templateName . '-' . $p->id);
 
             //set the page that will be replaced by the returned markup
             //refactor note: it might make sense to allways just replace parent if not root in the future
@@ -620,9 +624,9 @@ class ProcessPageGrid extends Process {
             //return if parent is symbol to prevent nested symbols
             if (count($parent->parents('name=pg-symbols, template=pg_container'))) return;
 
+            $pagegrid = $this->modules->get('InputfieldPageGrid');
             $clone = $this->pages->clone($p);
-            $templateName = str_replace('_', '-', $p->template->name);
-            $clone->name = $templateName . '-' . $clone->id; //generate unique name to support multiple symbold on same page
+            $clone->name = $pagegrid->itemName($p->template->name, $clone->id); //generate unique name to support multiple symbols on same page
             // $clone->title = $templateName . '-' . $clone->id;
             $clone->title = $p->title;
             $clone->parent = $parent;
@@ -650,17 +654,16 @@ class ProcessPageGrid extends Process {
             if ($type == 'addFromSymbol') {
                 $clone->meta()->remove('pg_symbol');
 
-                $css = $this->modules->get('InputfieldPageGrid')->renderStyles($clone);
+                $css = $pagegrid->renderStyles($clone);
 
                 foreach ($clone->find('') as $cloneItem) {
                     $cloneItem->of(false);
-                    $templateName = str_replace('_', '-', $cloneItem->template->name);
-                    $cloneItem->title = $templateName . '-' . $cloneItem->id;
-                    $cloneItem->name = $templateName . '-' . $cloneItem->id;
+                    $cloneItem->title = $pagegrid->itemName($cloneItem->template->name, $cloneItem->id);
+                    $cloneItem->name = $pagegrid->itemName($cloneItem->template->name, $cloneItem->id);
                     $cloneItem->save();
                     $cloneItem->of(true);
                     $cloneItem->meta()->remove('pg_symbol');
-                    $css .= $this->modules->get('InputfieldPageGrid')->renderStyles($cloneItem);
+                    $css .= $pagegrid->renderStyles($cloneItem);
                 }
                 $newPageClass = $clone->name;
             }
@@ -768,11 +771,9 @@ class ProcessPageGrid extends Process {
     }
 
     /**
-     * Save the page via Ajax for modal and update PageGrid
-     * we don't use ProcessPageEdit::ajaxSave() as it doesn't seem to work with language fields
-     * so we use some technic to build the form and process it like ProcessPageEdit does with a regular save
+     * Saves the current page via AJAX for modal editing and returns updated PageGrid markup.
      *
-     * @return json array with status of save with messages
+     * @return string|void JSON-encoded response with markup, messages, and file URLs, or void if no POST data.
      */
     public function executeAjaxSave() {
 
@@ -876,6 +877,13 @@ class ProcessPageGrid extends Process {
     }
 
 
+    /**
+     * Returns the URL of a block's CSS or JS asset file if it exists in site templates or modules.
+     *
+     * @param string $templateName Block template name to look up.
+     * @param string $type File type to find ('css' or 'js').
+     * @return string File URL, or empty string if not found.
+     */
     public function getBlockFileUrl($templateName, $type) {
         //check if block file exists
         $fileUrl = '';
@@ -890,6 +898,13 @@ class ProcessPageGrid extends Process {
     }
 
     //finding all files for $parent (page object) and its children
+    /**
+     * Collects all CSS or JS block asset URLs for a parent page and all its descendant items.
+     *
+     * @param Page $parent Page whose template and children templates are scanned for block files.
+     * @param string $type File type to collect ('css' or 'js').
+     * @return array Array of unique file URLs.
+     */
     public function getBlockFiles($parent, $type) {
         if (!$parent && !$parent->id) return [];
 
@@ -909,15 +924,13 @@ class ProcessPageGrid extends Process {
     }
 
 
-    /*
-     * Borrowed from Fredi front end edit
+    /**
+     * Processes form input fields and applies their values to the current page context. Hookable.
+     * Simplified version of ProcessPageEdit::processInput(); borrowed from Fredi front-end edit.
      *
-     * This method is simplified version of /wire/modules/process/ProcessPageEdit.module processInput() method
-     *
-     * First process the input, then loops through all the form fields, set page field values and finally saves the page
-     *
-     * If field is wrapper, then iterates (this case only with full page save)
-     *
+     * @param Inputfield $form The inputfield wrapper (form) to process.
+     * @param int $level Recursion depth; 0 means the top-level call that also runs processInput().
+     * @return void
      */
     public function ___processInput(Inputfield $form, $level = 0) {
 
@@ -949,8 +962,9 @@ class ProcessPageGrid extends Process {
     }
 
     /**
-     * build the form for saving
-     * @return InputfieldWrapper the form with fields
+     * Builds and returns the InputfieldForm for the current page edit session.
+     *
+     * @return InputfieldWrapper Form populated with all page fields via ProcessPageEdit.
      */
     public function buildForm() {
         $form = $this->modules->get('InputfieldForm');

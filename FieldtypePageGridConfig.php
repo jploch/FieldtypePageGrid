@@ -11,18 +11,36 @@ namespace ProcessWire;
 
 class FieldtypePageGridConfig extends ModuleConfig {
 
+	/**
+	 * Registers hooks for config save, page render defaults, and input sanitization.
+	 *
+	 * @return void
+	 */
 	public function __construct() {
 		$this->addHookAfter('Modules::saveConfig', $this, 'saveConfig');
 		$this->addHookBefore('Page::render', $this, 'setDefaults');
 		$this->addHookBefore('InputfieldTextarea::processInput', $this, 'sanitizeValue');
 	}
 
+	/**
+	 * Strips HTML tags from the customStyles input field value before processing.
+	 *
+	 * @param HookEvent $event Hook event containing the input object in arguments.
+	 * @return void
+	 */
 	public function sanitizeValue(HookEvent $event) {
 		$input = $event->arguments(0);
 		if ($input->customStyles) $input->customStyles = strip_tags($input->customStyles, '');
 		$event->arguments(0, $input);
 	}
 
+	/**
+	 * Installs block modules, sets default config values, and handles field deletion
+	 * before the module settings page renders.
+	 *
+	 * @param HookEvent $event Hook event for Page::render.
+	 * @return void
+	 */
 	public function setDefaults(HookEvent $event) {
 
 		//return if not module settings page
@@ -129,6 +147,12 @@ class FieldtypePageGridConfig extends ModuleConfig {
 	}
 
 	//this function runs on module save to keep PageFrontEdit and FieldtypePageGrid config is sync
+	/**
+	 * Syncs the inlineEditFields setting between PageFrontEdit and FieldtypePageGrid configs on module save.
+	 *
+	 * @param HookEvent $event Hook event with the saved module classname in arguments.
+	 * @return void
+	 */
 	public function saveConfig(HookEvent $event) {
 
 		if (!$this->modules->isInstalled('PageFrontEdit')) $this->modules->install('PageFrontEdit');
@@ -159,6 +183,11 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		}
 	}
 
+	/**
+	 * Returns the default configuration values for the FieldtypePageGrid module.
+	 *
+	 * @return array Associative array of default module config values.
+	 */
 	public function getDefaults() {
 		$configCore = $this->modules->getConfig('PageFrontEdit');
 		$inlineEditFields = isset($configCore['inlineEditFields']) ? $configCore['inlineEditFields'] : array();
@@ -193,6 +222,11 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		);
 	}
 
+	/**
+	 * Builds and returns the module configuration inputfields for the admin interface.
+	 *
+	 * @return InputfieldWrapper Wrapper containing all configuration inputfields.
+	 */
 	public function getInputfields() {
 
 		//add js for font uploader and to save collapsed states
@@ -786,6 +820,12 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		return $wrapper;
 	}
 
+	/**
+	 * Returns the ASM select inputfield for choosing block templates for a given field.
+	 *
+	 * @param Field $field The FieldtypePageGrid field to build block settings for.
+	 * @return Inputfield ASM select inputfield populated with available block templates.
+	 */
 	public function getBlockSettings($field) {
 		// $defaultBlocks = ['pg_text', 'pg_editor', 'pg_image', 'pg_video', 'pg_gallery', 'pg_gallery_video', 'pg_iframe', 'pg_group', 'pg_navigation', 'pg_slider', 'pg_accordion', 'pg_datalist', 'pg_prev_next', 'pg_spacer', 'pg_code'];
 		$defaultBlocks = ['pg_text', 'pg_editor', 'pg_image', 'pg_video', 'pg_gallery', 'pg_gallery_video', 'pg_iframe', 'pg_group', 'pg_slider', 'pg_accordion', 'pg_datalist', 'pg_prev_next', 'pg_spacer', 'pg_code'];
@@ -950,6 +990,12 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		return $f;
 	}
 
+	/**
+	 * Creates a new ProcessWire template and associated fieldgroup with the given name.
+	 *
+	 * @param string $templateName Name of the template to create.
+	 * @return Template|int New Template object on success, or 0 if name is empty or template already exists.
+	 */
 	public function createTemplate($templateName = '') {
 		if (!$templateName) return 0;
 		if ($this->templates->get($templateName)) return 0;
@@ -974,6 +1020,13 @@ class FieldtypePageGridConfig extends ModuleConfig {
 	}
 
 	//helper to download and install missing modules
+	/**
+	 * Downloads and installs a module from the ProcessWire module service.
+	 *
+	 * @param string $name Module class name to download.
+	 * @param bool $update Whether this is an update install rather than a new install.
+	 * @return bool|void Returns true on success, or void on error or if already installed.
+	 */
 	public function downloadModule($name, $update = false) {
 
 		if ($this->modules->get($name)) return;

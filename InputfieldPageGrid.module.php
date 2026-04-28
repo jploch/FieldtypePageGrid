@@ -12,6 +12,11 @@ namespace ProcessWire;
 class InputfieldPageGrid extends Inputfield {
 
 
+    /**
+     * Returns module info array used by ProcessWire to register this module.
+     *
+     * @return array Module info including title, version, requirements, and installs.
+     */
     public static function getModuleInfo() {
         return array(
             'title' => __('PageGrid Inputfield', __FILE__), // Module Title
@@ -34,9 +39,30 @@ class InputfieldPageGrid extends Inputfield {
     protected $rowTemplates = array();
     protected $ft;
 
+    /**
+     * Breakpoint names mapped to their CSS media query strings.
+     * Used by setStyles() to populate the 'size' key on breakpoint entries.
+     */
+    const BREAKPOINTS = [
+        'base' => '@media (min-width: 640px)',
+        'l'    => '@media (min-width: 1600px)',
+        'm'    => '@media (max-width: 960px)',
+        's'    => '@media (max-width: 640px)',
+    ];
+
+    /**
+     * Constructor — intentionally empty; initialization happens in init().
+     *
+     * @return void
+     */
     public function __construct() {
     }
 
+    /**
+     * Initializes the inputfield, sets defaults, and stores a FieldtypePageGrid shortcut.
+     *
+     * @return void
+     */
     public function init() {
         parent::init();
 
@@ -51,10 +77,20 @@ class InputfieldPageGrid extends Inputfield {
         $this->set('template_id', 0); // placeholder only
     }
 
+    /**
+     * Returns a placeholder string for the rendered value view. Hookable.
+     *
+     * @return string Placeholder text.
+     */
     public function ___renderValue() {
         return 'inputfield render value';
     }
 
+    /**
+     * Enqueues assets and renders the inputfield markup. Hookable.
+     *
+     * @return string|null Rendered field HTML, or null when inside a modal.
+     */
     public function ___render() {
         // don't render inside modal
         if (isset($_GET['modal'])) return;
@@ -72,6 +108,13 @@ class InputfieldPageGrid extends Inputfield {
         return $this->renderField();
     }
 
+    /**
+     * Collects global class, animation, and item style data and returns it as a JSON string. Hookable.
+     *
+     * @param PageArray|null $classPages    Optional subset of class pages to include.
+     * @param PageArray|null $animationPages Optional subset of animation pages to include.
+     * @return string JSON-encoded global style data.
+     */
     public function ___getData($classPages = null, $animationPages = null) {
         //make data available to js
         $globalPage = $this->pages->get('name=pg-classes, template=pg_container');
@@ -147,6 +190,13 @@ class InputfieldPageGrid extends Inputfield {
         return json_encode($globalPageData);
     }
 
+    /**
+     * Renames animation item data and updates all references to the old animation name across page items.
+     *
+     * @param Page   $item    The animation page whose data should be renamed.
+     * @param string $newName The new name to assign to the animation.
+     * @return void
+     */
     public function renameItemData($item, $newName) {
 
         //currently only used to rename animation if page name changes
@@ -199,6 +249,11 @@ class InputfieldPageGrid extends Inputfield {
 
     }
 
+    /**
+     * Builds and returns the full HTML markup for the PageGrid editor field. Hookable.
+     *
+     * @return string|void Rendered field HTML, or void if no edit ID is found.
+     */
     public function ___renderField() {
 
         //new pages to render based on items parent
@@ -228,13 +283,13 @@ class InputfieldPageGrid extends Inputfield {
 
         //END check if old id exists for imported pages via import module
 
-        if ($itemsParent->id) {
-        } else {
-            $itemsParent = new Page(); // create new page object
-            $itemsParent->template = 'pg_container'; // set template
-            $itemsParent->parent = 'pg-items'; // set the parent
-            $itemsParent->name = 'pg-' . $editID; // give it a name used in the url for the page
-            $itemsParent->title = $this->pages->get($editID)->title . ' items'; // set page title (not neccessary but recommended)
+        // createContainers hook handles this for new pages; fallback for legacy/imported pages
+        if (!$itemsParent->id) {
+            $itemsParent = new Page();
+            $itemsParent->template = 'pg_container';
+            $itemsParent->parent = $this->pages->get('name=pg-items, template=pg_container');
+            $itemsParent->name = 'pg-' . $editID;
+            $itemsParent->title = $this->pages->get($editID)->title . ' items';
             $itemsParent->save();
         }
 
@@ -333,7 +388,9 @@ class InputfieldPageGrid extends Inputfield {
 
         $fId = $this->fields->get($this->name) ? $this->fields->get($this->name)->id : 0;
         $wrapperPage = $itemsParent->get('name=pg-' . $fId . ', template=pg_container');
-        //create field container page if it doesn't exist
+        // Not redundant: createContainers only fires on Pages::added.
+        // If a PageGrid field is added to a template after pages already exist,
+        // those pages won't have a field container yet — create it on first render.
         if ($fId && !$wrapperPage->id) {
             $wrapperPage = new Page(); // create new page object
             $wrapperPage->template = 'pg_container'; // set template
@@ -401,6 +458,11 @@ class InputfieldPageGrid extends Inputfield {
         return $renderMarkup;
     }
 
+    /**
+     * Renders an icon-picker inputfield widget with its required JS/CSS assets.
+     *
+     * @return string HTML markup for the icon picker wrapper including script tag.
+     */
     public function renderIconPicker() {
         $field = $this->modules->get('InputfieldIcon');
         $field->name = 'pg-icon-picker';
@@ -413,7 +475,14 @@ class InputfieldPageGrid extends Inputfield {
         return '<div class="pg-icon-picker-wrapper">' . $field->render() . '</div>' . $script;
     }
 
-    //optional $templatesArray of template objects to render only specific templates
+    /**
+     * Renders the "Add Item" bar containing template and symbol buttons.
+     *
+     * @param int   $getSymbolsOnly  Set to 1 to render only the symbols section.
+     * @param array $templatesArray  Optional array of Template objects to restrict available templates.
+     * @param int   $quickAdd        Set to 1 to render a compact quick-add variant.
+     * @return string|void Rendered HTML for the add-item bar, or void if not permitted.
+     */
     public function renderAddItemBar($getSymbolsOnly = 0, $templatesArray = [], $quickAdd = 0) {
         $user = $this->user;
 
@@ -540,6 +609,11 @@ class InputfieldPageGrid extends Inputfield {
         return $addItems;
     }
 
+    /**
+     * Determines whether the current request is from the ProcessWire backend or a backend iframe.
+     *
+     * @return int 1 if backend context, 0 otherwise.
+     */
     public function isBackend() {
         $backend = 0;
 
@@ -553,6 +627,13 @@ class InputfieldPageGrid extends Inputfield {
         return $backend;
     }
 
+    /**
+     * Renders the full grid of child page items for a given page and field, with caching on the frontend.
+     *
+     * @param Page       $mainPage The page whose grid items should be rendered.
+     * @param Field|int  $field    Field object or 0 to auto-detect the first PageGrid field.
+     * @return string|void Rendered grid HTML, or void/null when nothing can be rendered.
+     */
     public function renderGrid($mainPage, $field = 0) {
         if (!$mainPage->id)  return;
 
@@ -688,12 +769,22 @@ class InputfieldPageGrid extends Inputfield {
         return $out;
     }
 
-    //disable automatic prepending/appending of template file by passing this string (checked on ready function of fieldtyle module)
+    /**
+     * Echoes an HTML comment marker that signals ProcessWire to skip template prepend/append files.
+     *
+     * @param Page $p The page being rendered.
+     * @return void
+     */
     public function noAppendFile($p) {
         echo '<!--pgNoAppendTemplateFile-->';
     }
 
-    //for items we never want prepending/appending of template file so disable it in DB
+    /**
+     * Permanently disables template prepend/append files for PageGrid item pages by saving the flag to the database.
+     *
+     * @param Page $p The page whose template should have prepend/append disabled.
+     * @return void
+     */
     public function noAppendFileSave($p) {
         $isPgPage = count($p->parents('template=pg_container'));
         if ($isPgPage && !$p->template->noAppendTemplateFile) {
@@ -705,6 +796,12 @@ class InputfieldPageGrid extends Inputfield {
         }
     }
 
+    /**
+     * Renders a single grid item page, resolving symbols and applying classes, attributes, and inline editor markup.
+     *
+     * @param Page $p The grid item page to render.
+     * @return string|bool Rendered HTML string, or false if the template file does not exist.
+     */
     public function renderItem($p) {
 
         $backend = $this->isBackend();
@@ -1048,9 +1145,14 @@ class InputfieldPageGrid extends Inputfield {
         return $layout;
     }
 
-    //function to render file uploader
-    // @param Page $p
-    // @param Field Name or Field Id $f
+    /**
+     * Renders a drag-and-drop file uploader widget for an image or video field on a page item.
+     *
+     * @param Page   $p       The page that owns the file field.
+     * @param string $fName   The field name or field ID to render the uploader for.
+     * @param Page   $pRender The page whose ID is passed as the render reference to the uploader.
+     * @return string|void Rendered uploader HTML, or void if not in backend or page is invalid.
+     */
     public function renderFileUploader($p, $fName, $pRender) {
 
         if (!$this->isBackend()) return;
@@ -1091,7 +1193,15 @@ class InputfieldPageGrid extends Inputfield {
         return $imageUpload;
     }
 
-    //function to render item header
+    /**
+     * Renders the backend item header bar with edit, clone, lock, symbol, and delete action buttons.
+     *
+     * @param Page         $p         The grid item page.
+     * @param string       $title     Optional override for the displayed item title.
+     * @param Page|int     $pOriginal Original page before symbol resolution, or 0 if same as $p.
+     * @param array        $options   Render options such as 'children' enabling the quick-add button.
+     * @return string Rendered header HTML, or empty string on the frontend.
+     */
     public function renderItemHeader($p, $title = '', $pOriginal = 0, $options = []) {
 
         //if frontend return empty string
@@ -1172,7 +1282,12 @@ class InputfieldPageGrid extends Inputfield {
         return $header;
     }
 
-    //function to get status classes for permissions 
+    /**
+     * Returns a space-separated string of backend status and permission CSS classes for an item page.
+     *
+     * @param Page $p The grid item page to evaluate.
+     * @return string CSS class string, or empty string on the frontend.
+     */
     public function getStatusClasses($p) {
         $user = $this->user;
         $statusClass = "";
@@ -1205,15 +1320,25 @@ class InputfieldPageGrid extends Inputfield {
         return $statusClass;
     }
 
+    /**
+     * Returns the configuration inputfields for this inputfield module. Hookable.
+     *
+     * @return InputfieldWrapper Wrapper containing any additional config inputfields.
+     */
     public function ___getConfigInputfields() {
         $inputfields = parent::___getConfigInputfields();
         //add inputfields here if needed
         return $inputfields;
     }
 
-    // function to get default classnames and classes added with style panel
-    // can also be used to allow adding classes to subitems, if called from block template
-    // $item = $page object
+    /**
+     * Returns CSS class string for a page item or sub-element, merging defaults with style-panel classes and animation event classes.
+     *
+     * @param Page        $item    The page item whose classes should be resolved.
+     * @param string      $itemId  Style data key to look up; defaults to 'pgitem' for the root element.
+     * @param array|null  $options Reserved for future use.
+     * @return string Space-separated CSS class string.
+     */
     public function getCssClasses($item, $itemId = 'pgitem', $options = null) {
 
         $itemData = $item->meta()->pg_styles;
@@ -1296,8 +1421,12 @@ class InputfieldPageGrid extends Inputfield {
         return $Classes;
     }
 
-    // function to get tagnames set via stylepanel
-    //get tag name
+    /**
+     * Returns the HTML tag name saved for an item via the style panel, defaulting to 'div'.
+     *
+     * @param Page $item The page item to look up.
+     * @return string HTML tag name (e.g. 'div', 'section', 'a').
+     */
     public function getTagName($item) {
 
         $tagName = 'div';
@@ -1319,8 +1448,13 @@ class InputfieldPageGrid extends Inputfield {
     }
     // END callable Methodes -------------------------------
 
-    //add scripts with same name as block file
-
+    /**
+     * Renders JavaScript includes for block templates and animations used on a page, with frontend caching.
+     *
+     * @param Page $mainPage         The page whose block scripts should be rendered.
+     * @param bool $updateAnimations When true, returns JSON animation data instead of script tags.
+     * @return string Script tags HTML, or JSON-encoded animation data when $updateAnimations is true.
+     */
     public function scripts($mainPage, $updateAnimations = false) {
         if (!$mainPage->id) return;
 
@@ -1486,6 +1620,12 @@ class InputfieldPageGrid extends Inputfield {
         return $scriptOutput;
     }
 
+    /**
+     * Builds a Google Fonts query string for all font families used in a page item's style data.
+     *
+     * @param Page $p The page item whose style metadata is inspected for font-family values.
+     * @return string Partial Google Fonts URL query string, or empty string if no fonts are found.
+     */
     public function getGooglefonts($p) {
 
         if (!$this->ft->googleFonts) return '';
@@ -1588,7 +1728,11 @@ class InputfieldPageGrid extends Inputfield {
         return $fonts;
     }
 
-    //helper methode to get fonts
+    /**
+     * Returns the absolute filesystem path to the templates/fonts directory, creating it if it does not exist.
+     *
+     * @return string Absolute path to the fonts folder (with trailing slash).
+     */
     public function getFontPath() {
 
         $filePath = $this->config->paths->templates . 'fonts/';
@@ -1601,6 +1745,11 @@ class InputfieldPageGrid extends Inputfield {
         return $filePath;
     }
 
+    /**
+     * Returns a list of local woff/woff2 font file names found in the templates/fonts directory.
+     *
+     * @return array Array of font file names (e.g. ['MyFont.woff2', 'Other.woff']).
+     */
     public function getFontNames() {
         //list files
         $filePath = $this->getFontPath();
@@ -1617,6 +1766,14 @@ class InputfieldPageGrid extends Inputfield {
         return $fontFiles;
     }
 
+    /**
+     * Generates CSS rules from a page item's stored style metadata, handling breakpoints, animations, and keyframes. Hookable.
+     *
+     * @param Page     $p             The page item (or animation/class page) to render styles for.
+     * @param string   $id            Optional style-data key to render only one specific style block.
+     * @param int|bool $keyframeClass When truthy, renders keyframe CSS as class selectors instead of percentage values.
+     * @return string|void CSS string, or void if the page is invalid or has no style data.
+     */
     public function ___renderStyles($p, $id = 0, $keyframeClass = 0) {
 
         if (!$p || !$p->id) return;
@@ -1841,6 +1998,16 @@ class InputfieldPageGrid extends Inputfield {
         return $css;
     }
 
+    /**
+     * Renders all CSS for a page including defaults, global classes, block template stylesheets, item styles, animations, and Google Fonts, with frontend caching.
+     *
+     * @param Page $mainPage          The page to generate CSS for.
+     * @param int  $loadDefaults      Set to 1 to include the built-in default styles.
+     * @param int  $loadGlobalClasses Set to 1 to include global class and animation styles.
+     * @param int  $loadFiles         Set to 1 to include per-block CSS files from disk.
+     * @param int  $loadFonts         Set to 1 to include Google Fonts link tags.
+     * @return string|void Full CSS output string, or void if the page has no ID.
+     */
     public function styles($mainPage, $loadDefaults = 1, $loadGlobalClasses = 1, $loadFiles = 1, $loadFonts = 1) {
 
         if (!$mainPage->id) return;
@@ -2029,13 +2196,16 @@ class InputfieldPageGrid extends Inputfield {
 
         //load google fonts
         if ($fonts) {
+            $fonts .= '&display=swap';
+            //add cache busting for local browser cache during development or for logged in users
+            if ($this->user->isLoggedin()) $fonts .= '&v=' . time();
             if ($this->ft->fontPrivacy) {
                 $preconnect = '<link rel="preconnect" href="https://fonts.bunny.net" crossorigin>';
                 $fonts = $preconnect . '<link rel="stylesheet" type="text/css" href="https://fonts.bunny.net/css2?' . $fonts . '">';
             } else {
                 $preconnect = '<link rel="preconnect" href="https://fonts.googleapis.com">';
                 $preconnect .= '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>';
-                $fonts = $preconnect . '<link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?' . $fonts . '&display=swap">';
+                $fonts = $preconnect . '<link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?' . $fonts . '">';
             }
         }
 
@@ -2054,6 +2224,12 @@ class InputfieldPageGrid extends Inputfield {
         return  $cssOutput;
     }
 
+    /**
+     * Builds the complete CSS output for a single animation page, including its keyframes and event trigger class.
+     *
+     * @param Page $animationPage The animation page containing style and keyframe metadata.
+     * @return string CSS string for the animation, or empty string if the page is invalid.
+     */
     public function getAnimationCss($animationPage) {
         if (!$animationPage->id) return '';
 
@@ -2098,7 +2274,12 @@ class InputfieldPageGrid extends Inputfield {
         return $animationsCss;
     }
 
-    //helper to return main page from item (argument: $page inside item template)
+    /**
+     * Returns the main content page being edited, resolving backend session and GET parameter context.
+     *
+     * @param Page|int $page Unused placeholder; pass 0 or omit.
+     * @return Page|bool The resolved content page, or false if it cannot be determined.
+     */
     public function getPage($page = 0) {
 
         //This always returns mainpage on frontend
@@ -2119,8 +2300,12 @@ class InputfieldPageGrid extends Inputfield {
         return $p;
     }
 
-    // pass options to template file before render
-    //render options are depricated and will be removed in future versions
+    /**
+     * Passes render options to the calling block template at runtime. Deprecated — will be removed in a future version.
+     *
+     * @param array $options Associative array of render options (e.g. ['children' => true]).
+     * @return void
+     */
     public function renderOptions($options = []) {
         //set options to template at runtime
         $templateName = basename(debug_backtrace()[0]['file'], '.php');
@@ -2135,7 +2320,13 @@ class InputfieldPageGrid extends Inputfield {
         }
     }
 
-    //returns grandchildren. needed because of bug. $page->find('') is not returning all pages
+    /**
+     * Recursively collects a page and all its descendants up to a given depth, working around $page->find('') bugs.
+     *
+     * @param Page $p     The root page to start from.
+     * @param int  $level Maximum recursion depth (default 20).
+     * @return PageArray All collected pages including $p and its descendants.
+     */
     public function getAncestors($p, $level = 20) {
         $retPages = (new PageArray())->add($p);
         if ($level > 0) {
@@ -2150,12 +2341,152 @@ class InputfieldPageGrid extends Inputfield {
     }
 
     /**
-     * Set a property to this Inputfield
-     * 
-     * @param string $key
-     * @param mixed $value
-     * @return $this
+     * Returns the pg-{fieldId} container page for the given page and optional PageGrid field.
+     * Containers are created automatically via the Pages::added hook in FieldtypePageGrid.
      *
+     * @param Page $page The content page whose field container to retrieve.
+     * @param Field|null $pgField Optional specific PageGrid field; defaults to first found on template.
+     * @return Page|null The field container page, or null if not found.
+     */
+    public function getFieldContainer(Page $page, ?Field $pgField = null): ?Page {
+        if (!$pgField) {
+            foreach ($page->fields as $f) {
+                if ($f->type instanceof FieldtypePageGrid) {
+                    $pgField = $f;
+                    break;
+                }
+            }
+        }
+        if (!$pgField) {
+            echo "- Error: no FieldtypePageGrid field found on template '{$page->template->name}'\n";
+            return null;
+        }
+        $fc = $this->wire('pages')->get("name=pg-{$pgField->id}, parent.name=pg-{$page->id}, template=pg_container");
+        if (!$fc->id) {
+            echo "- Error: field container pg-{$pgField->id} not found for page {$page->id}\n";
+            return null;
+        }
+        return $fc;
+    }
+
+    /**
+     * Returns the canonical item page name for a given template name and page ID.
+     * Converts underscores to hyphens: pg_text + 42 → pg-text-42
+     *
+     * @param string $templateName Item template name, e.g. 'pg_text', 'pg_group'.
+     * @param int    $id           Page ID.
+     * @return string
+     */
+    public function itemName(string $templateName, int $id): string {
+        return str_replace('_', '-', $templateName) . '-' . $id;
+    }
+
+    /**
+     * Creates a new PageGrid item page using the required two-step naming convention.
+     * Save 1 lets ProcessWire assign an ID; Save 2 sets the final name using that ID.
+     * Returns the item ready for field population — set content fields on the returned page.
+     *
+     * @param string $templateName Item template name, e.g. 'pg_text', 'pg_group'.
+     * @param Page   $parent       Field container (top-level item) or group page (nested item).
+     * @return Page|null The created item page, or null if the template does not exist.
+     */
+    public function addItem(string $templateName, Page $parent): ?Page {
+        $template = $this->wire('templates')->get($templateName);
+        if (!$template) {
+            echo "- Error: template '{$templateName}' not found\n";
+            return null;
+        }
+
+        // Save 1: temporary name so ProcessWire assigns an ID
+        $block = new Page();
+        $block->template = $template;
+        $block->parent = $parent;
+        $block->name = $templateName . '_' . time() . '_' . rand(100, 999);
+        $block->title = $block->name;
+        $block->save();
+
+        // Save 2: finalise name using the assigned ID
+        $finalName = $this->itemName($templateName, $block->id);
+        $block->setAndSave(['name' => $finalName, 'title' => $finalName]);
+
+        return $block;
+    }
+
+    /**
+     * Merges CSS properties into the pg_styles metadata for a block page.
+     * Enforces all structural requirements: id key, css sub-key, breakpoint size/name keys,
+     * and auto-corrects bare integer values for grid-column-end / grid-row-end to 'span N'.
+     *
+     * @param Page $block The block page (or field container for page-level / body styles).
+     * @param array $cssProps Flat CSS properties, e.g. ['background-color' => 'rgba(0,0,0,1)', 'padding' => '20px'].
+     * @param string $breakpoint Target breakpoint: 'base' (default), 's', 'm', or 'l'.
+     * @param string $elementId Target element key: 'pgitem' (default), 'img', 'body', 'caption-123', etc.
+     * @param array $options Structural keys written to the element entry: tagName, cssClass, cssClasses, attributes.
+     * @return void
+     */
+    public function setStyles(Page $block, array $cssProps, string $breakpoint = 'base', string $elementId = 'pgitem', array $options = []): void {
+        // Validate breakpoint
+        if (!isset(self::BREAKPOINTS[$breakpoint])) {
+            echo "- Warning: unknown breakpoint '{$breakpoint}', falling back to 'base'\n";
+            $breakpoint = 'base';
+        }
+
+        // tagName is required for non-pgitem elements — without it the CSS selector is silently skipped
+        if ($elementId !== 'pgitem' && empty($options['tagName'])) {
+            echo "- Error: setStyles() requires 'tagName' in \$options for element '{$elementId}' — styles not saved\n";
+            return;
+        }
+
+        $existing = $block->meta('pg_styles') ?? [];
+
+        // Always enforce the required id key
+        $existing[$elementId]['id'] = $elementId;
+
+        // Apply structural options (tagName, cssClass, cssClasses, attributes)
+        foreach (['tagName', 'cssClass', 'cssClasses', 'attributes'] as $key) {
+            if (isset($options[$key])) $existing[$elementId][$key] = $options[$key];
+        }
+        // tagName defaults to 'div' if not already set
+        if (!isset($existing[$elementId]['tagName'])) $existing[$elementId]['tagName'] = 'div';
+        // cssClass defaults to empty string if not provided
+        if (!isset($existing[$elementId]['cssClass'])) $existing[$elementId]['cssClass'] = '';
+
+        // Ensure the full breakpoint path exists
+        if (!isset($existing[$elementId]['breakpoints']))                            $existing[$elementId]['breakpoints'] = [];
+        if (!isset($existing[$elementId]['breakpoints'][$breakpoint]))               $existing[$elementId]['breakpoints'][$breakpoint] = [];
+        if (!isset($existing[$elementId]['breakpoints'][$breakpoint]['css']))        $existing[$elementId]['breakpoints'][$breakpoint]['css'] = [];
+
+        // Set the size and name keys that FieldtypePageGrid expects on every breakpoint entry
+        $existing[$elementId]['breakpoints'][$breakpoint]['size'] = self::BREAKPOINTS[$breakpoint];
+        $existing[$elementId]['breakpoints'][$breakpoint]['name'] = $breakpoint;
+
+        // Auto-correct grid-column-end / grid-row-end: must be 'span N', never a plain positive integer.
+        // Allow '-1' through as-is — it is valid CSS meaning "last column line of the explicit grid".
+        foreach (['grid-column-end', 'grid-row-end'] as $gridProp) {
+            if (isset($cssProps[$gridProp]) && is_numeric($cssProps[$gridProp]) && (int)$cssProps[$gridProp] > 0) {
+                echo "- Warning: '{$gridProp}' value '{$cssProps[$gridProp]}' coerced to 'span {$cssProps[$gridProp]}' — always use 'span N' format\n";
+                $cssProps[$gridProp] = 'span ' . $cssProps[$gridProp];
+            }
+        }
+
+        // Merge CSS properties under the css sub-key; null removes the property
+        foreach ($cssProps as $prop => $value) {
+            if ($value === null) {
+                unset($existing[$elementId]['breakpoints'][$breakpoint]['css'][$prop]);
+            } else {
+                $existing[$elementId]['breakpoints'][$breakpoint]['css'][$prop] = $value;
+            }
+        }
+
+        $block->meta('pg_styles', $existing);
+    }
+
+    /**
+     * Sets a property on this inputfield, converting template_id values into Template objects stored in $rowTemplates.
+     *
+     * @param string $key   Property name to set.
+     * @param mixed  $value Property value; when key is 'template_id', accepts an int or array of template IDs.
+     * @return $this
      */
     public function set($key, $value) {
         if ($key == 'template_id' && $value) {

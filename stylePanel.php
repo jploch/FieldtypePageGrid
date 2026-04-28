@@ -1478,12 +1478,32 @@ $settings = $tabs . '<div class="pg-sticky pg-interactions-wrapper">' . $interac
 // END SETTINGS ------
 
 // helper function to create uikit tooltip
+/**
+ * Adds a UIkit tooltip attribute to an inputfield if tooltips are enabled in the module config.
+ *
+ * @param Inputfield $field    The inputfield to attach the tooltip to.
+ * @param string     $text     Tooltip content; supports HTML markup.
+ * @param string     $position Tooltip position relative to the field (e.g. 'top', 'bottom').
+ * @return void
+ */
 function createTooltip($field, $text = '', $position = 'top') {
   $configInterface = wire('modules')->getConfig('FieldtypePageGrid')['interface'] ? wire('modules')->getConfig('FieldtypePageGrid')['interface'] : [];
   $showTooltips = in_array('showToolTips', $configInterface);
   if ($showTooltips) $field->wrapAttr("data-tooltip", "title: $text; pos: $position; delay:300;");
 }
 
+/**
+ * Creates a composite inputfield combining a numeric input with a CSS unit selector (px, %, vh, vw).
+ *
+ * @param string $name        Field name used as the CSS property identifier.
+ * @param string $label       Field label; defaults to $name when empty.
+ * @param int    $width       Column width percentage for the fieldset wrapper.
+ * @param string $icon        Optional icon name displayed in the fieldset label.
+ * @param string $lastUnit    Optional extra unit appended to the unit selector (e.g. 'em', 'rem').
+ * @param string $placeholder Placeholder for the numeric input; defaults to $lastUnit when empty.
+ * @param string $nameAdd     Optional value for the 'name-add' attribute, used to specify a transform property name.
+ * @return InputfieldWrapper  Configured fieldset containing the number input and unit select fields.
+ */
 function createUnitField($name, $label = '', $width = 100, $icon = '', $lastUnit = '', $placeholder = '', $nameAdd = '') {
 
   if (!$label) $label = $name;

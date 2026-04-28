@@ -11,12 +11,17 @@ namespace ProcessWire;
 
 class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableModule {
 
+  /**
+   * Returns module metadata used by ProcessWire to register and describe this module.
+   *
+   * @return array Module info array with title, version, permissions, and dependencies.
+   */
   public static function getModuleInfo() {
 
     return array(
       'title' => __('PAGEGRID Page Builder'),
       'summary' => __('PAGEGRID is a visual page builder for ProcessWire that gives developers full control while enabling designers and editors to create responsive layouts without coding.', __FILE__),
-      'version' => '2.2.155',
+      'version' => '2.2.156',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -34,6 +39,11 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     );
   }
 
+  /**
+   * Runs on module install; calls createModule() to set up templates, pages, and roles.
+   *
+   * @return void
+   */
   public function install() {
     $this->createModule();
   }
@@ -43,6 +53,12 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
   //   $this->createModule();
   // }
 
+  /**
+   * Creates all required templates, fieldgroups, pages, roles, and permissions for PAGEGRID.
+   * Called on install and conditionally during ready() when required resources are missing.
+   *
+   * @return void
+   */
   public function createModule() {
 
     // bd('create module');
@@ -177,83 +193,12 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     }
     // END create template for blueprints
 
-    //create page to hold items
-    $p = $this->pages->get("name=pg-items, template=pg_container");
-    if (!$p->id) {
-      // page needs to be created
-      $p = new Page(); // create new page object
-      $p->template = 'pg_container'; // set template
-      $p->parent = $adminPage; // set the parent
-      $p->name = 'pg-items'; // give it a name used in the url for the page
-      $p->title = 'Items'; // set page title (not neccessary but recommended)
-      $p->addStatus(Page::statusHidden);
-      $p->save();
-    }
-
-    //force new parent for older versions
-    $p->parent = $adminPage; // set the parent
-    $p->save();
-    // END create page to hold items  
-
-    // create page to hold classes
-    $p = $this->pages->get("name=pg-classes, template=pg_container");
-
-    if (!$p->id) {
-      $p = new Page(); // create new page object
-      $p->template = 'pg_container'; // set template
-      $p->parent = $adminPage; // set the parent
-      $p->name = 'pg-classes'; // give it a name used in the url for the page
-      $p->title = 'Classes'; // set page title (not neccessary but recommended)
-      $p->addStatus(Page::statusHidden);
-      $p->save();
-    }
-
-    //force new parent for older versions
-    $p->parent = $adminPage; // set the parent
-    $p->save();
-    // END create page to hold classes  
-
-    // create page to hold animations
-    $p = $this->pages->get("name=pg-animations, template=pg_container");
-
-    if (!$p->id) {
-      $p = new Page(); // create new page object
-      $p->template = 'pg_container'; // set template
-      $p->parent = $adminPage; // set the parent
-      $p->name = 'pg-animations'; // give it a name used in the url for the page
-      $p->title = 'Animations'; // set page title (not neccessary but recommended)
-      $p->addStatus(Page::statusHidden);
-      $p->save();
-    }
-    // END create page to hold animations 
-
-    // create page to hold blueprints
-    $p = $this->pages->get("name=pg-blueprints, template=pg_container");
-
-    if (!$p->id) {
-      $p = new Page(); // create new page object
-      $p->template = 'pg_container'; // set template
-      $p->parent = $adminPage; // set the parent
-      $p->name = 'pg-blueprints'; // give it a name used in the url for the page
-      $p->title = 'Blueprints'; // set page title (not neccessary but recommended)
-      // $p->addStatus(Page::statusHidden);
-      $p->save();
-    }
-    // END create page to hold blueprints 
-
-    // create page to hold symbols
-    $p = $this->pages->get("name=pg-symbols, template=pg_container");
-
-    if (!$p->id) {
-      $p = new Page(); // create new page object
-      $p->template = 'pg_container'; // set template
-      $p->parent = $adminPage; // set the parent
-      $p->name = 'pg-symbols'; // give it a name used in the url for the page
-      $p->title = 'Symbols'; // set page title (not neccessary but recommended)
-      // $p->addStatus(Page::statusHidden);
-      $p->save();
-    }
-    // END create page to hold symbols 
+    // create global system containers
+    $this->createSystemContainer('pg-items',      'Items',      $adminPage, true);
+    $this->createSystemContainer('pg-classes',    'Classes',    $adminPage, true);
+    $this->createSystemContainer('pg-animations', 'Animations', $adminPage, true);
+    $this->createSystemContainer('pg-blueprints', 'Blueprints', $adminPage, false);
+    $this->createSystemContainer('pg-symbols',    'Symbols',    $adminPage, false);
 
     //create editor role
     //add role and permissions
@@ -399,6 +344,11 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     $this->createSymbolPermissions();
   }
 
+  /**
+   * Removes PAGEGRID templates, fieldgroups, pages, and roles on module uninstall.
+   *
+   * @return void
+   */
   public function uninstall() {
 
     //remove block modules, causes error so uncomment for now
@@ -465,7 +415,16 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     }
   }
 
+  /**
+   * Initialises the module: registers the pagegrid fuel variable and attaches early hooks.
+   * Hooks requiring a logged-in user are only registered when a user session is active.
+   *
+   * @return void
+   */
   public function init() {
+    // Register before any guards so it fires in CLI, frontend, and admin contexts
+    $this->addHookAfter('Pages::added', $this, "createContainers");
+
     //make $pagegrid available to call functions from InputfieldPageGrid
     $this->fuel->set('pagegrid', $this->modules->get('InputfieldPageGrid'));
     $this->addHookBefore('Page::render', $this, 'disableAppendFile');
@@ -484,6 +443,12 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     }
   }
 
+  /**
+   * Runs after ProcessWire is ready; verifies required resources exist and registers admin hooks.
+   * Only executes in the admin context for performance.
+   *
+   * @return void
+   */
   public function ready() {
 
     //if not inside admin no need to run ready function (good for performance)
@@ -591,6 +556,13 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     if (wire('page')->name == 'roles') $this->createSymbolPermissions();
   }
 
+  /**
+   * Deactivates automatic prepend/append template files when the template contains
+   * a PageGrid field and the template file calls $pagegrid->noAppendFile.
+   *
+   * @param HookEvent $event Hook event from Page::render.
+   * @return void
+   */
   // deactivate automatic appending of template file
   public function disableAppendFile($event) {
     $p = $event->object;
@@ -606,17 +578,31 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     }
   }
 
+  /**
+   * Sets all languages active automatically for newly added PageGrid item pages.
+   *
+   * @param HookEvent $event Hook event from Pages::added.
+   * @return void
+   */
   // set all languages active automatically for new pg items
   public function activateLanguages($event) {
     if (!$this->templates->get('language')) return;
     if (!$this->modules->isInstalled('LanguageSupport')) return;
     $page = $event->arguments(0);
+    if ($page->_cloning && $page->_cloning->id) return; // skip cloned pages, language status is inherited
     //only enable for pg items
     if (!$page->parents()->get('template=pg_container')) return;
     foreach ($this->wire->languages as $lang) $page->set("status$lang", 1);
     $page->save();
   }
 
+  /**
+   * Handles the pgquickadd GET action: creates a new page from the given template and parent
+   * then redirects the user to the new page's edit URL.
+   *
+   * @param HookEvent $event Hook event from ProcessPageAdd::buildForm.
+   * @return void
+   */
   public function quickAdd($event) {
     if (isset($_GET['pgquickadd']) && isset($_GET['template_id']) && isset($_GET['parent_id'])) {
       // bd('quick-add');
@@ -642,6 +628,12 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     }
   }
 
+  /**
+   * Keeps the module config in sync when a PageGrid field is added to or removed from a template.
+   *
+   * @param HookEvent $event Hook event from ProcessTemplate::fieldAdded or ProcessTemplate::fieldRemoved.
+   * @return void
+   */
   public function updateTemplateSettings($event) {
     $f = $event->arguments[0];
     $t = $event->arguments[1];
@@ -656,6 +648,12 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     $this->modules->saveConfig('FieldtypePageGrid', $data);
   }
 
+  /**
+   * Syncs the template_id field setting into the module config whenever a PageGrid field is saved.
+   *
+   * @param HookEvent $event Hook event from ProcessField::fieldSaved.
+   * @return void
+   */
   public function updateFieldSettings($event) {
     $f = $event->arguments(0);
     if (!$f->type instanceof FieldtypePageGrid) return;
@@ -667,6 +665,12 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     $this->modules->saveConfig('FieldtypePageGrid', $data);
   }
 
+  /**
+   * Lists block templates (from the blocks/ folder) on the Add Template screen.
+   *
+   * @param HookEvent $event Hook event from ProcessTemplate::executeAdd.
+   * @return void
+   */
   //list block templates when creating new pages
   public function addTemplate($event) {
     $templateFiles = array();
@@ -704,6 +708,13 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     $event->replace = true;
   }
 
+  /**
+   * Resolves the correct template file path, searching the blocks/ folder and module folder
+   * when the default location does not contain a matching file.
+   *
+   * @param HookEvent $event Hook event from ProcessTemplate::buildEditForm or ProcessTemplate::getListTableRow.
+   * @return void
+   */
   //hide template not found warning for block templates 
   public function setTemplateFile($event) {
     $template = $event->arguments[0];
@@ -728,6 +739,13 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     }
   }
 
+  /**
+   * Ensures the pg_blueprint template has PageGrid fields added at runtime before editing.
+   * Creates the items container page for the blueprint if it does not yet exist.
+   *
+   * @param HookEvent $event Hook event from ProcessPageEdit::execute.
+   * @return void
+   */
   public function blueprintReady($event) {
     // make sure blueprint has pg fields
     // the fields are added on runtime, based on parent pages found
@@ -795,6 +813,11 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     }
   }
 
+  /**
+   * Sets the template file for the pg_blueprint template to the module's bundled file.
+   *
+   * @return void
+   */
   public function setBlueprintTemplate() {
     $t = $this->templates->get('pg_blueprint');
     if (!$t) return;
@@ -806,6 +829,12 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     $bpPages = $this->pages->find('template=pg_blueprint, include=all');
   }
 
+  /**
+   * Adds a PAGEGRID Blueprint select field to the template edit form in the admin.
+   *
+   * @param HookEvent $event Hook event from ProcessTemplate::buildEditForm.
+   * @return void
+   */
   public function addCustomTemplateSetting($event) {
     if ($this->page->template->name != 'admin') return;
     $form = $event->return;
@@ -830,6 +859,12 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     // $form->add($field);
   }
 
+  /**
+   * Saves the selected blueprint ID to the template's blueprint property on template save.
+   *
+   * @param HookEvent $event Hook event from ProcessTemplate::executeSave.
+   * @return void
+   */
   public function saveCustomTemplateSetting($event) {
     $template = $this->templates->get($this->input->post->id);
     $blueprintValue = $this->input->post->blueprint ? $this->input->post->blueprint : null;
@@ -837,6 +872,12 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     // bd($blueprintValue);
   }
 
+  /**
+   * Disables the inline front-end editor when the inlineEditorFrontDisable module setting is active.
+   *
+   * @param HookEvent $event Hook event from PageFrontEdit::getPage.
+   * @return void
+   */
   //disable inline editor if settings checkbox inlineEditorFrontDisable is checked
   public function disableInlineEdit($event) {
     $isBackend = isset($_GET['backend']);
@@ -851,6 +892,13 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     }
   }
 
+  /**
+   * Modifies the Add Page form: filters available templates to block templates for PageGrid
+   * contexts, sets up auto-title/name for quick-add items, and configures the blueprint picker.
+   *
+   * @param HookEvent $event Hook event from ProcessPageAdd::buildForm.
+   * @return void
+   */
   public function pageAddForm($event) {
 
     // Retrieve the form
@@ -991,6 +1039,14 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     $event->return = $form;
   }
 
+  /**
+   * Processes <pg-edit> custom tags in rendered HTML: injects file-uploader markup in the
+   * backend and strips the custom tags cleanly for frontend output.
+   *
+   * @param string $out     The rendered HTML output to process.
+   * @param Page   $pRender The page being rendered.
+   * @return string Processed HTML with <pg-edit> tags handled or removed.
+   */
   public function enableInlineEditFile($out, $pRender) {
 
     $editRegionTag = 'pg-edit';
@@ -1056,11 +1112,26 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return $returnValue;
   }
 
+  /**
+   * Formats the field value for $page->fieldname calls by rendering the PageGrid.
+   * Hookable.
+   *
+   * @param Page  $page  The page containing the field.
+   * @param Field $field The PageGrid field being formatted.
+   * @param mixed $value The raw field value.
+   * @return string Rendered HTML output of the grid.
+   */
   //function gets called for $page->fieldname calls render function as alternative
   public function ___formatValue(Page $page, Field $field, $value) {
     return $this->modules->get('InputfieldPageGrid')->renderGrid($page, $field);
   }
 
+  /**
+   * Adds template, role, user, permission, and breakpoint classes to the admin body element.
+   *
+   * @param HookEvent $event Hook event from AdminTheme::getExtraMarkup.
+   * @return void
+   */
   // add interface classes to body
   public function addBodyClasses($event) {
 
@@ -1098,6 +1169,12 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
 
 
 
+  /**
+   * Clones the PageGrid items container and renames all cloned items when a page is cloned.
+   *
+   * @param HookEvent $event Hook event from Pages::cloned, with original page and copy as arguments.
+   * @return void
+   */
   // clone items of page if page gets cloned
   public function clone($event) {
 
@@ -1125,6 +1202,12 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     }
   }
 
+  /**
+   * Propagates a page title change to the associated PageGrid items container page.
+   *
+   * @param HookEvent $event Hook event from Page::changed(0:title).
+   * @return void
+   */
   //handle title change of main page to reflect on items parent
   public function titleChanged($event) {
 
@@ -1138,6 +1221,13 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     }
   }
 
+  /**
+   * Deletes the PageGrid items container and its children when the parent page is deleted.
+   * Also removes the per-symbol permission if one exists for the deleted page.
+   *
+   * @param HookEvent $event Hook event from Pages::delete.
+   * @return void
+   */
   //delete pagegrid items when page gets deleted
   public function delete($event) {
     $pages = $event->wire('pages');
@@ -1165,6 +1255,12 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     }
   }
 
+  /**
+   * Removes the pg-dummies container page from ProcessPageList results to keep it hidden.
+   *
+   * @param HookEvent $event Hook event from ProcessPageList::find.
+   * @return void
+   */
   //hide dummy pages for init inline editor
   function hideDummies($event) {
     $event->return->each(function ($p) use ($event) {
@@ -1174,6 +1270,13 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     });
   }
 
+  /**
+   * Creates a blueprint items container by cloning the source page's items into the blueprint.
+   *
+   * @param int $pageId      ID of the source page whose items will be cloned.
+   * @param int $blueprintId ID of the target blueprint page.
+   * @return void
+   */
   public function createBlueprint($pageId, $blueprintId) {
 
     if (!$pageId || !$blueprintId) return;
@@ -1191,6 +1294,13 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     }
   }
 
+  /**
+   * Copies PageGrid items from a blueprint to a newly added page when a blueprint parent is configured.
+   * Also handles auto-publish for blueprints and pages without a title.
+   *
+   * @param HookEvent $event Hook event from Pages::added.
+   * @return void
+   */
   // blueprint feature and auto publish
   public function copyFromBlueprint($event) {
     $page = $event->arguments(0);
@@ -1274,6 +1384,13 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
 
   }
 
+  /**
+   * Auto-publishes a PageGrid item page whose title was set to 'pg-autotitle', assigning a
+   * real title/name based on template and ID, then redirects to its edit URL.
+   *
+   * @param HookEvent $event Hook event from Pages::save.
+   * @return void
+   */
   // autopuplish pages with one template and 'pg-autotitle' set as childNameFormat (automatically set in fieldtype)
   public function autoPuplish($event) {
     // remove statusTemp (flash icon on page)
@@ -1292,6 +1409,13 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     }
   }
 
+  /**
+   * Modifies the ProcessPageEdit form when editing a PageGrid item in a modal: adds CSS,
+   * manages the children tab, controls the back button, and hides irrelevant UI elements.
+   *
+   * @param HookEvent $event Hook event from ProcessPageEdit::buildForm.
+   * @return void
+   */
   // add function to load children inside modal when no other fields, function gets called from js when needed
   public function modalEdit($event) {
 
@@ -1417,6 +1541,13 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     }
   }
 
+  /**
+   * Re-initialises PageFrontEdit for a given page so that dynamically loaded AJAX items
+   * are prepared for inline editing.
+   *
+   * @param Page $p The page to enable inline editing for.
+   * @return void
+   */
   //reinit PageFrontEdit for ajax items
   public function readyFrontEdit($p) {
 
@@ -1432,12 +1563,11 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
   }
 
   /**
-   * Get the Inputfield used for input by PageTable
-   * 
-   * @param Page $page
-   * @param Field $field
-   * @return Inputfield
-   * 
+   * Returns the InputfieldPageGrid inputfield used to edit this field's value.
+   *
+   * @param Page  $page  The page being edited.
+   * @param Field $field The PageGrid field.
+   * @return Inputfield The InputfieldPageGrid instance.
    */
   public function getInputfield(Page $page, Field $field) {
     /** @var InputfieldPageGrid $inputfield */
@@ -1450,6 +1580,13 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return $inputfield;
   }
 
+  /**
+   * Returns the configuration inputfields for a PageGrid field in the admin field editor.
+   * Hookable.
+   *
+   * @param Field $field The PageGrid field being configured.
+   * @return InputfieldWrapper Inputfields for the field configuration form.
+   */
   public function ___getConfigInputfields(Field $field) {
 
     $inputfields = parent::___getConfigInputfields($field);
@@ -1462,6 +1599,12 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return $inputfields;
   }
 
+  /**
+   * Creates dummy pages for each inline-editable field so the PageFrontEdit inline editor
+   * initialises correctly before any real items exist.
+   *
+   * @return void
+   */
   //create dummies to trick inline editor to work for first items
   protected function createDummies() {
 
@@ -1514,6 +1657,12 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     }
   }
 
+  /**
+   * Creates per-symbol add permissions for every child of the pg-symbols container
+   * and assigns them to any role that already holds the pagegrid-symbol-add permission.
+   *
+   * @return void
+   */
   function createSymbolPermissions() {
 
     //create symbol permissions
@@ -1536,6 +1685,9 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     }
   }
 
+  /**
+   * Module setup function 
+   */
   protected function setup() {
     $curl = curl_init();
     $lKey = $this->lKey;
@@ -1647,5 +1799,85 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
   //        $a[] = 'pageTemplate';
   //		return $a;
   //	}
+
+  /**
+   * Creates or retrieves a global system container page (pg-items, pg-classes, etc.).
+   * Forces the parent to $parent so containers are correctly placed after module upgrades.
+   *
+   * @param string $name  Page name, e.g. 'pg-items'
+   * @param string $title Page title
+   * @param Page   $parent Parent page (admin)
+   * @param bool   $hidden Whether to add statusHidden
+   * @return Page
+   */
+  private function createSystemContainer(string $name, string $title, Page $parent, bool $hidden = true): Page {
+    $p = $this->pages->get("name=$name, template=pg_container");
+    if (!$p->id) {
+      $p = new Page();
+      $p->template = 'pg_container';
+      $p->parent = $parent;
+      $p->name = $name;
+      $p->title = $title;
+      if ($hidden) $p->addStatus(Page::statusHidden);
+      $p->save();
+    }
+    // force correct parent for upgrades from older versions
+    $p->parent = $parent;
+    $p->save();
+    return $p;
+  }
+
+  /**
+   * Auto-creates pg-{pageId} and pg-{fieldId} containers when a page with a PageGrid field is added.
+   * Runs after copyFromBlueprint and activateLanguages so blueprint-cloned containers are never overwritten.
+   *
+   * @param HookEvent $event
+   * @return void
+   */
+  public function createContainers($event) {
+    $page = $event->arguments(0);
+
+    // Skip cloned pages — Pages::cloned hook handles those separately
+    if ($page->_cloning && $page->_cloning->id) return;
+    // Skip container and block pages
+    if ($page->template->name === 'pg_container') return;
+    // Skip pages already living under pg-items
+    if ($page->parents->get('template=pg_container') && $page->parents->get('template=pg_container')->id) return;
+
+    // Collect all PageGrid fields on this page's template
+    $pgFields = [];
+    foreach ($page->fields as $f) {
+      if ($f->type instanceof FieldtypePageGrid) $pgFields[] = $f;
+    }
+    if (!count($pgFields)) return;
+
+    // Locate the global pg-items root
+    $pgItems = $this->pages->get('name=pg-items, template=pg_container');
+    if (!$pgItems->id) return;
+
+    // Get or create pg-{pageId} container under pg-items
+    $itemsParent = $this->pages->get("name=pg-{$page->id}, parent={$pgItems->id}, template=pg_container");
+    if (!$itemsParent->id) {
+      $itemsParent = new Page();
+      $itemsParent->template = 'pg_container';
+      $itemsParent->parent = $pgItems;
+      $itemsParent->name = 'pg-' . $page->id;
+      $itemsParent->title = $page->title . ' items';
+      $itemsParent->save();
+    }
+
+    // Get or create pg-{fieldId} container for each PageGrid field
+    foreach ($pgFields as $f) {
+      $fieldContainer = $itemsParent->get("name=pg-{$f->id}, template=pg_container");
+      if (!$fieldContainer->id) {
+        $fieldContainer = new Page();
+        $fieldContainer->template = 'pg_container';
+        $fieldContainer->parent = $itemsParent;
+        $fieldContainer->name = 'pg-' . $f->id;
+        $fieldContainer->title = 'pg-' . $f->id;
+        $fieldContainer->save();
+      }
+    }
+  }
 
 }

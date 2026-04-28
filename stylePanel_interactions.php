@@ -287,6 +287,12 @@ $fieldset2->append($field);
 // $field->columnWidth = 100;
 // $fieldset->append($field);
 
+/**
+ * Adds a predefined set of CSS easing/timing-function options to a select inputfield.
+ *
+ * @param Inputfield $field The select inputfield to populate with easing options.
+ * @return void
+ */
 function addEasingOptions($field) {
   $field->addOption("linear", "linear");
   $field->addOption("ease", "ease");
