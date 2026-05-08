@@ -21,7 +21,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID Page Builder'),
       'summary' => __('PAGEGRID is a visual page builder for ProcessWire that gives developers full control while enabling designers and editors to create responsive layouts without coding.', __FILE__),
-      'version' => '2.2.157',
+      'version' => '2.2.158',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -568,7 +568,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     $p = $event->object;
 
     //deactivate automatic appending of template file look for string
-    if ($p->template->name !== 'admin' && $p->fields->get('type=FieldtypePageGrid')) {
+    if ($p && $p->id && $p->template->name !== 'admin' && $p->fields && $p->fields->get('type=FieldtypePageGrid')) {
       // $parsedTemplate = new TemplateFile($p->template->filename);
       $parsedTemplate = file_get_contents($p->template->filename);
       if (strpos($parsedTemplate, '$pagegrid->noAppendFile') !== false) {
@@ -1879,5 +1879,4 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
       }
     }
   }
-
 }
