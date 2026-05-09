@@ -332,7 +332,7 @@ class InputfieldPageGrid extends Inputfield {
 
         if ($user->hasPermission('pagegrid-drag')) {
             //dom list
-            if ($user->hasPermission('page-move', $mainPage)) $topNav .= '<i class="pg-item-list-button fa fw fa-list-ul on" uk-tooltip="title:Item List; pos:bottom; delay:300;"></i>';
+            if ($user->hasPermission('page-move', $mainPage)) $topNav .= '<i class="pg-item-list-button fa fw fa-list-ul on" uk-tooltip="title:Layers; pos:bottom; delay:300;"></i>';
             //undo/redo
             $topNav .= '<div id="pg-undo-redo-wrapper"><i class="pg-undo fa fa-fw fa-reply" data-name="fa-reply" uk-tooltip="title:Undo; pos:bottom; delay:300;"></i><i class="pg-redo fa fa-fw fa-share" data-name="fa-share" uk-tooltip="title:Redo; pos:bottom; delay:300;"></i></div>';
         }
