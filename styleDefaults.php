@@ -179,7 +179,7 @@ $defaultCss .= '</style>';
 $customFont = '';
 $localFonts = $this->getFontNames();
 $filePath = $this->getFontPath();
-$fileUrl = $this->config->urls->templates . 'fonts/';
+$fileUrl = $this->getFontPath(false);
 
 foreach ($localFonts as $font) {
 

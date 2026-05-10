@@ -432,7 +432,7 @@ class InputfieldPageGrid extends Inputfield {
         }
 
 
-        $renderMarkup = $topNav . $settings . '<div class="pg-container pg-container-' . $this->name . '" data-page-title="' . $mainPage->title . '" data-page="' . $editID . '" data-id="' . $this->pages->get('pg-classes')->id . '" data-animations-id="' . $this->pages->get('pg-animations')->id . '" data-field="' . $this->name . '" data-site-url="' . $this->config->urls->site . '" data-module-url="' . $this->config->urls->siteModules . 'FieldtypePageGrid/" data-admin-url="' . $this->page->rootParent->url() . 'setup/pagegrid/" data-fallbackfonts="' . $this->ft->fallbackFonts . '">' . $addItems . $dataGlobal . $blueprintSelect;
+        $renderMarkup = $topNav . $settings . '<div class="pg-container pg-container-' . $this->name . '" data-page-title="' . $mainPage->title . '" data-page="' . $editID . '" data-id="' . $this->pages->get('pg-classes')->id . '" data-animations-id="' . $this->pages->get('pg-animations')->id . '" data-field="' . $this->name . '" data-site-url="' . $this->config->urls->site . '" data-module-url="' . $this->config->urls->siteModules . 'FieldtypePageGrid/" data-admin-url="' . $this->page->rootParent->url() . 'setup/pagegrid/" data-fallbackfonts="' . $this->ft->fallbackFonts . '" data-font-url="' . $this->getFontPath(false) . '">' . $addItems . $dataGlobal . $blueprintSelect;
         //loading animation
         $renderMarkup .= '<div class="pg-loading"><div class="fa fa-spin fa-spinner fa-fw"></div></div>';
         //container for item header (item header will be moved here with js)
@@ -1729,13 +1729,40 @@ class InputfieldPageGrid extends Inputfield {
     }
 
     /**
-     * Returns the absolute filesystem path to the templates/fonts directory, creating it if it does not exist.
+     * Returns the relative path (from site root) to the fonts directory. Hookable.
      *
-     * @return string Absolute path to the fonts folder (with trailing slash).
+     * Override this to change where fonts are stored. Return a path relative to
+     * the site root with a trailing slash (e.g. 'templates/fonts/').
+     *
+     * Example hook:
+     *   $wire->addHookAfter('InputfieldPageGrid::getFontFolder', function($event) {
+     *     $event->return = 'templates/custom-fonts/';
+     *   });
+     *
+     * @return string Relative path from site root to the fonts folder (with trailing slash).
      */
-    public function getFontPath() {
+    public function ___getFontFolder() {
+        return 'templates/fonts/';
+    }
 
-        $filePath = $this->config->paths->templates . 'fonts/';
+    /**
+     * Returns the absolute filesystem path or relative URL to the fonts directory.
+     *
+     * Uses getFontFolder() internally — hook getFontFolder() to change the location.
+     *
+     * @param bool|null $returnPath Omit or pass true for the absolute filesystem path (default).
+     *                             Pass false to get the relative URL (e.g. /site/templates/fonts/).
+     * @return string Fonts folder path or URL (with trailing slash).
+     */
+    public function getFontPath($returnPath = null) {
+
+        $folder = $this->getFontFolder();
+
+        if ($returnPath === false) {
+            return $this->config->urls->site . $folder;
+        }
+
+        $filePath = $this->config->paths->site . $folder;
 
         //create font folder if not present
         if (!file_exists($filePath)) {
