@@ -657,7 +657,8 @@ class InputfieldPageGrid extends Inputfield {
 
         //on frontend get cached markup if exists and return early
         $lang = $this->user->language && $this->user->language->id ? '-' . $this->user->language->id : '';
-        $cache = $this->cache->get('pgCache-markup-' . $mainPage->id . '-' . $field->id . $lang);
+        $disableCache = $this->ft->disableCache;
+        $cache = !$disableCache ? $this->cache->get('pgCache-markup-' . $mainPage->id . '-' . $field->id . $lang) : null;
         $hasGet = count($_GET) > 0 ? true : false;
         if ($cache && $this->user->isLoggedin()) $this->cache->delete("pgCache-*");
         if ($cache && !$backend && !$hasGet) return $cache;
@@ -765,7 +766,7 @@ class InputfieldPageGrid extends Inputfield {
             $out = '<div class="pg-wrapper pg pg-main ' . $this->getCssClasses($itemsParent) . '">' . $layout . '</div>';
         }
 
-        if (!$backend && !$hasGet) $this->cache->save('pgCache-markup-' . $mainPage->id . '-' . $field->id . $lang, $out);
+        if (!$backend && !$hasGet && !$disableCache) $this->cache->save('pgCache-markup-' . $mainPage->id . '-' . $field->id . $lang, $out);
         return $out;
     }
 
@@ -1461,7 +1462,8 @@ class InputfieldPageGrid extends Inputfield {
         $backend = $this->isBackend();
 
         //on frontend get cached markup if exists and return early
-        $cache = $this->cache->get('pgCache-js-' . $mainPage->id);
+        $disableCache = $this->ft->disableCache;
+        $cache = !$disableCache ? $this->cache->get('pgCache-js-' . $mainPage->id) : null;
         $hasGet = count($_GET) > 0 ? true : false;
         if ($cache && $this->user->isLoggedin()) $this->cache->delete("pgCache-*");
         if ($cache && !$backend && !$hasGet) return $cache;
@@ -1609,7 +1611,7 @@ class InputfieldPageGrid extends Inputfield {
         }
 
         $scriptOutput = $jsAnimationData . $jsFiles . $customJs;
-        if (!$backend && !$hasGet) $this->cache->save('pgCache-js-' . $mainPage->id, $scriptOutput);
+        if (!$backend && !$hasGet && !$disableCache) $this->cache->save('pgCache-js-' . $mainPage->id, $scriptOutput);
 
         // bd($animationsSelectors);
         // $updateAnimations = 1;
@@ -2042,7 +2044,8 @@ class InputfieldPageGrid extends Inputfield {
         $backend = $this->isBackend();
 
         //on frontend get cached markup if exists and return early
-        $cache = $this->cache->get('pgCache-css-' . $mainPage->id);
+        $disableCache = $this->ft->disableCache;
+        $cache = !$disableCache ? $this->cache->get('pgCache-css-' . $mainPage->id) : null;
         $hasGet = count($_GET) > 0 ? true : false;
         if ($cache && $this->user->isLoggedin()) $this->cache->delete("pgCache-*");
         if ($cache && !$backend && !$hasGet) return $cache;
@@ -2246,7 +2249,7 @@ class InputfieldPageGrid extends Inputfield {
         $cssOutput = $cssBackend . $defaults . $fonts . $cssTemplates . $itemCss . $customCss;
 
         //cache output
-        if (!$backend && !$hasGet) $this->cache->save('pgCache-css-' . $mainPage->id, $cssOutput);
+        if (!$backend && !$hasGet && !$disableCache) $this->cache->save('pgCache-css-' . $mainPage->id, $cssOutput);
 
         return  $cssOutput;
     }

@@ -219,6 +219,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 			'fontPrivacy' => 1,
 			'fallbackFonts' => 'Helvetica, Arial, sans-serif',
 			'stylePanel' => 1,
+			'disableCache' => 0,
 		);
 	}
 
@@ -773,6 +774,20 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		$f->attr('onscroll', 'sync_scroll(this);');
 		$f->attr('onkeydown', 'check_tab(this, event);');
 		$f->addClass('input-prism');
+		$wrapper->append($f);
+
+		// disable cache option
+		$f = $this('modules')->get('InputfieldCheckbox');
+		$f->attr('name', 'disableCache');
+		$f->label = $this->_('Cache');
+		$f->checkboxLabel = 'Disable frontend cache';
+		$f->icon = 'database';
+		$f->description = $this->_("PAGEGRID caches markup, JS, and CSS to speed up your site. Only disable this if you are experiencing issues. Note that the cache is already bypassed for logged-in users and URLs with parameters, so you don't need to disable it to see your latest changes. This setting is independent of ProcessWire’s internal markup cache.");
+		$f->notes = $this->_('Can also be set at runtime in ready.php: `wire(\'modules\')->get(\'FieldtypePageGrid\')->disableCache = true;`.');
+		$f->attr('value', $this->disableCache);
+		$f->collapsed(in_array($f->name, $collapsed) || $this->disableCache == '' ? 1 : 0);
+		$f->themeOffset = 1;
+		if ($this->disableCache) $f->attr('checked', 'checked');
 		$wrapper->append($f);
 
 		//custom uninstall even if field still exists
