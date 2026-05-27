@@ -21,7 +21,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID Page Builder'),
       'summary' => __('PAGEGRID is a visual page builder for ProcessWire that gives developers full control while enabling designers and editors to create responsive layouts without coding.', __FILE__),
-      'version' => '2.2.163',
+      'version' => '2.2.164',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -1135,13 +1135,20 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
   // add interface classes to body
   public function addBodyClasses($event) {
 
-    if ($this->process != 'ProcessPageEdit') {
-      return;
-    }
+    if ($this->process != 'ProcessPageEdit') return;
+
+    $p = $this->pages->get((int) wire('input')->get('id'));
+    if (!$p || !$p->id) return;
 
     $theme = $event->object;
     $user = $this->user;
-    $theme->addBodyClass("template-{$this->pages->get((int) wire('input')->get('id'))->template}");
+    $isPg = $p->fields('type=FieldtypePageGrid') ? 1 : 0;
+
+    if (!$isPg) return; // only add classes if page has pg field
+
+    if ($this->modules->get('FieldtypePageGrid')->stylePanel) $theme->maxWidth = ''; // allow custom max width to make space for style panel
+
+    $theme->addBodyClass("template-{$p->template}");
 
     foreach ($user->roles as $role) {
       $theme->addBodyClass("role-{$role->name}");
