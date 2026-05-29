@@ -415,6 +415,7 @@ class InputfieldPageGrid extends Inputfield {
 
             $quickAddButtons = $this->renderAddItemBar(0, $childrenTemplatesArray, 1);
             $quickAddMain = '<div class="pg-quick-add pg-quick-add-main" data-id-original="' . $wrapperPage->id . '" data-id="' . $wrapperPage->id . '"><span class="pg-quick-add-icon" uk-tooltip="title:Add Item; pos:bottom; delay:100;"></span>' . $quickAddButtons . '</div>';
+            $quickAddMainBottom = '<div class="pg-quick-add pg-quick-add-main-bottom" data-id-original="' . $wrapperPage->id . '" data-id="' . $wrapperPage->id . '"><span class="pg-quick-add-icon" uk-tooltip="title:Append Item; pos:bottom; delay:100;"></span>' . $quickAddButtons . '</div>';
         }
 
         //render language tabs to switch iframe language
@@ -441,6 +442,7 @@ class InputfieldPageGrid extends Inputfield {
         $renderMarkup .= $languageTabs;
         $renderMarkup .= '<iframe data-field="' . $this->name . '" id="pg-iframe-canvas-' . $this->name . '" class="pg-iframe-canvas" src="' . $iframeUrl . '?backend=1&field=' . $this->name . '&page=' . $mainPage->id . '" loading="lazy" frameBorder="0" scrolling="no" style="width:100%; max-height:100vh; border:0;"></iframe>';
         $renderMarkup .= $quickAddMain;
+        $renderMarkup .= $quickAddMainBottom;
         $renderMarkup .= '</div>';
 
         //render delete button
