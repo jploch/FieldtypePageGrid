@@ -150,10 +150,14 @@ $defaultCss .= '
    column-gap: 15px;
    row-gap: 15px;
   }
+
+  .pg-group {
+    flex-wrap: wrap;
+  }
+
   html:root .pg-item,
   html.breakpoint-s .pg-item {
    grid-column: 1/-1;
-   /* grid-row-end: span 1;*/
    grid-row: auto;
   }
 } 
