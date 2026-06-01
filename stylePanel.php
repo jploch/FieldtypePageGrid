@@ -718,7 +718,7 @@ $field->set('name', __('font-family'));
 $field->addClass('label-left', 'wrapClass');
 $field->addClass('fonts');
 $field->attr('local-fonts', $fontNames);
-$this->ft->googleFonts? $field->attr('google-fonts', 'true') : $field->attr('google-fonts', 'false');
+$this->ft->googleFonts ? $field->attr('google-fonts', 'true') : $field->attr('google-fonts', 'false');
 createTooltip($field, "The font-family CSS property sets the font for the selected element and it's children.");
 $field->columnWidth = 100;
 $fieldset->append($field);
@@ -1537,6 +1537,14 @@ function createUnitField($name, $label = '', $width = 100, $icon = '', $lastUnit
   $field->addOption("%");
   $field->addOption("vh");
   $field->addOption("vw");
+  $field->addOption("rem");
+  if ($name == "letter-spacing") {
+    $field->removeOption("rem");
+    $field->removeOption("%");
+    $field->removeOption("vw");
+    $field->removeOption("vh");
+    $field->addOption("em");
+  }
   if ($lastUnit) $field->addOption($lastUnit);
   $field->addClass('unit');
   $field->addClass('hide-label', 'headerClass');
