@@ -21,7 +21,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID Page Builder'),
       'summary' => __('PAGEGRID is a visual page builder for ProcessWire that gives developers full control while enabling designers and editors to create responsive layouts without coding.', __FILE__),
-      'version' => '2.2.169',
+      'version' => '2.2.170',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -30,7 +30,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
       'autoload' => true,
       'permissions' => array(
         'pagegrid-process' => 'Allow PAGEGRID to process ajax calls. This permission is needed to edit/save pages with PAGEGRID!',
-        'page-pagegrid-edit' => 'Edit PAGEGRID items in modal (applies to all editable templates)',
+        'page-pagegrid-edit' => 'Edit PAGEGRID items in modal',
         'pagegrid-drag' => 'Drag PAGEGRID items',
         'pagegrid-resize' => 'Resize PAGEGRID items',
         'pagegrid-style-panel' => 'Enable styling of PAGEGRID items',
@@ -256,6 +256,14 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     if (!$this->permissions->get('pagegrid-breakpoints')->id) {
       $permission = $this->permissions->add("pagegrid-breakpoints");
       $permission->title = 'Manage PAGEGRID breakpoints';
+      $permission->save();
+    }
+    $drole->addPermission($permission->name);
+
+    //pagegrid-delete (item header delete)
+    if (!$this->permissions->get('page-pagegrid-delete')->id) {
+      $permission = $this->permissions->add("page-pagegrid-delete");
+      $permission->title = 'Delete PAGEGRID items ';
       $permission->save();
     }
     $drole->addPermission($permission->name);

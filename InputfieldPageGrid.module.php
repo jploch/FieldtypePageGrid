@@ -1272,7 +1272,7 @@ class InputfieldPageGrid extends Inputfield {
                 //symbol
                 $header .= '<pg-item-header-button class="pg-symbol" uk-tooltip="' . $this->_('Create Symbol') . '" href="#"><i class="fa fw fa-cube"></i></pg-item-header-button>';
             }
-            if ($user->hasPermission('page-add', $p->parent()) && $user->hasPermission('page-delete', $p) && $isPgPage) {
+            if (($user->hasPermission('page-add', $p->parent()) && $user->hasPermission('page-delete', $p) && $isPgPage) || $user->hasPermission('page-pagegrid-delete', $p) && $isPgPage) {
                 //delete
                 $header .= '<pg-item-header-button class="pg-delete" uk-tooltip="' . $this->_('Mark for deletion') . '" href="#"><i class="fa fa-trash"></i></pg-item-header-button>';
             }
