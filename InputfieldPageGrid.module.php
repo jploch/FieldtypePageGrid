@@ -115,7 +115,7 @@ class InputfieldPageGrid extends Inputfield {
      * @param PageArray|null $animationPages Optional subset of animation pages to include.
      * @return string JSON-encoded global style data.
      */
-    public function ___getData($classPages = null, $animationPages = null) {
+    public function ___getData($classPages = null, $animationPages = null, $itemsContainer = null) {
         //make data available to js
         $globalPage = $this->pages->get('name=pg-classes, template=pg_container');
         $globalPageData = [];
@@ -168,12 +168,12 @@ class InputfieldPageGrid extends Inputfield {
 
         //item data
         $itemsArray = new PageArray();
-        $pageItems = $this->pages->get('name=pg-items, template=pg_container');
+        $pageItems = $itemsContainer ? $itemsContainer : $this->pages->get('name=pg-items, template=pg_container');
         $symbolsItems = $this->pages->get('name=pg-symbols, template=pg_container');
 
         // get all grandchildren with getAncestors function ($page->find('') not returning all levels)
-        $itemsArray->add($this->getAncestors($pageItems));
-        $itemsArray->add($this->getAncestors($symbolsItems));
+        $itemsArray->add($this->getAncestors($pageItems, 20, true));
+        $itemsArray->add($this->getAncestors($symbolsItems, 20, true));
 
         foreach ($itemsArray as $pageItem) {
             $itemData = $pageItem->meta()->pg_styles;
@@ -263,6 +263,11 @@ class InputfieldPageGrid extends Inputfield {
 
         $itemsParent = $this->pages->get('pg-' . $editID);
 
+        if ($this->wire('input')->get('showDraft') && $this->user->hasPermission('pagegrid-draft')) {
+            $draft = $this->pages->get("name=pg-draft-{$editID}-1, template=pg_container");
+            if ($draft->id) $itemsParent = $draft;
+        }
+
         //check if old id exists for imported pages via import module
         $mainPage = $this->pages->get($editID);
         $oldEditID = $mainPage->meta()->pg_itemsPage;
@@ -315,8 +320,15 @@ class InputfieldPageGrid extends Inputfield {
         $topNav = '';
         $addItems = '';
 
+        $draftExists = $this->pages->get("name=pg-draft-{$editID}-1, template=pg_container")->id ? true : false;
+        $showDraft = $this->wire('input')->get('showDraft');
+        $blueprintContainer = $this->pages->get('name=pg-blueprints, template=pg_container');
+        $blueprintPage = $blueprintContainer->id ? $blueprintContainer->child() : null;
+        $bpView = $blueprintPage ? $this->user->hasPermission('page-view', $blueprintPage) : false;
+        $bpCreate = $blueprintPage ? $this->user->hasPermission('page-create', $blueprintPage) : false;
+
         //make data available to js
-        $globalPageData = $this->getData();
+        $globalPageData = $this->getData(null, null, $itemsParent);
         $dataGlobal = '<script>$(".pg-container").data("pg", ' . $globalPageData . ')</script>';
         //END make data available to js
 
@@ -359,8 +371,46 @@ class InputfieldPageGrid extends Inputfield {
             $topNav .= '</div>';
         }
 
-        $topNav .= '<div id="pg-tabs-nav-wrapper"><div class="pg-tabs-nav"><i class="fa fa-gear pw-nav-tabs"></i></div></div>';
-        $topNav .= '<a class="pg-view" href="' . $mainPage->url() . '" target="_blank" uk-tooltip="View page in new tab"><i class="fa fw fa-eye"></i></a>';
+        if ($this->name == $fieldFound) {
+            $settingsNav = '<div class="pg-settings-dropdown"><ul class="pg-settings-nav">';
+        if ($draftExists && $showDraft && $user->hasPermission('pagegrid-draft')) {
+                //draft actions moved to status indicator dropdown
+            } elseif ($draftExists && !$showDraft) {
+                //draft actions moved to status indicator dropdown
+            } else {
+                if ($user->hasPermission('pagegrid-draft')) {
+                    $settingsNav .= '<li><a href="' . $mainPage->editUrl() . '&pg-draft=create"><i class="fa fa-plus-circle fa-fw"></i>Create Draft</a></li>';
+                }
+            }
+            if ($bpCreate || $bpView) {
+                $blueprintParent = $this->pages->get('name=pg-blueprints, template=pg_container');
+                if ($bpCreate && $blueprintParent->id && !$showDraft) $settingsNav .= '<li><a href="' . $this->config->urls->admin . 'page/add/?parent_id=' . $blueprintParent->id . '&addBlueprint=' . $editID . '" target="_blank"><i class="fa fa-plus-circle fa-fw"></i>Create Blueprint</a></li>';
+                if ($bpView) $settingsNav .= '<li><a href="#" class="pg-blueprint-load"><i class="fa fa-cubes fa-fw"></i>Load Blueprint</a></li>';
+            }
+            $settingsNav .= '</ul></div>';
+        } else {
+            $settingsNav = '';
+        }
+
+        $topNav .= '<div id="pg-tabs-nav-wrapper"><div class="pg-tabs-nav"><i class="fa fa-gear pw-nav-tabs"></i>' . $settingsNav . '</div></div>';
+        $viewUrl = $mainPage->url();
+        $viewTooltip = 'View page in new tab';
+        if ($draftExists && $showDraft && $user->hasPermission('pagegrid-draft')) {
+            $viewUrl .= '?pg-draft=1';
+            $viewTooltip = 'View draft in new tab';
+        }
+        $topNav .= '<a class="pg-view" href="' . $viewUrl . '" target="_blank" uk-tooltip="' . $viewTooltip . '"><i class="fa fw fa-eye"></i></a>';
+        if ($this->name == $fieldFound && $draftExists && $user->hasPermission('pagegrid-draft')) {
+            $draftMenu = '';
+            if ($showDraft) {
+                $draftMenu .= '<li><a href="' . $mainPage->editUrl() . '"><i class="fa fa-exchange fa-fw"></i>Switch to Live</a></li>';
+                $draftMenu .= '<li><a href="' . $mainPage->editUrl() . '&pg-draft=publish"><i class="fa fa-upload fa-fw"></i>Publish Draft</a></li>';
+                $draftMenu .= '<li><a href="' . $mainPage->editUrl() . '&pg-draft=discard"><i class="fa fa-trash fa-fw"></i>Discard Draft</a></li>';
+            } else {
+                $draftMenu .= '<li><a href="' . $mainPage->editUrl() . '&showDraft=1"><i class="fa fa-exchange fa-fw"></i>Switch to Draft</a></li>';
+            }
+            $topNav .= '<div class="pg-status-indicator"><span class="pg-status-nav"><span class="pg-status-dot ' . ($showDraft ? 'pg-draft' : 'pg-live') . '" pg-tooltip="title:' . ($showDraft ? 'Draft' : 'Live') . '; pos:bottom; delay:300;"></span><span class="pg-status-label ' . ($showDraft ? 'pg-draft' : 'pg-live') . '">' . ($showDraft ? 'Draft' : 'Live') . '</span></span><div class="pg-settings-dropdown pg-draft-dropdown"><ul class="pg-settings-nav">' . $draftMenu . '</ul></div></div>';
+        }
         $topNav .= '</div>';
 
         $addItems = $this->renderAddItemBar();
@@ -385,7 +435,6 @@ class InputfieldPageGrid extends Inputfield {
         }
         //END add blueprint select
 
-
         $fId = $this->fields->get($this->name) ? $this->fields->get($this->name)->id : 0;
         $wrapperPage = $itemsParent->get('name=pg-' . $fId . ', template=pg_container');
         // Not redundant: createContainers only fires on Pages::added.
@@ -402,20 +451,33 @@ class InputfieldPageGrid extends Inputfield {
 
         //quick add button for main container
         $quickAddMain = '';
+        $quickAddMainBottom = '';
         if ($user->hasPermission('page-add', $wrapperPage)) {
 
             $childrenTemplatesArray = [];
-            if ($wrapperPage->template->childTemplates && !$user->isSuperuser()) {
+            $hasContainerCreate = $user->hasPermission('page-create', $wrapperPage);
+            if (!$user->isSuperuser() && $wrapperPage->template->childTemplates) {
                 $childrenTemplates = $wrapperPage->template->childTemplates;
                 foreach ($childrenTemplates as $childTemplate) {
-                    $childTemplate = $this->templates->get($childTemplate);
-                    if ($childTemplate->id)  $childrenTemplatesArray[] = $childTemplate;
+                    $ct = $this->templates->get($childTemplate);
+                    if ($ct->id) {
+                        if ($ct->useRoles) {
+                            if ($user->hasPermission('page-create', $ct)) $childrenTemplatesArray[] = $ct;
+                        } else {
+                            if ($hasContainerCreate) $childrenTemplatesArray[] = $ct;
+                        }
+                    }
                 }
             }
 
+            if ($wrapperPage->template->childTemplates && !$user->isSuperuser() && !$childrenTemplatesArray) {
+                $quickAddMain = '';
+                $quickAddMainBottom = '';
+            } else {
             $quickAddButtons = $this->renderAddItemBar(0, $childrenTemplatesArray, 1);
             $quickAddMain = '<div class="pg-quick-add pg-quick-add-main" data-id-original="' . $wrapperPage->id . '" data-id="' . $wrapperPage->id . '"><span class="pg-quick-add-icon" uk-tooltip="title:Add Item; pos:bottom; delay:100;"></span>' . $quickAddButtons . '</div>';
             $quickAddMainBottom = '<div class="pg-quick-add pg-quick-add-main-bottom" data-id-original="' . $wrapperPage->id . '" data-id="' . $wrapperPage->id . '"><span class="pg-quick-add-icon" uk-tooltip="title:Append Item; pos:bottom; delay:100;"></span>' . $quickAddButtons . '</div>';
+            }
         }
 
         //render language tabs to switch iframe language
@@ -433,14 +495,15 @@ class InputfieldPageGrid extends Inputfield {
         }
 
 
-        $renderMarkup = $topNav . $settings . '<div class="pg-container pg-container-' . $this->name . '" data-page-title="' . $mainPage->title . '" data-page="' . $editID . '" data-id="' . $this->pages->get('pg-classes')->id . '" data-animations-id="' . $this->pages->get('pg-animations')->id . '" data-field="' . $this->name . '" data-site-url="' . $this->config->urls->site . '" data-module-url="' . $this->config->urls->siteModules . 'FieldtypePageGrid/" data-admin-url="' . $this->page->rootParent->url() . 'setup/pagegrid/" data-fallbackfonts="' . $this->ft->fallbackFonts . '" data-font-url="' . $this->getFontPath(false) . '">' . $addItems . $dataGlobal . $blueprintSelect;
+        $renderMarkup = $topNav . $settings . '<div class="pg-container pg-container-' . $this->name . '" data-page-title="' . $mainPage->title . '" data-page="' . $editID . '" data-has-draft="' . ($draftExists ? '1' : '0') . '" data-show-draft="' . ($showDraft ? '1' : '0') . '" data-id="' . $this->pages->get('pg-classes')->id . '" data-animations-id="' . $this->pages->get('pg-animations')->id . '" data-field="' . $this->name . '" data-site-url="' . $this->config->urls->site . '" data-module-url="' . $this->config->urls->siteModules . 'FieldtypePageGrid/" data-admin-url="' . $this->page->rootParent->url() . 'setup/pagegrid/" data-fallbackfonts="' . $this->ft->fallbackFonts . '" data-font-url="' . $this->getFontPath(false) . '">' . $addItems . $dataGlobal . $blueprintSelect;
         //loading animation
         $renderMarkup .= '<div class="pg-loading"><div class="fa fa-spin fa-spinner fa-fw"></div></div>';
         //container for item header (item header will be moved here with js)
         $renderMarkup .= $this->renderIconPicker();
         $renderMarkup .= '<div class="pg-item-header-container"></div>';
         $renderMarkup .= $languageTabs;
-        $renderMarkup .= '<iframe data-field="' . $this->name . '" id="pg-iframe-canvas-' . $this->name . '" class="pg-iframe-canvas" src="' . $iframeUrl . '?backend=1&field=' . $this->name . '&page=' . $mainPage->id . '" loading="lazy" frameBorder="0" scrolling="no" style="width:100%; max-height:100vh; border:0;"></iframe>';
+        $draftParam = ($this->wire('input')->get('showDraft') && $draftExists) ? '&pg-draft=1' : '';
+        $renderMarkup .= '<iframe data-field="' . $this->name . '" id="pg-iframe-canvas-' . $this->name . '" class="pg-iframe-canvas" src="' . $iframeUrl . '?backend=1&field=' . $this->name . '&page=' . $mainPage->id . $draftParam . '" loading="lazy" frameBorder="0" scrolling="no" style="width:100%; max-height:100vh; border:0;"></iframe>';
         $renderMarkup .= $quickAddMain;
         $renderMarkup .= $quickAddMainBottom;
         $renderMarkup .= '</div>';
@@ -485,7 +548,7 @@ class InputfieldPageGrid extends Inputfield {
      * @param int   $quickAdd        Set to 1 to render a compact quick-add variant.
      * @return string|void Rendered HTML for the add-item bar, or void if not permitted.
      */
-    public function renderAddItemBar($getSymbolsOnly = 0, $templatesArray = [], $quickAdd = 0) {
+    public function renderAddItemBar($getSymbolsOnly = 0, $templatesArray = [], $quickAdd = 0, $symbolIds = null, $hideSymbols = false) {
         $user = $this->user;
 
         //if no quick add and no permissions not allow add item bar for dragging
@@ -535,12 +598,15 @@ class InputfieldPageGrid extends Inputfield {
                 if (!$template->id) continue;
                 if ($template->name == 'pg_container' || $template->name == 'admin' || $template->name == 'home') continue;
 
-                if (!$user->isSuperuser() && $template->useRoles) {
-                    $canCreate = 0;
-                    foreach ($user->roles as $role) {
-                        if (in_array($role->id, $template->createRoles)) $canCreate = 1;
+                if (!$user->isSuperuser() && !count($templatesArray)) {
+                    $pgContainer = $this->templates->get('pg_container');
+                    $hasContainerCreate = $pgContainer && $user->hasPermission('page-create', $pgContainer);
+
+                    if ($template->useRoles) {
+                        if (!$user->hasPermission('page-create', $template)) continue;
+                    } else {
+                        if (!$hasContainerCreate) continue;
                     }
-                    if (!$canCreate) continue;
                 }
 
                 // keep this line for future updates, makes it possible to add items via modal if link is clicked, maybe alternative for non super users oneday
@@ -558,51 +624,57 @@ class InputfieldPageGrid extends Inputfield {
         }
 
         //add symbols
-        $addItems .= '<div class="pg-add-symbol-container">';
-        $symbolParent = $this->pages->get("name=pg-symbols, template=pg_container");
-        $symbols = $symbolParent->children('sort=created');
-        $linkedPages = $this->database->query("SELECT source_id FROM pages_meta WHERE name = 'pg_symbol'");
-        $linkedPages = implode("|", $linkedPages->fetchAll(\PDO::FETCH_COLUMN, 0));
-        $linkedPages = $this->pages->getByIDs($linkedPages);
+        if (!$hideSymbols) {
+            $addItems .= '<div class="pg-add-symbol-container">';
+            $symbolParent = $this->pages->get("name=pg-symbols, template=pg_container");
+            $symbols = $symbolParent->children('sort=created');
+            $linkedPages = $this->database->query("SELECT source_id FROM pages_meta WHERE name = 'pg_symbol'");
+            $linkedPages = implode("|", $linkedPages->fetchAll(\PDO::FETCH_COLUMN, 0));
+            $linkedPages = $this->pages->getByIDs($linkedPages);
 
-        //sort symbols
-        $syncedSymbols = new PageArray();
-        $unSyncedSymbols = new PageArray();
+            //sort symbols
+            $syncedSymbols = new PageArray();
+            $unSyncedSymbols = new PageArray();
 
-        foreach ($symbols as $symbol) {
-            if (!$user->hasPermission("pagegrid-symbol-add-$symbol->id")) continue;
+            foreach ($symbols as $symbol) {
+                if (is_array($symbolIds)) {
+                    if (!in_array($symbol->id, $symbolIds)) continue;
+                } else {
+                    if (!$user->hasPermission("pagegrid-symbol-add-$symbol->id")) continue;
+                }
 
-            $sync = $symbol->meta()->pg_sync === 0 ? 0 : 1;
-            if ($sync) $syncedSymbols->add($symbol);
-            if (!$sync) $unSyncedSymbols->add($symbol);
-        }
-
-        $symbolsSorted = new PageArray();
-        $symbolsSorted->add($syncedSymbols);
-        $symbolsSorted->add($unSyncedSymbols);
-
-        foreach ($symbolsSorted as $symbol) {
-            $sync = $symbol->meta()->pg_sync === 0 ? 0 : 1;
-            $icon = $symbol->meta()->pg_icon ? $symbol->meta()->pg_icon : $symbol->template->icon;
-
-            if (!$icon) {
-                $tIcon = '<div class="pg-iconletter">' . substr($symbol->title, 0, 1) . '</div>';
-            } else {
-                $tIcon = wireIconMarkup($icon);
+                $sync = $symbol->meta()->pg_sync === 0 ? 0 : 1;
+                if ($sync) $syncedSymbols->add($symbol);
+                if (!$sync) $unSyncedSymbols->add($symbol);
             }
 
-            $linkedPagesCount = 0;
-            foreach ($linkedPages as $lp) {
-                if ($lp->meta()->pg_symbol !== null && $lp->meta()->pg_symbol == $symbol->id && $lp->parent->name !== 'trash') {
-                    $linkedPagesCount++;
+            $symbolsSorted = new PageArray();
+            $symbolsSorted->add($syncedSymbols);
+            $symbolsSorted->add($unSyncedSymbols);
+
+            foreach ($symbolsSorted as $symbol) {
+                $sync = $symbol->meta()->pg_sync === 0 ? 0 : 1;
+                $icon = $symbol->meta()->pg_icon ? $symbol->meta()->pg_icon : $symbol->template->icon;
+
+                if (!$icon) {
+                    $tIcon = '<div class="pg-iconletter">' . substr($symbol->title, 0, 1) . '</div>';
+                } else {
+                    $tIcon = wireIconMarkup($icon);
+                }
+
+                $linkedPagesCount = 0;
+                foreach ($linkedPages as $lp) {
+                    if ($lp->meta()->pg_symbol !== null && $lp->meta()->pg_symbol == $symbol->id && $lp->parent->name !== 'trash') {
+                        $linkedPagesCount++;
+                    }
+                }
+                if ($user->isSuperuser() || $user->hasRole('pagegrid-admin') || $user->hasRole('pagegrid-designer') || $user->hasPermission('pagegrid-symbol-add') || is_array($symbolIds)) {
+                    $addItems .= '<div class="pg-add pg-add-symbol" data-sync="' . $sync . '" data-id="' . $symbol->id . '" data-template-id="' . $symbol->template->id . '" template="' . $symbol->template->name . '">' . $tIcon . '<span class="ui-button-text"><span class="pg-symbol-title">' . $symbol->title . '</span><span class="pg-symbol-number">' . $linkedPagesCount . '</span></span></div>';
                 }
             }
-            if ($user->isSuperuser() || $user->hasRole('pagegrid-admin') || $user->hasRole('pagegrid-designer') || $user->hasPermission('pagegrid-symbol-add')) {
-                $addItems .= '<div class="pg-add pg-add-symbol" data-sync="' . $sync . '" data-id="' . $symbol->id . '" data-template-id="' . $symbol->template->id . '" template="' . $symbol->template->name . '">' . $tIcon . '<span class="ui-button-text"><span class="pg-symbol-title">' . $symbol->title . '</span><span class="pg-symbol-number">' . $linkedPagesCount . '</span></span></div>';
-            }
-        }
 
-        $addItems .= '</div>';
+            $addItems .= '</div>';
+        }
         //END add symbols
 
         if (!$getSymbolsOnly) {
@@ -642,6 +714,11 @@ class InputfieldPageGrid extends Inputfield {
         $backend = $this->isBackend();
         $statusClass = '';
         $itemsParent = $this->pages->get('pg-' . $mainPage->id);
+
+        if ($this->user->isLoggedin() && $this->wire('input')->get('pg-draft') && $this->user->hasPermission('pagegrid-draft')) {
+            $draft = $this->pages->get("name=pg-draft-{$mainPage->id}-1, template=pg_container");
+            if ($draft->id) $itemsParent = $draft;
+        }
         $layout = "";
         $fieldCount = count($mainPage->fields->find('type=FieldtypePageGrid'));
 
@@ -704,7 +781,7 @@ class InputfieldPageGrid extends Inputfield {
 
         //END NEW support for multiple fields
 
-        $pagesToRender = $itemsParent->children();
+        $pagesToRender = $backend ? $itemsParent->children('include=all') : $itemsParent->children();
         foreach ($pagesToRender as $p) {
             $layout .= $this->renderItem($p);
         }
@@ -759,7 +836,7 @@ class InputfieldPageGrid extends Inputfield {
 
             $statusClass = '';
 
-            if ($this->user->hasPermission('pagegrid-drag')) $statusClass .= 'pg-sortable';
+            $statusClass .= 'pg-sortable';
             if ($this->user->hasPermission('pagegrid-select'))  $statusClass .= " pg-permission-select";
 
             $out = '<div id="' . $itemsParent->name . '" class="pg-is-backend pg-wrapper pg-item pg-main pg-droppable pg ' . $this->getCssClasses($itemsParent) . ' ' . $statusClass . '" data-id="' . $itemsParent->id . '" data-field="' . $field->name . '">' . $layout . '</div>';
@@ -1216,7 +1293,7 @@ class InputfieldPageGrid extends Inputfield {
         $layoutTitle = $title ? $title : $layoutTitle;
         $statusClass = $this->getStatusClasses($p);
         $isPgPage = count($p->parents('template=pg_container'));
-        $addButton = isset($options['children']) && $options['children'] ? 1 : 0;
+        $addButton = (isset($options['children']) && $options['children']) || $this->ft->templateHasChildren($p->template) || $p->template->childTemplates ? 1 : 0;
 
         //disbale inline edit on title field
         $p->edit(false);
@@ -1235,27 +1312,58 @@ class InputfieldPageGrid extends Inputfield {
         }
 
         // use custom html element for header, to be able to nest inside "<a>"
-        if ($p->editable() && $user->hasPermission('page-pagegrid-edit', $p)) {
+        if ($user->hasPermission('page-edit', $p) && $user->hasPermission('page-pagegrid-edit', $p)) {
             $header .= '<pg-item-header id="pg-item-header-' . $pOriginal->id . '" data-id="' . $p->id . '" data-id-original="' . $pOriginal->id . '" class="pg-item-header' . $statusClass . '">';
             $header .= '<span>' . $layoutTitle . '</span>';
 
             //quick add button
             // <i class="fa fw fa-plus" title="Add Item"></i>
             // if ($addButton) $header .= '<a class="pg-quick-add pg-edit" href="#" data-url="/admin/page/add/?parent_id=' . $p->id . '&template_id=' . $this->templates->get('pg_editor')->id . '&pgquickadd=1&modal=1&pgmodal=1">+</a>';
-            if ($addButton && $user->hasPermission('page-add', $p)) {
-                $childrenTemplatesArray = isset($options['children']) && is_array($options['children']) ? $options['children'] : [];
-                // if template->childTemplate is set via admin and not superuser, use settings
-                // $childrenTemplatesArray = [];
-                if ($p->template->childTemplates && !$user->isSuperuser()) {
-                    $childrenTemplates = $p->template->childTemplates;
-                    foreach ($childrenTemplates as $childTemplate) {
-                        $childTemplate = $this->templates->get($childTemplate);
-                        if ($childTemplate->id)  $childrenTemplatesArray[] = $childTemplate;
+            if ($addButton && $this->ft->hasPgPermissions('page-add', $p)) {
+                $childrenTemplatesArray = [];
+                $meta = json_decode((string) $p->meta('pg_permissions'), true);
+                $hadRestrictions = false;
+                $hasContainerCreate = $user->hasPermission('page-create', $this->templates->get('pg_container'));
+
+                $canCreate = function($t) use ($user, $hasContainerCreate) {
+                    if (!$t || !$t->id) return false;
+                    if ($t->useRoles) return $user->hasPermission('page-create', $t);
+                    return $hasContainerCreate;
+                };
+
+                if ($user->isSuperuser()) {
+                    $childrenTemplatesArray = [];
+                } elseif (!empty($meta['children'])) {
+                    $hadRestrictions = true;
+                    foreach ($meta['children'] as $name) {
+                        $t = $this->templates->get($name);
+                        if ($t && $t->id) $childrenTemplatesArray[] = $t->name;
+                    }
+                } elseif ($p->template->childTemplates) {
+                    $hadRestrictions = true;
+                    foreach ($p->template->childTemplates as $childTemplateId) {
+                        $t = $this->templates->get($childTemplateId);
+                        if ($canCreate($t)) $childrenTemplatesArray[] = $t->name;
+                    }
+                } elseif (isset($options['children']) && is_array($options['children'])) {
+                    $hadRestrictions = true;
+                    foreach ($options['children'] as $name) {
+                        $t = $this->templates->get($name);
+                        if ($canCreate($t)) $childrenTemplatesArray[] = $t->name;
                     }
                 }
-                // bd($childrenTemplates);
-                $quickAddButtons = $this->renderAddItemBar(0, $childrenTemplatesArray, 1);
-                $header .= '<div class="pg-quick-add" data-id-original="' . $pOriginal->id . '" data-id="' . $p->id . '"><span class="pg-quick-add-icon" uk-tooltip="title:Add Item to ' . $layoutTitle . '; pos:bottom; delay:100;"></span>' . $quickAddButtons . '</div>';
+
+                $symbolIds = (!$user->isSuperuser() && isset($meta['symbols']) && is_array($meta['symbols'])) ? $meta['symbols'] : null;
+
+                $hasTemplates = $hadRestrictions ? !empty($childrenTemplatesArray) : true;
+                $hasSymbols = !empty($symbolIds);
+                if ($hasTemplates || $hasSymbols) {
+                    $isSynced = $pOriginal->meta('pg_symbol') ? true : false;
+                    $quickAddButtons = $this->renderAddItemBar(0, $childrenTemplatesArray, 1, $symbolIds, $isSynced);
+                    if (strpos($quickAddButtons, 'pg-add ') !== false) {
+                        $header .= '<div class="pg-quick-add" data-id-original="' . $pOriginal->id . '" data-id="' . $p->id . '"><span class="pg-quick-add-icon" uk-tooltip="title:Add Item to ' . $layoutTitle . '; pos:bottom; delay:100;"></span>' . $quickAddButtons . '</div>';
+                    }
+                }
             }
             //edit
             $header .= '<pg-item-header-button class="pg-edit" uk-tooltip="' . $this->_('Edit') . '" data-url="./?id=' . $p->id . '&amp;modal=1&pgmodal=1" href="#"><i class="fa fa-pencil"></i></pg-item-header-button>';
@@ -1299,19 +1407,18 @@ class InputfieldPageGrid extends Inputfield {
         if (!$this->isBackend()) return $statusClass;
 
         //set css classes
-        if ($p->editable() == 0) $statusClass .= " pg-no-edit";
+        if (!$user->hasPermission('page-edit', $p)) $statusClass .= " pg-no-edit";
         if ($user->hasPermission('page-pagegrid-edit', $p) == 0) $statusClass .= " pg-no-edit";
         if ($p->is(Page::statusUnpublished)) $statusClass .= " pg-unpublished";
         if ($p->is(Page::statusHidden)) $statusClass .= " pg-hidden";
         if ($p->is(Page::statusLocked)) $statusClass .= " pg-locked";
-        if (!($user->hasPermission('page-edit', $p))) $statusClass .= " pg-locked";
-        if ($user->hasPermission('pagegrid-drag')) $statusClass .= " pg-item-draggable";
-        if ($user->hasPermission('pagegrid-resize')) $statusClass .= " pg-item-resizable";
+        if ($this->ft->hasPgPermissions('pagegrid-drag', $p)) $statusClass .= " pg-item-draggable";
+        if ($this->ft->hasPgPermissions('pagegrid-resize', $p)) $statusClass .= " pg-item-resizable";
         if ($user->hasPermission('pagegrid-select'))  $statusClass .= " pg-permission-select";
         if ($user->hasPermission('pagegrid-style-panel'))  $statusClass .= " pg-permission-style-panel";
-        if ($user->hasPermission('page-add', $p)) $statusClass .= " pg-permission-add";
+        if ($this->ft->hasPgPermissions('page-add', $p)) $statusClass .= " pg-permission-add";
         if ($user->hasPermission('page-create', $p)) $statusClass .= " pg-permission-create";
-        if ($user->hasPermission('page-delete', $p)) $statusClass .= " pg-permission-delete";
+        if ($this->ft->hasPgPermissions('page-delete', $p)) $statusClass .= " pg-permission-delete";
         if ($user->hasPermission('page-clone', $p) && $user->hasPermission('page-create', $p)) $statusClass .= " pg-permission-clone";
         if ($p->is(Page::statusUnpublished)) $statusClass .= " pg-unpublished";
         if ($p->is(Page::statusHidden)) $statusClass .= " pg-hidden";
@@ -1482,14 +1589,19 @@ class InputfieldPageGrid extends Inputfield {
         $items = new PageArray();
         $itemsParent = $this->pages->get('pg-' . $mainPage->id);
 
+        if ($this->user->isLoggedin() && $this->wire('input')->get('pg-draft')) {
+            $draft = $this->pages->get("name=pg-draft-{$mainPage->id}-1, template=pg_container");
+            if ($draft->id) $itemsParent = $draft;
+        }
+
         if ($itemsParent->id) {
             //getAncestors returns parent and grandchildren. needed because of bug. $page->find('') is not returning all pages
-            $items->add($this->getAncestors($itemsParent));
+            $items->add($this->getAncestors($itemsParent, 20, $backend));
             //on multilanguage pages sometimes don't return children
-            if (count($items) <= 1) $items->add($itemsParent->find(''));
+            if (count($items) <= 1) $items->add($itemsParent->find($backend ? 'include=all' : ''));
         } else {
             //getAncestors returns parent and grandchildren. needed because of bug. $page->find('') is not returning all pages
-            $items->add($this->getAncestors($mainPage));
+            $items->add($this->getAncestors($mainPage, 20, $backend));
         }
 
         foreach ($items as $item) {
@@ -2068,6 +2180,11 @@ class InputfieldPageGrid extends Inputfield {
         $itemsArray = new PageArray();
         $itemsParent = $this->pages->get('pg-' . $mainPage->id);
 
+        if ($this->user->isLoggedin() && $this->wire('input')->get('pg-draft')) {
+            $draft = $this->pages->get("name=pg-draft-{$mainPage->id}-1, template=pg_container");
+            if ($draft->id) $itemsParent = $draft;
+        }
+
         //load backend css only if rendering page with pg field
         if ($backend && $itemsParent->id) {
             $cssBackendUrl = wire('config')->urls->InputfieldPageGrid . "css/main.css";
@@ -2086,12 +2203,12 @@ class InputfieldPageGrid extends Inputfield {
         //get items
         if ($itemsParent->id) {
             //getAncestors returns parent and grandchildren. needed because of bug. $page->find('') is not returning all pages
-            $pageItems = $this->getAncestors($itemsParent);
+            $pageItems = $this->getAncestors($itemsParent, 20, $backend);
 
             // for some multilang pages getAncestors is not returning the children, so get them as a backup like this
             // with multi lang we also need to make sure to get all containers (for some reason find is not returning all of them)
             if (count($pageItems) <= 1) {
-                $pageItems = $itemsParent->find('');
+                $pageItems = $backend ? $itemsParent->find('include=all') : $itemsParent->find('');
                 $rootPath = $itemsParent->url('');
                 foreach ($mainPage->fields as $f) {
                     if ($f->type instanceof FieldtypePageGrid) {
@@ -2108,7 +2225,25 @@ class InputfieldPageGrid extends Inputfield {
                     $symbolId = $pageItem->meta('pg_symbol');
                     $symbol = $this->pages->get($symbolId);
                     if ($symbol && $symbol->id && $symbol->hasChildren()) {
-                        $itemsArray->add($this->getAncestors($symbol));
+                        $itemsArray->add($this->getAncestors($symbol, 20, $backend));
+                    }
+                }
+            }
+
+            // prevent overlap when multiple instances of the same symbol exist on a page
+            $symbolCounts = [];
+            foreach ($pageItems as $pageItem) {
+                if ($pageItem->meta('pg_symbol') !== null && $pageItem->meta('pg_symbol')) {
+                    $k = $pageItem->meta('pg_symbol');
+                    $symbolCounts[$k] = ($symbolCounts[$k] ?? 0) + 1;
+                }
+            }
+            foreach ($symbolCounts as $symbolId => $count) {
+                if ($count > 1) {
+                    $s = $this->pages->get((int) $symbolId);
+                    if ($s->id) {
+                        $rule = '.' . $s->name . '.' . $s->name . '.' . $s->name . '{grid-row-start:auto;}';
+                        $itemCss .= $backend ? '<style class="pg-style">' . $rule . '</style>' : $rule;
                     }
                 }
             }
@@ -2359,11 +2494,12 @@ class InputfieldPageGrid extends Inputfield {
      * @param int  $level Maximum recursion depth (default 20).
      * @return PageArray All collected pages including $p and its descendants.
      */
-    public function getAncestors($p, $level = 20) {
+    public function getAncestors($p, $level = 20, $includeAll = false) {
         $retPages = (new PageArray())->add($p);
         if ($level > 0) {
-            foreach ($p->children as $child)
-                $retPages->add($this->getAncestors($child, $level - 1));
+            $children = $includeAll ? $p->children('include=all') : $p->children('include=hidden');
+            foreach ($children as $child)
+                $retPages->add($this->getAncestors($child, $level - 1, $includeAll));
         }
 
         // $p->parents()->rebuildAll();

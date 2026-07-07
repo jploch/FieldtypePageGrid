@@ -21,7 +21,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID Page Builder'),
       'summary' => __('PAGEGRID is a visual page builder for ProcessWire that gives developers full control while enabling designers and editors to create responsive layouts without coding.', __FILE__),
-      'version' => '2.2.170',
+      'version' => '2.3.0',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -35,6 +35,8 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
         'pagegrid-resize' => 'Resize PAGEGRID items',
         'pagegrid-style-panel' => 'Enable styling of PAGEGRID items',
         'pagegrid-add' => 'Use the sidebar to drag new PAGEGRID items to the page (also needs pagegrid-drag permission to work)',
+        'pagegrid-settings-tab' => 'Show the Settings tab in the PAGEGRID modal edit view',
+        'pagegrid-draft' => 'Create and manage PAGEGRID drafts',
       ),
     );
   }
@@ -195,6 +197,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
 
     // create global system containers
     $this->createSystemContainer('pg-items',      'Items',      $adminPage, true);
+    $this->createSystemContainer('pg-drafts',     'Drafts',     $adminPage, true);
     $this->createSystemContainer('pg-classes',    'Classes',    $adminPage, true);
     $this->createSystemContainer('pg-animations', 'Animations', $adminPage, true);
     $this->createSystemContainer('pg-blueprints', 'Blueprints', $adminPage, false);
@@ -221,6 +224,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     $erole->addPermission("page-view");
     $erole->addPermission("page-edit");
     $erole->addPermission("profile-edit");
+    if ($this->permissions->get('page-pagegrid-edit')->id) $erole->addPermission("page-pagegrid-edit");
 
     $drole->addPermission("page-view");
     $drole->addPermission("page-edit");
@@ -245,6 +249,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
       $permission->title = 'Play PAGEGRID animations in backend';
       $permission->save();
     }
+    $drole->addPermission('page-pagegrid-play');
 
     if (!$this->permissions->get('pagegrid-select')->id) {
       $permission = $this->permissions->add("pagegrid-select");
@@ -267,6 +272,22 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
       $permission->save();
     }
     $drole->addPermission($permission->name);
+
+    //pagegrid-settings-tab
+    if (!$this->permissions->get('pagegrid-settings-tab')->id) {
+      $permission = $this->permissions->add("pagegrid-settings-tab");
+      $permission->title = 'Show the Settings tab in the PAGEGRID modal edit view';
+      $permission->save();
+    }
+
+    //pagegrid-draft
+    if (!$this->permissions->get('pagegrid-draft')->id) {
+      $permission = $this->permissions->add("pagegrid-draft");
+      $permission->title = 'Create and manage PAGEGRID drafts';
+      $permission->save();
+      $drole->addPermission('pagegrid-draft');
+      $erole->addPermission('pagegrid-draft');
+    }
 
     //setup permission
     if (!$this->permissions->get('pagegrid-setup')->id) {
@@ -466,6 +487,9 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     $container = $this->pages->get("name=pg-items, template=pg_container");
     if (!$container->id) $this->createModule();
 
+    $container = $this->pages->get("name=pg-drafts, template=pg_container");
+    if (!$container->id) $this->createModule();
+
     $container = $this->pages->get("name=pg-animations, template=pg_container");
     if (!$container->id) $this->createModule();
 
@@ -519,14 +543,23 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     $this->addHookAfter('Pages::cloned', $this, "clone");
     $this->addHookBefore('Page::changed(0:title)', $this, "titleChanged");
     $this->addHookAfter('Pages::delete', $this, "delete");
+    $this->addHookAfter('Pages::delete', $this, "deleteDraft");
     $this->addHookAfter('ProcessPageList::find', $this, "hideDummies");
     $this->addHookAfter('Pages::added', $this, "copyFromBlueprint");
     $this->addHookAfter('Pages::added', $this, "activateLanguages");
     $this->addHookAfter("Pages::save", $this, "autoPuplish");
-    $this->addHookAfter("ProcessPageEdit::buildForm", $this, "modalEdit");
+    $this->addHookAfter('ProcessPageEdit::buildForm', $this, "modalEdit");
+    $this->addHookAfter('ProcessPageEdit::buildForm', $this, "draftTabs");
+    $this->addHookAfter('ProcessPageEdit::getTabs', $this, 'draftTabsOrder');
+    $this->addHookAfter('ProcessPageEdit::buildFormSettings', $this, 'filterTemplateSelect');
+    $this->addHookAfter('ProcessPageEdit::processInput', $this, 'savePgPermissions');
+    $this->addHookAfter('User::hasPagePermission', $this, 'hookHasPagePermission');
+    $this->addHookAfter('Page::sortable', $this, 'hookPageSortable');
+    $this->addHookAfter('ProcessPageEdit::buildFormChildren', $this, 'hookBuildFormChildren');
     $this->addHookBefore('ProcessPageAdd::buildForm', $this, "quickAdd");
     $this->addHookAfter('ProcessPageAdd::buildForm', $this, "pageAddForm");
     $this->addHookBefore('ProcessPageEdit::execute', $this, 'blueprintReady');
+    $this->addHookBefore('ProcessPageEdit::execute', $this, 'draftActions');
     $this->addHookAfter('ProcessTemplate::executeAdd', $this, "addTemplate");
     $this->addHookBefore('ProcessTemplate::buildEditForm', $this, "setTemplateFile");
     $this->addHookBefore('ProcessTemplate::getListTableRow', $this, "setTemplateFile");
@@ -822,6 +855,121 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
   }
 
   /**
+   * Handles draft actions (create, publish, discard) via URL parameters on the page edit screen.
+   *
+   * @param HookEvent $event Hook event from ProcessPageEdit::execute.
+   */
+  public function draftActions($event) {
+    $action = $this->wire('input')->get('pg-draft');
+    if (!$action || !in_array($action, ['create', 'publish', 'discard'])) return;
+
+    $page = $event->object->getPage();
+    if (!$page || !$page->id) return;
+
+    if (!$this->user->isSuperuser() && !$this->user->hasPermission('pagegrid-draft')) return;
+
+    if ($action === 'create') $this->createDraft($page->id);
+    elseif ($action === 'publish') $this->publishDraft($page->id);
+    elseif ($action === 'discard') $this->discardDraft($page->id);
+
+    $this->wire('session')->redirect($page->editUrl() . ($action === 'create' ? '&showDraft=1' : ''));
+  }
+
+  /**
+   * Adds draft tabs (Live/Draft/Create Draft) to the PageEdit tab navigation.
+   *
+   * @param HookEvent $event Hook event from ProcessPageEdit::buildForm.
+   */
+  public function draftTabs($event) {
+    if ($this->process != 'ProcessPageEdit') return;
+    if (!$this->wire('input')->get('showDraft')) return;
+
+    if (!$this->user->isSuperuser() && !$this->user->hasPermission('pagegrid-draft')) {
+      $page = $event->object->getPage();
+      if ($page && $page->id) {
+        $this->wire('session')->redirect($page->editUrl());
+      }
+    }
+
+    $page = $event->object->getPage();
+    if ($page && $page->id) {
+      $draft = $this->pages->get("name=pg-draft-{$page->id}-1, template=pg_container");
+      if (!$draft->id) {
+        $this->wire('session')->redirect($page->editUrl());
+      }
+    }
+
+    // TODO: When ProcessWire's PagesVersions module (wire/modules/Pages/PagesVersions/)
+    // reaches the master release, consider using savePageVersion(1) / restorePageVersion(1)
+    // / deletePageVersion(1) instead of hiding non-PageGrid fields. This would provide
+    // a full-page draft experience without manual field filtering.
+
+    $form = $event->return;
+    $contentTab = $form->children->get('id=ProcessPageEditContent');
+
+    // Move all PageGrid fields into the Content tab
+    foreach ($form->children as $tab) {
+      if (!$tab instanceof InputfieldWrapper) continue;
+      foreach ($tab->children as $field) {
+        $f = $field->hasField ? $field->hasField : null;
+        if ($f && $f->type instanceof FieldtypePageGrid) {
+          $tab->remove($field);
+          $contentTab->append($field);
+        }
+      }
+    }
+
+    // Remove all tabs except Content
+    $removeTabs = array();
+    foreach ($form->children as $tab) {
+      if ($tab->attr('id') !== 'ProcessPageEditContent' && $tab instanceof InputfieldWrapper) {
+        $removeTabs[] = $tab;
+      }
+    }
+    foreach ($removeTabs as $tab) {
+      $id = $tab->attr('id');
+      $form->remove($tab);
+      if ($id) $event->object->removeTab($id);
+    }
+
+    $form->appendMarkup(
+      '<style>'
+      . '#ProcessPageEditContent .Inputfield:not(.InputfieldPageGrid):not(.InputfieldWrapper){display:none!important;}'
+      . '#pw-content-head-buttons{display:none!important;}'
+      . '#wrap_submit_save{display:none!important;}'
+      . '#wrap_submit_save_unpublished{display:none!important;}'
+      . '#_ProcessPageEditView{display:none!important;}'
+      . '#ProcessPageEditTabs{display:none!important;}'
+      . '#PageEditTabs{display:none!important;}'
+      . 'body.AdminThemeUikit.hideTabs .pg-settings-dropdown #ProcessPageEditTabs,'
+      . 'body.AdminThemeUikit.hideTabs .pg-settings-dropdown #PageEditTabs{display:none!important;}'
+      . '#pg-tabs-nav-wrapper .pg-settings-divider{display:none!important;}'
+      . '#pg-tabs-nav-wrapper:not(:has(.pg-settings-nav li)){display:none!important;}'
+      . '</style>'
+    );
+  }
+
+  /**
+   * Moves draft tabs after the Content tab in the PageEdit tab navigation.
+   *
+   * @param HookEvent $event Hook event from ProcessPageEdit::getTabs.
+   */
+  public function draftTabsOrder($event) {
+    $tabs = $event->return;
+    $ordered = [];
+    $draftKeys = ['PgDraftDraft'];
+    foreach ($tabs as $id => $label) {
+        $ordered[$id] = $label;
+        if ($id === 'ProcessPageEditContent') {
+            foreach ($draftKeys as $dk) {
+                if (isset($tabs[$dk])) $ordered[$dk] = $tabs[$dk];
+            }
+        }
+    }
+    $event->return = $ordered;
+  }
+
+  /**
    * Sets the template file for the pg_blueprint template to the module's bundled file.
    *
    * @return void
@@ -901,6 +1049,397 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
   }
 
   /**
+   * Checks if a template is a PageGrid block template.
+   * A block template has a corresponding PHP file in site/templates/blocks/
+   * or site/modules/PageGridBlocks/blocks/.
+   *
+   * @param Template|string $template Template object or template name.
+   * @return bool
+   */
+  public function isBlockTemplate($template) {
+    $name = is_object($template) ? $template->name : $template;
+    if (file_exists($this->config->paths->templates . 'blocks/' . $name . '.php')) return true;
+    if (file_exists($this->config->paths->siteModules . 'PageGridBlocks/blocks/' . $name . '.php')) return true;
+    return false;
+  }
+
+  /**
+   * Checks if a template's block file contains pg-children, indicating it supports child items.
+   *
+   * @param Template|string $template Template object or template name.
+   * @return bool
+   */
+  public function templateHasChildren($template) {
+    $name = is_object($template) ? $template->name : $template;
+    $paths = array(
+      $this->config->paths->templates . 'blocks/' . $name . '.php',
+      $this->config->paths->siteModules . 'PageGridBlocks/blocks/' . $name . '.php',
+    );
+    foreach ($paths as $path) {
+      if (file_exists($path) && strpos(file_get_contents($path), 'pg-children') !== false) return true;
+    }
+    return false;
+  }
+
+  /**
+   * Checks whether the current user has a PageGrid permission for a given page,
+   * using the page's parent meta (pg_permissions) as an override layer.
+   * Falls back to the global permission if no parent-level grant is found.
+   *
+   * @param string $permission Permission name.
+   * @param Page   $page       The item page (permission is checked against its parent).
+   * @return bool
+   */
+  public function hasPgPermissions($permission, $page) {
+    $user = $this->user;
+    if ($user->isSuperuser()) return true;
+
+    $meta = json_decode((string) $page->meta('pg_permissions'), true);
+    if (!empty($meta['_manage'])) {
+      if ($permission === 'pagegrid-drag' || $permission === 'pagegrid-resize') return false;
+      if (!empty($meta[$permission])) {
+        foreach ($user->roles as $role) {
+          if (in_array($role->id, $meta[$permission])) return true;
+        }
+      }
+      return false;
+    }
+
+    $parent = $page->parent();
+    while ($parent->id && $parent->template->name === 'pg_container') {
+      $parent = $parent->parent();
+    }
+    if ($parent->id) {
+      $parentMeta = json_decode((string) $parent->meta('pg_permissions'), true);
+      if (!empty($parentMeta['_manage'])) {
+        if (!empty($parentMeta[$permission])) {
+          foreach ($user->roles as $role) {
+            if (in_array($role->id, $parentMeta[$permission])) return true;
+          }
+        }
+        return false;
+      }
+    }
+
+    if ($user->hasPermission($permission, $page)) return true;
+
+    return false;
+  }
+
+  /**
+   * Saves per-group PageGrid permission grants from the page edit form
+   * into the page's meta data.
+   *
+   * Hooks ProcessPageEdit::processInput.
+   *
+   * @param HookEvent $event Hook event from ProcessPageEdit::processInput.
+   * @return void
+   */
+  public function savePgPermissions($event) {
+    if (($event->arguments(1)) > 0) return;
+    $page = $event->object->getPage();
+    if (!$page || !$page->id) return;
+    if (!$this->templateHasChildren($page->template)) return;
+
+    if (!$this->input->post('pg_perm_manage_access')) {
+      $page->meta('pg_permissions', '');
+      return;
+    }
+
+    $input = $this->input;
+    $permissions = array('page-add', 'pagegrid-drag', 'pagegrid-resize', 'page-sort', 'page-move');
+    $data = array();
+    foreach ($permissions as $perm) {
+      $val = $input->post("pg_perm_$perm");
+      if (is_array($val)) {
+        $data[$perm] = array_map('intval', $val);
+      }
+    }
+
+    // Save child template restrictions
+    $childrenVal = $input->post('pg_perm_child_templates');
+    if ($childrenVal !== null) {
+      if (is_array($childrenVal)) {
+        $templateIds = array_map('intval', $childrenVal);
+        $templateNames = array();
+        foreach ($templateIds as $id) {
+          $t = $this->templates->get($id);
+          if ($t && $t->id) $templateNames[] = $t->name;
+        }
+        $data['children'] = $templateNames;
+      }
+    }
+
+    // Save symbol restrictions
+    $symbolsVal = $input->post('pg_perm_symbols');
+    if ($symbolsVal !== null) {
+      if (is_array($symbolsVal)) {
+        $data['symbols'] = array_map('intval', $symbolsVal);
+      }
+    }
+
+    $data['_manage'] = true;
+    $page->meta('pg_permissions', json_encode($data));
+  }
+
+  /**
+   * Intercepts user permission checks and grants PageGrid permissions based on
+   * per-group pg_permissions meta, for both the given page and its parent.
+   *
+   * Hooks User::hasPagePermission so all code paths (ProcessPageSort,
+   * ProcessPageEdit, ProcessPageGrid, etc.) automatically respect per-group grants.
+   *
+   * @param HookEvent $event Hook event from User::hasPagePermission.
+   * @return void
+   */
+  public function hookHasPagePermission($event) {
+    $permission = $event->arguments(0);
+    $page = $event->arguments(1);
+
+    $pgPermissions = array('page-add', 'pagegrid-drag', 'pagegrid-resize', 'page-sort', 'page-move');
+    if (!in_array($permission, $pgPermissions)) return;
+    if (!$page instanceof Page || !$page->id) return;
+
+    $user = $event->object;
+    if ($user->isSuperuser()) return;
+
+    $meta = json_decode((string) $page->meta('pg_permissions'), true);
+    if (!empty($meta['_manage'])) {
+      if ($permission === 'pagegrid-drag' || $permission === 'pagegrid-resize') { $event->return = false; return; }
+      if (!empty($meta[$permission])) {
+        foreach ($user->roles as $role) {
+          if (in_array($role->id, $meta[$permission])) {
+            $event->return = true;
+            return;
+          }
+        }
+      }
+      $event->return = false;
+      return;
+    }
+
+    $parent = $page->parent();
+    while ($parent->id && $parent->template->name === 'pg_container') {
+      $parent = $parent->parent();
+    }
+    if ($parent->id) {
+      $parentMeta = json_decode((string) $parent->meta('pg_permissions'), true);
+      if (!empty($parentMeta['_manage'])) {
+        if (!empty($parentMeta[$permission])) {
+          foreach ($user->roles as $role) {
+            if (in_array($role->id, $parentMeta[$permission])) {
+              $event->return = true;
+              return;
+            }
+          }
+        }
+        $event->return = false;
+        return;
+      }
+      if (!$event->return && !empty($parentMeta[$permission])) {
+        foreach ($user->roles as $role) {
+          if (in_array($role->id, $parentMeta[$permission])) {
+            $event->return = true;
+            return;
+          }
+        }
+      }
+    }
+
+    if (!$event->return && !empty($meta[$permission])) {
+      foreach ($user->roles as $role) {
+        if (in_array($role->id, $meta[$permission])) {
+          $event->return = true;
+          return;
+        }
+      }
+    }
+  }
+
+  /**
+   * Allows sorting of child pages when the user has page-sort granted via
+   * per-group permissions (pg_permissions meta). Hooks Page::sortable.
+   *
+   * @param HookEvent $event Hook event from Page::sortable.
+   * @return void
+   */
+  public function hookPageSortable($event) {
+    if ($event->return) return;
+    $page = $event->object;
+    if ($this->hasPgPermissions('page-sort', $page)) {
+      $event->return = true;
+    }
+  }
+
+  /**
+   * Injects the sort settings fieldset into the children tab when the user has
+   * page-sort granted via per-group permissions, but ProcessWire's built-in
+   * check would skip it.
+   *
+   * @param HookEvent $event Hook event from ProcessPageEdit::buildFormChildren.
+   * @return void
+   */
+  public function hookBuildFormChildren($event) {
+    $page = $event->object->getPage();
+    if (!$page || !$page->id) return;
+    if ($this->user->hasPermission('page-sort', $page)) return;
+    if (!$this->hasPgPermissions('page-sort', $page)) return;
+
+    $wrapper = $event->return;
+    $fieldset = ProcessPageEdit::buildFormSortfield($page->template->sortfield, $event->object);
+    if ($fieldset) {
+      $fieldset->set('class', 'ProcessPageEditSortSettings');
+      $wrapper->append($fieldset);
+    }
+  }
+
+  /**
+   * Filters template select in the Settings tab for PageGrid items in modal mode:
+   * removes pg_container/pg_blueprint, and for non-superusers limits to block templates only.
+   *
+   * Hooks ProcessPageEdit::buildFormSettings so filtering runs both on initial render
+   * and when the field lazily loads options via AJAX.
+   *
+   * @param HookEvent $event Hook event from ProcessPageEdit::buildFormSettings.
+   * @return void
+   */
+  public function filterTemplateSelect($event) {
+    if ($this->process != 'ProcessPageEdit') return;
+    $page = $event->object->getPage();
+    if (!$page || !$page->id) return;
+
+    $isPageGrid = false;
+    if (isset($_GET['modal']) && count($page->parents('template=pg_container'))) $isPageGrid = true;
+    if (isset($_GET['pgmodal'])) $isPageGrid = true;
+    if (!$isPageGrid) return;
+
+    $wrapper = $event->return;
+
+    //add child permission config for blocks that support children
+    $options = $this->session->get('pg_template_' . $page->template->name) ? json_decode($this->session->get('pg_template_' . $page->template->name), true) : [];
+    if ($this->user->isSuperuser() && (isset($options['children']) || $this->templateHasChildren($page->template))) {
+      $currentPerms = json_decode((string) $page->meta('pg_permissions'), true) ?: array();
+
+      $permFieldset = $this->modules->get('InputfieldFieldset');
+      $permFieldset->name = 'pg_permissions';
+      $permFieldset->label = __('Permissions');
+      $permFieldset->icon = 'key';
+      $permFieldset->description = __('When checked, you can define which roles have access to this item. When unchecked, template and global permissions apply.');
+
+      $manageAccess = $this->modules->get('InputfieldCheckbox');
+      $manageAccess->name = 'pg_perm_manage_access';
+      $manageAccess->checkboxLabel = __('Manage access');
+      $manageAccess->attr('value', '1');
+      if (!empty($currentPerms)) $manageAccess->attr('checked', '1');
+      $manageAccess->collapsed = Inputfield::collapsedNever;
+      $manageAccess->addClass('InputfieldNoBorder', 'wrapClass');
+      $manageAccess->skipLabel = Inputfield::skipLabelHeader;
+      $permFieldset->add($manageAccess);
+
+      $permissions = array(
+        'page-add'        => 'Allow adding new child items to this block',
+        'pagegrid-drag'   => 'Allow dragging items within this block in the editor',
+        'pagegrid-resize' => 'Allow resizing items within this block in the editor',
+        'page-sort'       => 'Allow reordering children of this block',
+        'page-move'       => 'Allow moving child items to a different parent block',
+      );
+      $roles = $this->roles->find("name!=guest, name!=superuser");
+
+      foreach ($permissions as $perm => $desc) {
+        $f = $this->modules->get('InputfieldCheckboxes');
+        $f->name = "pg_perm_$perm";
+        $f->label = $perm;
+        $f->description = $desc;
+        foreach ($roles as $role) {
+          $f->addOption($role->id, $role->name);
+        }
+        if (!empty($currentPerms[$perm])) {
+          $f->value = $currentPerms[$perm];
+        }
+        $f->optionColumns = 1;
+        $f->showIf = 'pg_perm_manage_access=1';
+        $f->addClass('pg-perm-item', 'wrapClass');
+        $permFieldset->add($f);
+      }
+
+      // Allowed child templates
+      $childTemplateField = $this->modules->get('InputfieldCheckboxes');
+      $childTemplateField->name = 'pg_perm_child_templates';
+      $childTemplateField->label = __('Allowed Child Templates');
+      $childTemplateField->description = __('Block templates that can be added as children.');
+      $currentChildren = isset($currentPerms['children']) ? $currentPerms['children'] : [];
+      foreach ($this->templates as $t) {
+        if ($this->isBlockTemplate($t)) {
+          $childTemplateField->addOption($t->id, $t->name);
+        }
+      }
+      if (!empty($currentChildren)) {
+        $selectedIds = [];
+        foreach ($this->templates as $t) {
+          if ($this->isBlockTemplate($t) && in_array($t->name, $currentChildren)) {
+            $selectedIds[] = $t->id;
+          }
+        }
+        $childTemplateField->value = $selectedIds;
+      }
+      $childTemplateField->optionColumns = 1;
+      $childTemplateField->showIf = 'pg_perm_manage_access=1';
+      $childTemplateField->addClass('pg-perm-item', 'wrapClass');
+      $permFieldset->add($childTemplateField);
+
+      // Allowed symbols
+      $symbolParent = $this->pages->get("name=pg-symbols, template=pg_container");
+      if ($symbolParent->id) {
+        $symbolField = $this->modules->get('InputfieldCheckboxes');
+        $symbolField->name = 'pg_perm_symbols';
+        $symbolField->label = __('Allowed Symbols');
+        $symbolField->description = __('Symbols that can be added as children.');
+        $currentSymbols = isset($currentPerms['symbols']) ? $currentPerms['symbols'] : [];
+        foreach ($symbolParent->children('sort=title') as $symbol) {
+          $symbolField->addOption($symbol->id, $symbol->title);
+        }
+        if (!empty($currentSymbols)) {
+          $symbolField->value = $currentSymbols;
+        }
+        $symbolField->optionColumns = 1;
+        $symbolField->showIf = 'pg_perm_manage_access=1';
+        $symbolField->addClass('pg-perm-item', 'wrapClass');
+        $permFieldset->add($symbolField);
+      }
+
+      $statusField = $wrapper->get('status');
+      if ($statusField) {
+        $wrapper->insertAfter($permFieldset, $statusField);
+      } else {
+        $wrapper->add($permFieldset);
+      }
+
+      $wrapper->appendMarkup('<style>#wrap_Inputfield_pg_perm_child_templates li,#wrap_Inputfield_pg_perm_symbols li{float:none!important;width:100%!important}</style>');
+    }
+
+    if (!$wrapper instanceof InputfieldWrapper) return;
+
+    $field = $wrapper->get('template');
+    if (!$field instanceof InputfieldSelect) return;
+
+    foreach ($field->options as $key => $value) {
+      $t = $this->templates->get($key);
+      if (!$t || !$t->id) continue;
+
+      if ($t->name == 'pg_container' || $t->name == 'pg_blueprint') {
+        if ($page->template->name != 'pg_container' && $page->template->name != 'pg_blueprint') {
+          $field->removeOption($key);
+        }
+        continue;
+      }
+
+      if (!$this->user->isSuperuser() && $t->id != $page->template->id && !$this->isBlockTemplate($t)) {
+        $field->removeOption($key);
+      }
+    }
+  }
+
+  /**
    * Modifies the Add Page form: filters available templates to block templates for PageGrid
    * contexts, sets up auto-title/name for quick-add items, and configures the blueprint picker.
    *
@@ -968,15 +1507,10 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
 
         foreach ($templates as $key => $value) {
           $t = $this->templates->get($key);
-          $file = $this->config->paths->templates . 'blocks/' .  $t->name . '.php';
-          $fileModule = $this->config->paths->siteModules . 'PageGridBlocks/blocks/' . $t->name . '.php';
-          $isBlock = 0;
+          $isBlock = $this->isBlockTemplate($t);
 
           //allways filter out pg_container
           if ($t->name == 'pg_container') unset($templates[$key]);
-
-          if (file_exists($file)) $isBlock = 1;
-          if (file_exists($fileModule)) $isBlock = 1;
 
           //for normal pages hide block templates
           if (!$isPageGrid && $isBlock) unset($templates[$key]);
@@ -1180,6 +1714,11 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
 
     //add active breakpoint classes
     $theme->addBodyClass('breakpoint-base');
+
+    if ($p->id && $this->pages->get("name=pg-draft-{$p->id}-1, template=pg_container")->id) {
+      $theme->addBodyClass('pg-has-draft');
+      $theme->addBodyClass($this->wire('input')->get('showDraft') ? 'pg-draft-view' : 'pg-live-view');
+    }
   }
 
 
@@ -1306,6 +1845,119 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
       $cloneItems->name = 'pg-' . $blueprintId;
       $cloneItems->title = $blueprint->name;
       $cloneItems->save();
+    }
+  }
+
+  /**
+   * Create a draft of the PageGrid items for a page by cloning its items container.
+   *
+   * @param int $pageId The main page ID.
+   * @return bool True if draft was created successfully.
+   */
+  public function createDraft($pageId) {
+    if (!$pageId) return false;
+    $pItems = $this->pages->get("name=pg-$pageId, template=pg_container");
+    if (!$pItems || !$pItems->id) return false;
+
+    $pgDrafts = $this->pages->get('name=pg-drafts, template=pg_container');
+    if (!$pgDrafts->id) return false;
+
+    $draftsParent = $this->pages->get("name=pg-drafts-$pageId, parent={$pgDrafts->id}, template=pg_container");
+    if (!$draftsParent->id) {
+      $draftsParent = new Page();
+      $draftsParent->template = 'pg_container';
+      $draftsParent->parent = $pgDrafts;
+      $draftsParent->name = 'pg-drafts-' . $pageId;
+      $draftsParent->title = 'pg-drafts-' . $pageId;
+      $draftsParent->addStatus(Page::statusHidden);
+      $draftsParent->save();
+    }
+
+    $draft = $this->pages->get("name=pg-draft-{$pageId}-1, parent={$draftsParent->id}, template=pg_container");
+    if ($draft->id) $draft->delete(true);
+
+    $clone = $this->pages->clone($pItems);
+    $clone->parent = $draftsParent;
+    $clone->name = 'pg-draft-' . $pageId . '-1';
+    $clone->title = $this->pages->get($pageId)->title . ' draft';
+    $clone->save();
+    return true;
+  }
+
+  /**
+   * Publish a draft by replacing the live items container with the draft container.
+   *
+   * @param int $pageId The main page ID.
+   * @return bool True if draft was published successfully.
+   */
+  public function publishDraft($pageId) {
+    if (!$pageId) return false;
+    $draft = $this->pages->get("name=pg-draft-{$pageId}-1, template=pg_container");
+    if (!$draft->id) return false;
+
+    $live = $this->pages->get("name=pg-$pageId, template=pg_container");
+    if ($live->id) {
+        foreach ($live->find("status=" . Page::statusLocked . ", include=all") as $locked) {
+            $locked->removeStatus(Page::statusLocked);
+            $locked->save();
+        }
+        $live->delete(true);
+    }
+
+    $pgItems = $this->pages->get('name=pg-items, template=pg_container');
+    $draft->parent = $pgItems;
+    $draft->name = 'pg-' . $pageId;
+    $draft->save();
+
+    foreach ($draft->find('include=all') as $child) {
+        if ($child->template->name === 'pg_container') continue;
+        $newName = $child->template->name . '-' . $child->id;
+        $child->setAndSave('name', $newName);
+        $child->setAndSave('title', $newName);
+    }
+
+    $draftsParent = $this->pages->get("name=pg-drafts-$pageId, template=pg_container");
+    if ($draftsParent->id) $draftsParent->delete(true);
+
+    return true;
+  }
+
+  /**
+   * Discard a draft by deleting the draft items container.
+   *
+   * @param int $pageId The main page ID.
+   * @return bool True if draft was discarded.
+   */
+  public function discardDraft($pageId) {
+    if (!$pageId) return false;
+    $draft = $this->pages->get("name=pg-draft-{$pageId}-1, template=pg_container");
+    if ($draft->id) {
+        foreach ($draft->find("status=" . Page::statusLocked . ", include=all") as $locked) {
+            $locked->removeStatus(Page::statusLocked);
+            $locked->save();
+        }
+        $draft->delete(true);
+        $draftsParent = $this->pages->get("name=pg-drafts-$pageId, template=pg_container");
+        if ($draftsParent->id) $draftsParent->delete(true);
+        return true;
+    }
+    return false;
+  }
+
+  /**
+   * Clean up draft container when the main page is deleted.
+   *
+   * @param HookEvent $event Hook event from Pages::delete.
+   */
+  public function deleteDraft($event) {
+    $page = $event->arguments(0);
+    $draftsParent = $this->pages->get("name=pg-drafts-$page->id, template=pg_container");
+    if ($draftsParent->id) {
+        foreach ($draftsParent->find("status=" . Page::statusLocked . ", include=all") as $locked) {
+            $locked->removeStatus(Page::statusLocked);
+            $locked->save();
+        }
+        $draftsParent->delete(true);
     }
   }
 
@@ -1452,7 +2104,21 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     $form = $event->return;
     $contentTab = $form->children->get('id=ProcessPageEditContent');
     $childrenTab = $form->children->get('id=ProcessPageEditChildren');
-    $settingsTab = $form->get("id=ProcessPageEditSettings");
+
+    if (!$this->user->isSuperuser() && !$this->user->hasPermission('pagegrid-settings-tab')) {
+      foreach ($form as $child) {
+        if ($child->attr('id') === 'ProcessPageEditSettings') {
+          $nameField = $child->get('_pw_page_name');
+          if ($nameField) {
+            $contentTab->append($nameField);
+            $form->appendMarkup = '<style>#wrap_Inputfield__pw_page_name{display:none!important;}</style>';
+          }
+          $form->remove($child);
+          $event->object->removeTab('ProcessPageEditSettings');
+          break;
+        }
+      }
+    }
 
     if ($page->parent() && $page->parent()->id) {
       $parentOptions = $this->session->get('pg_template_' . $page->parent()->template->name) ? json_decode($this->session->get('pg_template_' . $page->parent()->template->name), true) : [];
@@ -1476,13 +2142,6 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
       $form->prependFile = $this->config->styles->add($this->config->urls->InputfieldPageGrid . "css/prism.css");
       $form->prependFile = $this->config->styles->add($this->config->urls->InputfieldPageGrid . "css/prism-vs.css");
       $form->prependFile = $this->config->scripts->add($this->config->urls->InputfieldPageGrid . "prism.js");
-    }
-
-    //remove pg_container and pg_blueprint templates from page settings select
-    if ($settingsTab && $settingsTab->template && $page->template != 'pg_container' && $page->template != 'pg_blueprint') {
-      foreach ($settingsTab->template->options as $key => $value) {
-        if ($value == 'pg_container' || $value == 'pg_blueprint') $form->find("id=ProcessPageEditSettings")->first()->template->removeOption($key);
-      }
     }
 
     // render back button

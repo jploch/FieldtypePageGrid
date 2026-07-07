@@ -413,7 +413,6 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		$f->collapsed(in_array($f->name, $collapsed) ? 1 : 0);
 		$f->themeOffset = 1;
 		$f->textFormat = Inputfield::textFormatBasic;
-		if (!$this->modules->isInstalled('AdminThemeCanvas')) $f->notes = 'If you prefer a more neutral look for your backend, you can also use [AdminThemeCanvas](https://processwire.com/modules/admin-theme-canvas/).';
 		// $f->addOption('setDefault', 'Default'); //set on first run to have default checked
 		$f->addClass('pg-table-auto', 'wrapClass');
 		$f->addOption('hideFieldTitle', 'Hide Field Label | [span.detail] Hide field label in page editor if there is only one PAGEGRID field.[/span]');

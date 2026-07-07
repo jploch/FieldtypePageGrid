@@ -122,9 +122,9 @@ class ProcessPageGrid extends Process {
         $getToolTip = isset($_POST['getToolTip']) ? $_POST['getToolTip'] : '';
 
         // return early if admin page or other critical pages
-        $p1 = $pageId ? $this->pages->get($pageId) : 0;
-        $p2 = $insertAfter ? $this->pages->get($insertAfter) : 0;
-        $p3 = $removeId ? $this->pages->get($removeId) : 0;
+        $p1 = $pageId ? $this->pages->get("id=$pageId, include=all") : 0;
+        $p2 = $insertAfter ? $this->pages->get("id=$insertAfter, include=all") : 0;
+        $p3 = $removeId ? $this->pages->get("id=$removeId, include=all") : 0;
         if ($p1 && $p1->id && $p1->template->name == 'admin') return;
         if ($p2 && $p2->id && $p2->template->name == 'admin') return;
         if ($p3 && $p3->id && $p3->template->name == 'admin') return;
@@ -145,7 +145,7 @@ class ProcessPageGrid extends Process {
         }
 
         if ($type === 'updateAnimation') {
-            $p = $this->pages->get($pageId);
+            $p = $this->pages->get("id=$pageId, include=all");
             if (!$p || !$p->id) return;
             $animationData = $this->modules->get('InputfieldPageGrid')->scripts($p, true);
             return $animationData;
@@ -156,7 +156,7 @@ class ProcessPageGrid extends Process {
             $data = json_decode($data, true);
 
             if (isset($pageId) && $pageId != 0) {
-                $settingsPage = $this->pages->get($pageId);
+                $settingsPage = $this->pages->get("id=$pageId, include=all");
             } else {
                 return false;
             }
@@ -179,7 +179,8 @@ class ProcessPageGrid extends Process {
                 return false;
             }
             if (isset($pageId) && $pageId != 0) {
-                $settingsPage = $this->pages->get($pageId);
+                $settingsPage = $this->pages->get("id=$pageId, include=all");
+                if (!$settingsPage || !$settingsPage->id) return false;
             } else {
                 return false;
             }
@@ -197,7 +198,7 @@ class ProcessPageGrid extends Process {
                 $parentID = $parent->id;
                 $className = $dataItem['cssClass'];
                 $classNameSanitized = $this->sanitizer->pageName($className, true);
-                $settingsPage = $this->pages->get("name=$classNameSanitized, template=pg_container, parent=$parentID");
+                $settingsPage = $this->pages->get("name=$classNameSanitized, template=pg_container, parent=$parentID, include=all");
 
                 if ($settingsPage && $settingsPage->id) {
                 } else {
@@ -241,7 +242,7 @@ class ProcessPageGrid extends Process {
 
         //convert to symbol
         if ($type === 'convertSymbol' && !empty($_POST['pageId'])) {
-            $p = $this->pages->get($_POST['pageId']);
+            $p = $this->pages->get("id=$pageId, include=all");
             if (!$p || !$p->id) return;
             $isSymbol = isset($_POST['isSymbol']) ? $_POST['isSymbol'] : 0;
             $isSymbol = json_decode($isSymbol, true);
@@ -251,7 +252,7 @@ class ProcessPageGrid extends Process {
             //if no symbol unlink
             if (!$isSymbol) {
                 $originalId = $_POST['originalId'];
-                $originalP = $this->pages->get($originalId);
+                $originalP = $this->pages->get("id=$originalId, include=all");
                 if (!$originalP || !$originalP->id) return;
 
                 //clone symbol back to page
@@ -269,7 +270,7 @@ class ProcessPageGrid extends Process {
                 $originalP->trash();
 
                 //rename children to prevent duplicated classes
-                foreach ($clone->find('') as $cloneItem) {
+                foreach ($clone->find('include=all') as $cloneItem) {
                     $cloneItem->of(false);
                     $cloneItem->title = $pagegrid->itemName($cloneItem->template->name, $cloneItem->id);
                     $cloneItem->name = $pagegrid->itemName($cloneItem->template->name, $cloneItem->id);
@@ -316,7 +317,7 @@ class ProcessPageGrid extends Process {
 
             $css = $this->modules->get('InputfieldPageGrid')->renderStyles($p);
 
-            foreach ($p->find('') as $child) {
+            foreach ($p->find('include=all') as $child) {
                 $css .= $this->modules->get('InputfieldPageGrid')->renderStyles($child);
             }
 
@@ -347,11 +348,11 @@ class ProcessPageGrid extends Process {
 
             // bd('parent change');
 
-            $p = $this->pages->get($_POST['pageId']);
-            $insertAfter = $this->pages->get($_POST['insertAfter']);
-            $newParent = $this->pages->get($_POST['newParent']);
+            $p = $this->pages->get("id=$pageId, include=all");
+            $insertAfter = $this->pages->get("id=" . $this->sanitizer->int($_POST['insertAfter']) . ", include=all");
+            $newParent = $this->pages->get("id=" . $this->sanitizer->int($_POST['newParent']) . ", include=all");
             if ($p->id && $newParent->id) {
-                $top = $newParent->children('sort=sort')->first();
+                $top = $newParent->children('sort=sort, include=all')->first();
                 $p->of(false);
                 $p->parent = $newParent;
                 $p->save();
@@ -377,12 +378,12 @@ class ProcessPageGrid extends Process {
 
             foreach ($ids as $id) {
                 $i++;
-                $p = $this->pages->get($id);
+                $p = $this->pages->get("id=$id, include=all");
                 $this->pages->sort($p, $i);
             }
 
             // re-build sort values for children of parent, removing duplicates and gaps needed?
-            $first = $this->pages->get($ids[0]);
+            $first = $this->pages->get("id=$ids[0], include=all");
             if ($first->id) {
                 $parent = $first->parent();
                 $this->pages->sort($parent, true);
@@ -403,8 +404,8 @@ class ProcessPageGrid extends Process {
         if ($type === 'delete' && $removeId) {
 
             //get page, for classes and animations use name and parent selector
-            $p = $this->pages->get($removeId);
-            if ($parentId) $p = $this->pages->findOne('name=' . $removeId . ', has_parent=' . $parentId);
+            $p = $this->pages->get("id=$removeId, include=all");
+            if ($parentId) $p = $this->pages->findOne('name=' . $removeId . ', has_parent=' . $parentId . ', include=all');
 
             if (!$p || !$p->id) return;
             if ($p->template->name == 'admin') return;
@@ -414,7 +415,7 @@ class ProcessPageGrid extends Process {
             $p->removeStatus(Page::statusLocked);
             $p->save();
 
-            foreach ($p->find('') as $item) {
+            foreach ($p->find('include=all') as $item) {
                 $item->removeStatus(Page::statusLocked);
                 $item->save();
             }
@@ -426,14 +427,18 @@ class ProcessPageGrid extends Process {
 
         if ($type === 'getData') {
             //already JSON encoded
-            $globalPageData = $this->modules->get('InputfieldPageGrid')->getData();
+            $getData = $this->modules->get('InputfieldPageGrid');
+            $pageId = (int) $this->wire('input')->post('pageId');
+            $showDraft = $this->wire('input')->post('showDraft');
+            $container = ($showDraft && $pageId) ? $this->pages->get("name=pg-draft-{$pageId}-1, template=pg_container") : null;
+            $globalPageData = $getData->getData(null, null, $container);
             return ($globalPageData);
         }
 
         if ($type === 'deleteData') {
             $pageName = isset($_POST['pageName']) ? $_POST['pageName'] : '';
             $itemId = isset($_POST['itemId']) ? $_POST['itemId'] : '';
-            $settingsPage = $this->pages->get($pageName);
+            $settingsPage = $this->pages->get("$pageName, include=all");
 
             if (!$settingsPage->id) {
                 return false;
@@ -462,11 +467,11 @@ class ProcessPageGrid extends Process {
         if ($type === 'clone' && !empty($_POST['pageId'])) {
 
             if (!$pageId || $pageId == 0 || $pageId == '0') return false;
-            $p = $this->pages->get($pageId);
+            $p = $this->pages->get("id=$pageId, include=all");
             if (!$p || !$p->id) return;
             if ($p->template->name == 'admin' || $p->template->name == 'pg_container') return;
 
-            $insertAfter = $this->pages->get($insertAfter);
+            $insertAfter = $this->pages->get("id=$insertAfter, include=all");
             $newPages = array();
             $clone = $this->pages->clone($p);
 
@@ -492,12 +497,12 @@ class ProcessPageGrid extends Process {
             $css = $pagegrid->renderStyles($clone);
 
             //set page id as meta for children to load data from original via $newPages
-            foreach ($p->find('') as $pChild) {
+            foreach ($p->find('include=all') as $pChild) {
                 $pChild->meta()->set('old_id', $pChild->id);
             }
 
             // rename children, for unique ID
-            foreach ($clone->find('') as $cloneChild) {
+            foreach ($clone->find('include=all') as $cloneChild) {
                 $cloneChild->setAndSave('name', $pagegrid->itemName($cloneChild->template->name, $cloneChild->id));
                 $cloneChild->setAndSave('title', $pagegrid->itemName($cloneChild->template->name, $cloneChild->id));
                 $newPages[$cloneChild->meta('old_id')] = $cloneChild->id;
@@ -519,7 +524,7 @@ class ProcessPageGrid extends Process {
         }
 
         if ($type === 'loadBlueprint' && !empty($_POST['pageId'])) {
-            $p = $this->pages->get($pageId);
+            $p = $this->pages->get("id=$pageId, include=all");
             $blueprintParent = $this->pages->get("name=pg-blueprints, template=pg_container");
 
             if (!$pageId || !$p || !$p->id || !$blueprintParent || !$blueprintParent->id || $p->template->name === 'admin' || $p->template->name === 'pg_container') {
@@ -528,16 +533,18 @@ class ProcessPageGrid extends Process {
 
             $blueprintTitle = isset($_POST['name']) ? $_POST['name'] : '';
             $blueprintName = $this->sanitizer->pageName($blueprintTitle, true);
-            $blueprint = $this->pages->get("name=$blueprintName, template=pg_blueprint");
+            $blueprint = $this->pages->get("name=$blueprintName, template=pg_blueprint, include=all");
 
             if ($blueprint && $blueprint->id) {
-                $blueprintItemsPage = $this->pages->get("pg-$blueprint->id");
-                $pItems = $this->pages->get("pg-$p->id");
+                $blueprintItemsPage = $this->pages->get("name=pg-$blueprint->id, include=all");
+                $showDraft = isset($_POST['showDraft']) && (int)$_POST['showDraft'];
+                $itemsName = ($showDraft && $this->pages->get("name=pg-draft-{$pageId}-1, template=pg_container")->id) ? "pg-draft-{$p->id}-1" : "pg-{$p->id}";
+                $pItems = $this->pages->get("name={$itemsName}, include=all");
 
                 if ($pItems && $pItems->id && $blueprintItemsPage && $blueprintItemsPage->id) {
 
                     //unlock old pages before deleting
-                    foreach ($pItems->find("status=" . Page::statusLocked) as $locked) {
+                    foreach ($pItems->find("status=" . Page::statusLocked . ", include=all") as $locked) {
                         $locked->removeStatus(Page::statusLocked);
                         $locked->save();
                     }
@@ -546,12 +553,12 @@ class ProcessPageGrid extends Process {
                     //remove old items page
                     $pItems->delete(true);
                     $cloneItems = $this->pages->clone($blueprintItemsPage);
-                    $cloneItems->name = 'pg-' . $p->id;
+                    $cloneItems->name = $itemsName;
                     $cloneItems->title = $p->title;
                     $cloneItems->save();
 
                     //rename itms to prevent naming conflicts
-                    foreach ($cloneItems->find('') as $clone) {
+                    foreach ($cloneItems->find('include=all') as $clone) {
                         //skip field page containers
                         if ($clone->template->name === 'pg_container') continue;
                         $newName = $clone->template->name . '-' . $clone->id;
@@ -568,7 +575,7 @@ class ProcessPageGrid extends Process {
 
         if ($type === 'add') {
             $template =  $this->templates->get($templateId);
-            $parent = $this->pages->get($parentId);
+            $parent = $this->pages->get("id=$parentId, include=all");
             if (!$parent || !$parent->id) return;
             if (!$template || !$template->id) return;
             if ($template->name == 'admin' || $template->name == 'pg_container') return;
@@ -581,7 +588,7 @@ class ProcessPageGrid extends Process {
             $replaceParentId = $this->sanitizer->int($_POST['replaceParentId']);
 
             if ($insertAfter) {
-                $afterP = $this->pages->get($insertAfter);
+                $afterP = $this->pages->get("id=$insertAfter, include=all");
                 if ($afterP->id) $this->pages->insertBefore($p, $afterP);
             }
 
@@ -594,7 +601,7 @@ class ProcessPageGrid extends Process {
 
             //set the page that will be replaced by the returned markup
             //refactor note: it might make sense to allways just replace parent if not root in the future
-            $replacPage = $replaceParentId ? $this->pages->get($replaceParentId) : 0;
+            $replacPage = $replaceParentId ? $this->pages->get("id=$replaceParentId, include=all") : 0;
             $updatePage = $replacPage && $replacPage->id && $replacPage->template->name != 'pg_container' ? $replacPage : $p;
 
             //get block CSS and JS files
@@ -615,9 +622,9 @@ class ProcessPageGrid extends Process {
 
         if (($type === 'addSymbol' || $type === 'addFromSymbol') && !empty($pageId)) {
 
-            $p = $this->pages->get($pageId);
+            $p = $this->pages->get("id=$pageId, include=all");
             if (!$p || !$p->id) return;
-            $parent = $this->pages->get($parentId);
+            $parent = $this->pages->get("id=$parentId, include=all");
             if (!$parent || !$parent->id) return;
             if ($p->template->name == 'admin' || $p->template->name == 'pg_container') return;
 
@@ -639,7 +646,7 @@ class ProcessPageGrid extends Process {
             $insertAfter = $this->sanitizer->int($_POST['insertAfter']);
 
             if (isset($insertAfter) && $insertAfter != 0) {
-                $afterP = $this->pages->get($insertAfter);
+                $afterP = $this->pages->get("id=$insertAfter, include=all");
                 $this->pages->insertBefore($clone, $afterP);
             }
 
@@ -656,7 +663,7 @@ class ProcessPageGrid extends Process {
 
                 $css = $pagegrid->renderStyles($clone);
 
-                foreach ($clone->find('') as $cloneItem) {
+                foreach ($clone->find('include=all') as $cloneItem) {
                     $cloneItem->of(false);
                     $cloneItem->title = $pagegrid->itemName($cloneItem->template->name, $cloneItem->id);
                     $cloneItem->name = $pagegrid->itemName($cloneItem->template->name, $cloneItem->id);
@@ -691,8 +698,8 @@ class ProcessPageGrid extends Process {
         // handel uploads to pages
         if ($type === 'upload' && !empty($pageId)) {
             $pageRenderId = isset($_POST['pageRenderId']) ? $this->sanitizer->int($_POST['pageRenderId']) : '';
-            $p = $this->pages->get($pageId);
-            $pRender = $this->pages->get($pageRenderId);
+            $p = $this->pages->get("id=$pageId, include=all");
+            $pRender = $this->pages->get("id=$pageRenderId, include=all");
             $fileRelativePath = $p->filesUrl();
             $extensions = 'jpg jpeg gif png svg';
             $fileField = 0;
@@ -783,7 +790,7 @@ class ProcessPageGrid extends Process {
 
             $this->pageId = (int) $this->input->post("id");
             $this->replaceId = (int) $this->input->post("replaceId");
-            $this->pageContext = $this->pages->get($this->pageId);
+            $this->pageContext = $this->pages->get("id=$this->pageId, include=all");
             $this->pageContext->setTrackChanges(true); // not sure this is needed, what does it do? Leftover from AutoSave?
             $this->pageEdit = $this->modules->get("ProcessPageEdit");
             $form = $this->buildForm();
@@ -842,7 +849,7 @@ class ProcessPageGrid extends Process {
 
             //use replaceId if set to have diffrent replace target that saved page
             if ($this->replaceId) {
-                $p = $this->pages->get($this->replaceId);
+                $p = $this->pages->get("id=$this->replaceId, include=all");
             }
 
             if ($p->id) {
@@ -914,7 +921,7 @@ class ProcessPageGrid extends Process {
         $fileUrl = $this->getBlockFileUrl($parent->template->name, $type);
         if ($fileUrl && $loadScript) $files[] = $fileUrl;
 
-        foreach ($parent->find('') as $c) {
+        foreach ($parent->find('include=all') as $c) {
             $options = $c->template->pgOptions ? json_decode($c->template->pgOptions, true) : [];
             $loadScript = isset($options['reloadScript']) && $options['reloadScript'] == false && $type == 'js' ? false : true;
             $fileUrl = $this->getBlockFileUrl($c->template->name, $type);
