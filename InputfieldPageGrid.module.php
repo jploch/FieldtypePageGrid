@@ -640,7 +640,23 @@ class InputfieldPageGrid extends Inputfield {
                 if (is_array($symbolIds)) {
                     if (!in_array($symbol->id, $symbolIds)) continue;
                 } else {
-                    if (!$user->hasPermission("pagegrid-symbol-add-$symbol->id")) continue;
+                    if ($getSymbolsOnly) {
+                        // @todo Remove entire block and restore the line below
+                        // when PW master catches up (permission cache fix).
+                        // if (!$user->hasPermission("pagegrid-symbol-add-$symbol->id")) continue;
+                        $hasPerm = false;
+                        foreach ($user->roles as $userRole) {
+                            $this->pages->uncache($userRole);
+                            $freshRole = $this->pages->get($userRole->id);
+                            if ($freshRole->id && $freshRole->hasPermission("pagegrid-symbol-add-$symbol->id")) {
+                                $hasPerm = true;
+                                break;
+                            }
+                        }
+                        if (!$hasPerm) continue;
+                    } else {
+                        if (!$user->hasPermission("pagegrid-symbol-add-$symbol->id")) continue;
+                    }
                 }
 
                 $sync = $symbol->meta()->pg_sync === 0 ? 0 : 1;
