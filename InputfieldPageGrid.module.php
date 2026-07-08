@@ -1414,6 +1414,7 @@ class InputfieldPageGrid extends Inputfield {
         if ($p->is(Page::statusLocked)) $statusClass .= " pg-locked";
         if ($this->ft->hasPgPermissions('pagegrid-drag', $p)) $statusClass .= " pg-item-draggable";
         if ($this->ft->hasPgPermissions('pagegrid-resize', $p)) $statusClass .= " pg-item-resizable";
+        if ($this->ft->hasPgPermissions('page-move', $p)) $statusClass .= " pg-permission-move";
         if ($user->hasPermission('pagegrid-select'))  $statusClass .= " pg-permission-select";
         if ($user->hasPermission('pagegrid-style-panel'))  $statusClass .= " pg-permission-style-panel";
         if ($this->ft->hasPgPermissions('page-add', $p)) $statusClass .= " pg-permission-add";
