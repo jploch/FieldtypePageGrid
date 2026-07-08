@@ -30,9 +30,7 @@ Everything stays native, and developers maintain full control.
   Give them creative freedom while keeping the structure safe.
 
 * **Your CSS:**
-  PAGEGRID works with your existing CSS — no assumptions or frameworks required.
-  Write styles in your code editor or bring your own framework.
-  Beyond grids, it supports Flexbox, Block, and Inline-block layouts.
+  PAGEGRID works with your existing CSS — no assumptions or frameworks required. The default is native CSS grid that can be customized easily. Write styles in your code editor or bring your own framework. Beyond grids, it supports Flexbox, Block, and Inline-block layouts.
 
 * **Nesting:**
   PAGEGRID supports nested blocks — a powerful but optional feature.
