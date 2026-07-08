@@ -455,14 +455,14 @@ class InputfieldPageGrid extends Inputfield {
         if ($user->hasPermission('page-add', $wrapperPage)) {
 
             $childrenTemplatesArray = [];
-            $hasContainerCreate = $user->hasPermission('page-create', $wrapperPage);
+            $hasContainerCreate = $this->ft->pgTemplateCreateAccess($user, $this->templates->get('pg_container'));
             if (!$user->isSuperuser() && $wrapperPage->template->childTemplates) {
                 $childrenTemplates = $wrapperPage->template->childTemplates;
                 foreach ($childrenTemplates as $childTemplate) {
                     $ct = $this->templates->get($childTemplate);
                     if ($ct->id) {
                         if ($ct->useRoles) {
-                            if ($user->hasPermission('page-create', $ct)) $childrenTemplatesArray[] = $ct;
+                            if ($this->ft->pgTemplateCreateAccess($user, $ct)) $childrenTemplatesArray[] = $ct;
                         } else {
                             if ($hasContainerCreate) $childrenTemplatesArray[] = $ct;
                         }
@@ -581,7 +581,7 @@ class InputfieldPageGrid extends Inputfield {
         // $parentID = $itemsParent->id;
         $addItems = '';
 
-        if (!$getSymbolsOnly) {
+            if (!$getSymbolsOnly) {
             $fieldName = $this->name ? $this->name : '';
             $addItems = '<div data-field=' . $fieldName . ' class="pg-add-container pg-add-container-' . $fieldName . '">';
             if ($quickAdd) $addItems = '<div class="pg-quick-add-container pg-quick-add-inner">'; //change wrapper for quick edit to preven events
@@ -598,12 +598,12 @@ class InputfieldPageGrid extends Inputfield {
                 if (!$template->id) continue;
                 if ($template->name == 'pg_container' || $template->name == 'admin' || $template->name == 'home') continue;
 
-                if (!$user->isSuperuser() && !count($templatesArray)) {
+                if (!$user->isSuperuser()) {
                     $pgContainer = $this->templates->get('pg_container');
-                    $hasContainerCreate = $pgContainer && $user->hasPermission('page-create', $pgContainer);
+                    $hasContainerCreate = $pgContainer && $pgContainer->id && $this->ft->pgTemplateCreateAccess($user, $pgContainer);
 
                     if ($template->useRoles) {
-                        if (!$user->hasPermission('page-create', $template)) continue;
+                        if (!$this->ft->pgTemplateCreateAccess($user, $template)) continue;
                     } else {
                         if (!$hasContainerCreate) continue;
                     }
@@ -1323,11 +1323,12 @@ class InputfieldPageGrid extends Inputfield {
                 $childrenTemplatesArray = [];
                 $meta = json_decode((string) $p->meta('pg_permissions'), true);
                 $hadRestrictions = false;
-                $hasContainerCreate = $user->hasPermission('page-create', $this->templates->get('pg_container'));
+                $hasContainerCreate = $this->ft->pgTemplateCreateAccess($user, $this->templates->get('pg_container'));
 
-                $canCreate = function($t) use ($user, $hasContainerCreate) {
+                $ft = $this->ft;
+                $canCreate = function($t) use ($user, $hasContainerCreate, $ft) {
                     if (!$t || !$t->id) return false;
-                    if ($t->useRoles) return $user->hasPermission('page-create', $t);
+                    if ($t->useRoles) return $ft->pgTemplateCreateAccess($user, $t);
                     return $hasContainerCreate;
                 };
 

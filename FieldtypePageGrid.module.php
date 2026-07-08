@@ -21,7 +21,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID Page Builder'),
       'summary' => __('PAGEGRID is a visual page builder for ProcessWire that gives developers full control while enabling designers and editors to create responsive layouts without coding.', __FILE__),
-      'version' => '2.3.1',
+      'version' => '2.3.2',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -1123,6 +1123,26 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
 
     if ($user->hasPermission($permission, $page)) return true;
 
+    return false;
+  }
+
+  /**
+   * Check if any of the user's roles has page-create access
+   * on the given template via Template::hasRole().
+   *
+   * Uses the Template API directly to avoid hasTemplatePermission()
+   * edge cases on older ProcessWire versions.
+   *
+   * @param User     $user
+   * @param Template $template
+   * @return bool
+   */
+  public function pgTemplateCreateAccess($user, $template) {
+    if ($user->isSuperuser()) return true;
+    if (!$template || !$template->id) return false;
+    foreach ($user->roles as $role) {
+      if (in_array($role->id, $template->createRoles)) return true;
+    }
     return false;
   }
 
