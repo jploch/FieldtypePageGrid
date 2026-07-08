@@ -21,7 +21,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID Page Builder'),
       'summary' => __('PAGEGRID is a visual page builder for ProcessWire that gives developers full control while enabling designers and editors to create responsive layouts without coding.', __FILE__),
-      'version' => '2.3.0',
+      'version' => '2.3.1',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -1317,7 +1317,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
 
     //add child permission config for blocks that support children
     $options = $this->session->get('pg_template_' . $page->template->name) ? json_decode($this->session->get('pg_template_' . $page->template->name), true) : [];
-    if ($this->user->isSuperuser() && (isset($options['children']) || $this->templateHasChildren($page->template))) {
+    if (($this->user->isSuperuser() || $this->user->hasPermission('pagegrid-settings-tab')) && (isset($options['children']) || $this->templateHasChildren($page->template))) {
       $currentPerms = json_decode((string) $page->meta('pg_permissions'), true) ?: array();
 
       $permFieldset = $this->modules->get('InputfieldFieldset');

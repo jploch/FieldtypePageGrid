@@ -324,7 +324,7 @@ class InputfieldPageGrid extends Inputfield {
         $showDraft = $this->wire('input')->get('showDraft');
         $blueprintContainer = $this->pages->get('name=pg-blueprints, template=pg_container');
         $blueprintPage = $blueprintContainer->id ? $blueprintContainer->child() : null;
-        $bpView = $blueprintPage ? $this->user->hasPermission('page-view', $blueprintPage) : false;
+        $bpView = ($blueprintPage && $blueprintPage->id) ? $this->user->hasPermission('page-view', $blueprintPage) : false;
         $bpCreate = $blueprintPage ? $this->user->hasPermission('page-create', $blueprintPage) : false;
 
         //make data available to js
@@ -1353,7 +1353,7 @@ class InputfieldPageGrid extends Inputfield {
                     }
                 }
 
-                $symbolIds = (!$user->isSuperuser() && isset($meta['symbols']) && is_array($meta['symbols'])) ? $meta['symbols'] : null;
+                $symbolIds = (!$user->isSuperuser() && !empty($meta['_manage'])) ? (isset($meta['symbols']) && is_array($meta['symbols']) ? $meta['symbols'] : []) : null;
 
                 $hasTemplates = $hadRestrictions ? !empty($childrenTemplatesArray) : true;
                 $hasSymbols = !empty($symbolIds);
