@@ -21,7 +21,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID Page Builder'),
       'summary' => __('PAGEGRID is a visual page builder for ProcessWire that gives developers full control while enabling designers and editors to create responsive layouts without coding.', __FILE__),
-      'version' => '2.3.5',
+      'version' => '2.3.6',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -300,6 +300,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
       $permission = $this->permissions->add("pagegrid-symbol-create");
       $permission->title = 'Create PAGEGRID symbols';
       $permission->save();
+      $drole->addPermission('pagegrid-symbol-create');
     }
 
     if (!$this->permissions->get('pagegrid-symbol-add')->id) {

@@ -242,6 +242,7 @@ class ProcessPageGrid extends Process {
 
         //convert to symbol
         if ($type === 'convertSymbol' && !empty($_POST['pageId'])) {
+            if (!$this->user->isSuperuser() && !$this->user->hasPermission('pagegrid-symbol-create')) return;
             $p = $this->pages->get("id=$pageId, include=all");
             if (!$p || !$p->id) return;
             $isSymbol = isset($_POST['isSymbol']) ? $_POST['isSymbol'] : 0;
