@@ -225,6 +225,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     $erole->addPermission("page-edit");
     $erole->addPermission("profile-edit");
     if ($this->permissions->get('page-pagegrid-edit')->id) $erole->addPermission("page-pagegrid-edit");
+    if ($this->permissions->get('page-pagegrid-edit')->id) $drole->addPermission("page-pagegrid-edit");
 
     $drole->addPermission("page-view");
     $drole->addPermission("page-edit");
