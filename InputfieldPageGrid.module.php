@@ -373,7 +373,7 @@ class InputfieldPageGrid extends Inputfield {
 
         if ($this->name == $fieldFound) {
             $settingsNav = '<div class="pg-settings-dropdown"><ul class="pg-settings-nav">';
-        if ($draftExists && $showDraft && $user->hasPermission('pagegrid-draft')) {
+            if ($draftExists && $showDraft && $user->hasPermission('pagegrid-draft')) {
                 //draft actions moved to status indicator dropdown
             } elseif ($draftExists && !$showDraft) {
                 //draft actions moved to status indicator dropdown
@@ -474,9 +474,9 @@ class InputfieldPageGrid extends Inputfield {
                 $quickAddMain = '';
                 $quickAddMainBottom = '';
             } else {
-            $quickAddButtons = $this->renderAddItemBar(0, $childrenTemplatesArray, 1);
-            $quickAddMain = '<div class="pg-quick-add pg-quick-add-main" data-id-original="' . $wrapperPage->id . '" data-id="' . $wrapperPage->id . '"><span class="pg-quick-add-icon" uk-tooltip="title:Add Item; pos:bottom; delay:100;"></span>' . $quickAddButtons . '</div>';
-            $quickAddMainBottom = '<div class="pg-quick-add pg-quick-add-main-bottom" data-id-original="' . $wrapperPage->id . '" data-id="' . $wrapperPage->id . '"><span class="pg-quick-add-icon" uk-tooltip="title:Append Item; pos:bottom; delay:100;"></span>' . $quickAddButtons . '</div>';
+                $quickAddButtons = $this->renderAddItemBar(0, $childrenTemplatesArray, 1);
+                $quickAddMain = '<div class="pg-quick-add pg-quick-add-main" data-id-original="' . $wrapperPage->id . '" data-id="' . $wrapperPage->id . '"><span class="pg-quick-add-icon" uk-tooltip="title:Add Item; pos:bottom; delay:100;"></span>' . $quickAddButtons . '</div>';
+                $quickAddMainBottom = '<div class="pg-quick-add pg-quick-add-main-bottom" data-id-original="' . $wrapperPage->id . '" data-id="' . $wrapperPage->id . '"><span class="pg-quick-add-icon" uk-tooltip="title:Append Item; pos:bottom; delay:100;"></span>' . $quickAddButtons . '</div>';
             }
         }
 
@@ -581,7 +581,7 @@ class InputfieldPageGrid extends Inputfield {
         // $parentID = $itemsParent->id;
         $addItems = '';
 
-            if (!$getSymbolsOnly) {
+        if (!$getSymbolsOnly) {
             $fieldName = $this->name ? $this->name : '';
             $addItems = '<div data-field=' . $fieldName . ' class="pg-add-container pg-add-container-' . $fieldName . '">';
             if ($quickAdd) $addItems = '<div class="pg-quick-add-container pg-quick-add-inner">'; //change wrapper for quick edit to preven events
@@ -640,7 +640,7 @@ class InputfieldPageGrid extends Inputfield {
                 if (is_array($symbolIds)) {
                     if (!in_array($symbol->id, $symbolIds)) continue;
                 } else {
-                    if ($getSymbolsOnly) {
+                    if ($getSymbolsOnly && !$user->isSuperuser()) {
                         // @todo Remove entire block and restore the line below
                         // when PW master catches up (permission cache fix).
                         // if (!$user->hasPermission("pagegrid-symbol-add-$symbol->id")) continue;
@@ -655,7 +655,7 @@ class InputfieldPageGrid extends Inputfield {
                         }
                         if (!$hasPerm) continue;
                     } else {
-                        if (!$user->hasPermission("pagegrid-symbol-add-$symbol->id")) continue;
+                        if (!$user->hasPermission("pagegrid-symbol-add-$symbol->id") && !$user->isSuperuser()) continue;
                     }
                 }
 
@@ -1342,7 +1342,7 @@ class InputfieldPageGrid extends Inputfield {
                 $hasContainerCreate = $this->ft->pgTemplateCreateAccess($user, $this->templates->get('pg_container'));
 
                 $ft = $this->ft;
-                $canCreate = function($t) use ($user, $hasContainerCreate, $ft) {
+                $canCreate = function ($t) use ($user, $hasContainerCreate, $ft) {
                     if (!$t || !$t->id) return false;
                     if ($t->useRoles) return $ft->pgTemplateCreateAccess($user, $t);
                     return $hasContainerCreate;
