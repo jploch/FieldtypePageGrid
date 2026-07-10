@@ -378,7 +378,7 @@ class InputfieldPageGrid extends Inputfield {
             } elseif ($draftExists && !$showDraft) {
                 //draft actions moved to status indicator dropdown
             } else {
-                if ($user->hasPermission('pagegrid-draft')) {
+                if ($user->hasPermission('pagegrid-draft') && $mainPage->template->name != 'pg_blueprint') {
                     $settingsNav .= '<li><a href="' . $mainPage->editUrl() . '&pg-draft=create"><i class="fa fa-plus-circle fa-fw"></i>Create Draft</a></li>';
                 }
             }
