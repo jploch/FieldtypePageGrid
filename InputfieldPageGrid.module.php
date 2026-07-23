@@ -268,25 +268,7 @@ class InputfieldPageGrid extends Inputfield {
             if ($draft->id) $itemsParent = $draft;
         }
 
-        //check if old id exists for imported pages via import module
         $mainPage = $this->pages->get($editID);
-        $oldEditID = $mainPage->meta()->pg_itemsPage;
-
-        if (isset($oldEditID)) {
-
-            if ($oldEditID != $editID) {
-                $itemsParentOld = $this->pages->get('pg-' . $oldEditID);
-                if ($itemsParentOld->id && $itemsParent->id == 0) {
-                    $itemsParentOld->name = 'pg-' . $editID;
-                    $itemsParentOld->save();
-                    $itemsParent = $itemsParentOld;
-                }
-            }
-        }
-
-        $mainPage->meta()->set('pg_itemsPage', $editID);
-
-        //END check if old id exists for imported pages via import module
 
         // createContainers hook handles this for new pages; fallback for legacy/imported pages
         if (!$itemsParent->id) {

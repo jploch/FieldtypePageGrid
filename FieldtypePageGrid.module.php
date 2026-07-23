@@ -21,7 +21,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID Page Builder'),
       'summary' => __('PAGEGRID is a visual page builder for ProcessWire that gives developers full control while enabling designers and editors to create responsive layouts without coding.', __FILE__),
-      'version' => '2.3.14',
+      'version' => '2.3.15',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -1690,6 +1690,126 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return $this->modules->get('InputfieldPageGrid')->renderGrid($page, $field);
   }
 
+  public function ___exportValue(Page $page, Field $field, $value, array $options = array()) {
+    $fc = $this->modules->get('InputfieldPageGrid')->getFieldContainer($page, $field);
+    if (!$fc || !$fc->id) return parent::___exportValue($page, $field, $value, $options);
+
+    $blocks = new PageArray();
+    $blocks->add($fc);
+    foreach ($fc->children('include=all') as $child) {
+      $blocks->add($child);
+      $blocks->import($child->find('include=all'));
+    }
+    $data = $this->wire(new PagesExportImport())->pagesToArray($blocks, $options);
+    $data['_pgPageContainer'] = 'pg-' . $page->id;
+    $data['_pgFieldContainer'] = 'pg-' . $field->id;
+
+    $cp = $this->pages->get('name=pg-classes, template=pg_container');
+    if ($cp->id) {
+      $data['_pgClasses'] = $this->wire(new PagesExportImport())->pagesToArray($cp->find('include=all'), $options);
+    }
+
+    $symbolMap = [];
+    $symbolPages = new PageArray();
+    foreach ($blocks as $b) {
+      $sid = $b->meta('pg_symbol');
+      if ($sid) {
+        $symbol = $this->pages->get($sid);
+        if ($symbol->id) {
+          $symbolMap[$sid] = $symbol->name;
+          if (!$symbolPages->has($symbol)) {
+            $symbolPages->add($symbol);
+            $symbolPages->import($symbol->find('include=all'));
+          }
+        }
+      }
+    }
+    if ($symbolMap) $data['_pgSymbolMap'] = $symbolMap;
+    if ($symbolPages->count()) {
+      $data['_pgSymbolPages'] = $this->wire(new PagesExportImport())->pagesToArray($symbolPages, $options);
+    }
+
+    return $data;
+  }
+
+  public function ___importValue(Page $page, Field $field, $value, array $options = array()) {
+    if (!is_array($value) || empty($value['type']) || $value['type'] !== 'ProcessWire:PageArray') {
+      return parent::___importValue($page, $field, $value, $options);
+    }
+
+    $pgItems = $this->pages->get('name=pg-items, template=pg_container');
+    if (!$pgItems->id) return parent::___importValue($page, $field, $value, $options);
+
+    $itemsParent = $this->pages->get("name=pg-{$page->id}, parent={$pgItems->id}, template=pg_container");
+    if (!$itemsParent->id) {
+      $itemsParent = new Page();
+      $itemsParent->template = 'pg_container';
+      $itemsParent->parent = $pgItems;
+      $itemsParent->name = 'pg-' . $page->id;
+      $itemsParent->title = $page->title . ' items';
+      $itemsParent->save();
+    }
+
+    $fieldContainer = $itemsParent->get("name=pg-{$field->id}, template=pg_container");
+    if (!$fieldContainer->id) {
+      $fieldContainer = new Page();
+      $fieldContainer->template = 'pg_container';
+      $fieldContainer->parent = $itemsParent;
+      $fieldContainer->name = 'pg-' . $field->id;
+      $fieldContainer->title = 'pg-' . $field->id;
+      $fieldContainer->save();
+    }
+
+    if (!empty($value['pages'][0]['meta'])) {
+      foreach ($value['pages'][0]['meta'] as $key => $val) {
+        $fieldContainer->meta($key, $val);
+      }
+    }
+
+    if (isset($value['_pgPageContainer']) && isset($value['_pgFieldContainer'])) {
+      foreach ($value['pages'] as $i => &$item) {
+        $item['path'] = str_replace(
+          $value['_pgPageContainer'] . '/' . $value['_pgFieldContainer'],
+          'pg-' . $page->id . '/pg-' . $field->id,
+          $item['path']
+        );
+      }
+    }
+    unset($value['_pgPageContainer'], $value['_pgFieldContainer']);
+
+    if (!empty($value['_pgClasses'])) {
+      $this->wire(new PagesExportImport())->arrayToPages($value['_pgClasses'], $options);
+      unset($value['_pgClasses']);
+    }
+
+    if (!empty($value['_pgSymbolPages'])) {
+      $this->wire(new PagesExportImport())->arrayToPages($value['_pgSymbolPages'], $options);
+      unset($value['_pgSymbolPages']);
+    }
+
+    array_shift($value['pages']);
+
+    $imported = $this->wire(new PagesExportImport())->arrayToPages($value, $options);
+
+    if (!empty($value['_pgSymbolMap'])) {
+      $sp = $this->pages->get('name=pg-symbols, template=pg_container');
+      if ($sp->id) {
+        foreach ($imported as $p) {
+          $oldId = $p->meta('pg_symbol');
+          if ($oldId && isset($value['_pgSymbolMap'][$oldId])) {
+            $symbol = $sp->get("name={$value['_pgSymbolMap'][$oldId]}");
+            if ($symbol->id) {
+              $p->meta('pg_symbol', $symbol->id);
+              $p->save();
+            }
+          }
+        }
+      }
+    }
+
+    return $this->getBlankValue($page, $field);
+  }
+
   /**
    * Adds template, role, user, permission, and breakpoint classes to the admin body element.
    *
@@ -2539,6 +2659,9 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     if ($page->template->name === 'pg_container') return;
     // Skip pages already living under pg-items
     if ($page->parents->get('template=pg_container') && $page->parents->get('template=pg_container')->id) return;
+
+    // Skip auto-creation for imported pages — handled by ___importValue() instead
+    if (!empty($page->_importOriginalID) && $page->_importOriginalID != $page->id) return;
 
     // Collect all PageGrid fields on this page's template
     $pgFields = [];
