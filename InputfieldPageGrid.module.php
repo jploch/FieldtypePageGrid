@@ -511,15 +511,27 @@ class InputfieldPageGrid extends Inputfield {
      * @return string HTML markup for the icon picker wrapper including script tag.
      */
     public function renderIconPicker() {
-        $field = $this->modules->get('InputfieldIcon');
-        $field->name = 'pg-icon-picker';
-        $field->label = 'Icon';
-        $field->addClass('pg-icon-picker', 'wrapClass');
-        $scriptUrl = $this->config->urls->modules . 'Inputfield/InputfieldIcon/InputfieldIcon.js';
-        $stylesUrl = $this->config->urls->modules . 'Inputfield/InputfieldIcon/InputfieldIcon.css';
-        $styles = "<link type='text/css' href='$stylesUrl' rel='stylesheet'>";
-        $script = "<script type='text/javascript' src='$scriptUrl'></script>";
-        return '<div class="pg-icon-picker-wrapper">' . $field->render() . '</div>' . $script;
+        $icons = file(
+            $this->config->paths->root . 'wire/modules/Inputfield/InputfieldIcon/icons.inc',
+            FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES
+        );
+        $options = '';
+        foreach ($icons as $icon) {
+            $icon = trim($icon);
+            $label = ucfirst(str_replace('-', ' ', substr($icon, 3)));
+            $options .= "<option value='$icon'>$label</option>";
+        }
+        $out = '<div class="pg-icon-picker-wrapper">';
+        $out .= "<i class='fa fa-fw ui-priority-secondary fa-angle-down'></i>";
+        $out .= "<select id='Inputfield_pg-icon-picker' name='pg-icon-picker' class='uk-select pg-icon-picker'><option value=''></option>$options</select>&nbsp;";
+        $out .= "<div class='InputfieldIconAll' style='display:none'>";
+        foreach ($icons as $icon) {
+            $icon = trim($icon);
+            $out .= "<i class='fa fa-fw $icon' title='$icon' data-icon='$icon'></i>";
+        }
+        $out .= "</div>";
+        $out .= '</div>';
+        return $out;
     }
 
     /**
