@@ -610,9 +610,13 @@ class InputfieldPageGrid extends Inputfield {
             $addItems .= '<div class="pg-add-symbol-container">';
             $symbolParent = $this->pages->get("name=pg-symbols, template=pg_container");
             $symbols = $symbolParent->children('sort=created');
-            $linkedPages = $this->database->query("SELECT source_id FROM pages_meta WHERE name = 'pg_symbol'");
-            $linkedPages = implode("|", $linkedPages->fetchAll(\PDO::FETCH_COLUMN, 0));
-            $linkedPages = $this->pages->getByIDs($linkedPages);
+            try {
+                $linkedPages = $this->database->query("SELECT source_id FROM pages_meta WHERE name = 'pg_symbol'");
+                $linkedPages = implode("|", $linkedPages->fetchAll(\PDO::FETCH_COLUMN, 0));
+                $linkedPages = $this->pages->getByIDs($linkedPages);
+            } catch (\Exception $e) {
+                $linkedPages = new PageArray();
+            }
 
             //sort symbols
             $syncedSymbols = new PageArray();
