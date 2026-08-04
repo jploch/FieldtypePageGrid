@@ -123,7 +123,7 @@ class InputfieldPageGrid extends Inputfield {
 
         //get all classes if no arguments
         if ($classPages == null) {
-            $classPages = $globalPage->find('');
+            $classPages = $globalPage->find('sort=sort');
         }
 
         //get classes data
