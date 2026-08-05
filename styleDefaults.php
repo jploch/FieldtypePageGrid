@@ -70,13 +70,13 @@ $defaultCss .= '
   padding: 0;
 } ';
 
-$defaultCss .= 'html, body {width:100%;} ';
+$defaultCss .= 'html, body {width:100%; font-weight: normal;} ';
 
 $defaultCss .= '
 p, h1, h2, h3, h4, h5, h6 {
   overflow-wrap: break-word;
   word-break: break-word;
-  font-weight: normal; 
+  font-weight: inherit; 
 } ';
 
 $defaultCss .= 'a {color: inherit;} ';

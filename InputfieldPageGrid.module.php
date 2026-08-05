@@ -2119,7 +2119,11 @@ class InputfieldPageGrid extends Inputfield {
                     $fallbackFonts = $this->ft->fallbackFonts;
 
                     if ($style === 'font-family' && $fallbackFonts) {
-                        $val = $val . ', ' . $this->ft->fallbackFonts;
+                        if ($val === 'Helvetica') {
+                            $val = 'Helvetica, Arial, sans-serif';
+                        } else {
+                            $val = $val . ', ' . $this->ft->fallbackFonts;
+                        }
                     }
 
                     if ($style === 'align-items' && $val === 'stretch') {

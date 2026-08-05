@@ -703,7 +703,7 @@ $fieldset->append($field);
 //get local fonts without extension
 $localFonts = $this->getFontNames();
 $filePath = $this->getFontPath();
-$fontNames = '';
+$fontNames = 'Helvetica,';
 
 foreach ($localFonts as $font) {
   // // // bd($font);
@@ -1537,12 +1537,16 @@ function createUnitField($name, $label = '', $width = 100, $icon = '', $lastUnit
   $field->addOption("%");
   $field->addOption("vh");
   $field->addOption("vw");
+  $field->addOption("cqw");
+  $field->addOption("cqh");
   $field->addOption("rem");
   if ($name == "letter-spacing") {
     $field->removeOption("rem");
     $field->removeOption("%");
     $field->removeOption("vw");
     $field->removeOption("vh");
+    $field->removeOption("cqw");
+    $field->removeOption("cqh");
     $field->addOption("em");
   }
   if ($lastUnit) $field->addOption($lastUnit);
