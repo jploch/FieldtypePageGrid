@@ -1760,98 +1760,80 @@ class InputfieldPageGrid extends Inputfield {
      */
     public function getGooglefonts($p) {
 
-        if (!$this->ft->googleFonts) return '';
+        if (!$this->ft->googleFonts) return [];
 
         $items = json_encode($p->meta()->pg_styles);
-        $items = json_decode($items, false); //convert to object
-        $fonts = '';
-        $font = '';
+        $items = json_decode($items, false);
+        $fonts = [];
         $googleFontsJson = file_get_contents(($this->config->paths->InputfieldPageGrid . "googleFonts.json"));
         $googleFontsList = json_decode($googleFontsJson, true);
 
         if (isset($items) == 0) {
-            return;
+            return [];
         }
+
+        $localFontNamesArray = $this->getFontNames();
+        $localFontNames = '';
+        foreach ($localFontNamesArray as $localFont) {
+            $fontExt = '.' . pathinfo($localFont, PATHINFO_EXTENSION);
+            $localFontNames .= str_replace($fontExt, '', $localFont) . ',';
+        }
+        $systemFontsString = 'Arial,Helvetica+Neue,Courier+New,Times+New+Roman,Comic+Sans+MS,Verdana,Impact,' . $localFontNames;
+        $systemFontsString = trim($systemFontsString);
+        $systemFonts = explode(',', $systemFontsString);
 
         foreach ($items as $item) {
 
             if (isset($item->breakpoints) == 0) {
-                return;
+                return [];
             }
 
             foreach ($item->breakpoints as $breakpoint) {
                 foreach ($breakpoint->css as $style => $val) {
-                    if ($style == 'font-family') {
+                    if ($style !== 'font-family') continue;
 
-                        //check if font is a google font
-                        $validFont = array_key_exists($val, $googleFontsList);
-                        if (!$validFont) {
-                            continue;
+                    if (!array_key_exists($val, $googleFontsList)) continue;
+                    if (strpos($val, ',') !== false) continue;
+
+                    $fontName = preg_replace('/\s+/', '+', $val);
+                    $fontName = str_replace('"', "", $fontName);
+                    if ($fontName === '') continue;
+
+                    $isSystemFont = false;
+                    foreach ($systemFonts as $systemFont) {
+                        if ($fontName == $systemFont) {
+                            $isSystemFont = true;
+                            break;
                         }
+                    }
+                    if ($isSystemFont) continue;
 
-                        $fontVariants = [];
-                        $fontVariantPrefix = '';
-                        $fontStyle = '';
-                        $fontWeight = '';
+                    $fontVariants = [];
+                    if (array_key_exists('variants', $googleFontsList[$val])) {
+                        $fontVariants = explode(",", $googleFontsList[$val]['variants']);
+                    }
 
-                        //get variants for this font as array
-                        if (array_key_exists('variants', $googleFontsList[$val])) $fontVariants = explode(",", $googleFontsList[$val]['variants']);
-
-                        foreach ($breakpoint->css as $style2 => $fvariant) {
-
-                            if (!in_array($fvariant, $fontVariants)) continue;
-
-                            if ($style2 == 'font-style' && $fvariant === 'italic') {
-                                if ($fontStyle) $fontStyle .= ',';
-                                $fontStyle .= '1';
-                            }
-                            if ($style2 == 'font-weight') {
-                                if ($fontWeight || $fontStyle) $fontWeight .= ',';
-                                $fontWeight .= $fvariant;
-                            }
+                    $hasItalic = false;
+                    $weights = [];
+                    foreach ($breakpoint->css as $style2 => $fvariant) {
+                        if (!in_array($fvariant, $fontVariants)) continue;
+                        if ($style2 == 'font-style' && $fvariant === 'italic') {
+                            $hasItalic = true;
                         }
-
-                        //add prefix if variant is set
-                        if ($fontStyle || $fontWeight) $fontVariantPrefix = ':';
-                        if ($fontStyle) $fontVariantPrefix .= 'ital';
-                        if ($fontStyle && $fontWeight) $fontVariantPrefix .= ',';
-                        if ($fontWeight) $fontVariantPrefix .= 'wght@';
-
-                        // skip font loading for local fonts
-                        $localFontNamesArray = $this->getFontNames();
-                        $localFontNames = '';
-
-                        foreach ($localFontNamesArray as $localFont) {
-                            $fontExt = '.' . pathinfo($localFont, PATHINFO_EXTENSION);
-                            $localFontNames .= str_replace($fontExt, '', $localFont) . ',';
+                        if ($style2 == 'font-weight') {
+                            $weights[] = $fvariant;
                         }
+                    }
 
-                        // skip google font loading for these fonts
-                        $systemFontsString = 'Arial,Helvetica+Neue,Courier+New,Times+New+Roman,Comic+Sans+MS,Verdana,Impact,' . $localFontNames;
-                        $systemFontsString = trim($systemFontsString);
-                        $systemFonts = explode(',', $systemFontsString);
-
-                        // $fontName = strstr( $val, ',', true );
-                        $fontName = preg_replace('/\s+/', '+', $val);
-                        $fontName = str_replace('"', "", $fontName);
-
-                        if ($fontName !== '') {
-                            $font = $fontName . $fontVariantPrefix . $fontStyle . $fontWeight;
-                        }
-
-                        foreach ($systemFonts as $systemFont) {
-                            if ($fontName == $systemFont) {
-                                $font = "";
-                            }
-                        }
-
-                        if ($fonts !== '' && $font !== '' && strpos($val, ',') == false) {
-                            $fonts .= '&';
-                        }
-
-                        //add font only if it is single value and has no comma list
-                        if (strpos($val, ',') == false) {
-                            $fonts .= $font;
+                    if (!isset($fonts[$fontName])) {
+                        $fonts[$fontName] = ['weights' => [], 'italic' => false];
+                    }
+                    if ($hasItalic) {
+                        $fonts[$fontName]['italic'] = true;
+                    }
+                    foreach ($weights as $w) {
+                        if (!in_array($w, $fonts[$fontName]['weights'])) {
+                            $fonts[$fontName]['weights'][] = $w;
                         }
                     }
                 }
@@ -2293,6 +2275,8 @@ class InputfieldPageGrid extends Inputfield {
             $defaults = preg_replace('/\s+/', ' ', $defaults);
         }
 
+        $allGoogleFonts = [];
+
         foreach ($itemsArray as $item) {
 
             //load template file children
@@ -2323,9 +2307,18 @@ class InputfieldPageGrid extends Inputfield {
             $itemCss .= $this->renderStyles($item);
 
             //render google fonts
-            $font = $this->getGooglefonts($item);
-            if ($loadFonts && $font) {
-                $fonts .= '&family=' . $font;
+            if ($loadFonts) {
+                $itemFonts = $this->getGooglefonts($item);
+                foreach ($itemFonts as $fontName => $fontData) {
+                    if (!isset($allGoogleFonts[$fontName])) {
+                        $allGoogleFonts[$fontName] = $fontData;
+                    } else {
+                        $allGoogleFonts[$fontName]['weights'] = array_unique(
+                            array_merge($allGoogleFonts[$fontName]['weights'], $fontData['weights'])
+                        );
+                        $allGoogleFonts[$fontName]['italic'] = $allGoogleFonts[$fontName]['italic'] || $fontData['italic'];
+                    }
+                }
             }
 
             //load animations
@@ -2340,6 +2333,33 @@ class InputfieldPageGrid extends Inputfield {
                     }
                 }
             }
+        }
+
+        //build google fonts URL from merged font data
+        if (!empty($allGoogleFonts)) {
+            $fontParams = [];
+            foreach ($allGoogleFonts as $fontName => $fontData) {
+                if ($fontData['italic']) {
+                    $weights = $fontData['weights'];
+                    sort($weights, SORT_NUMERIC);
+                    $spec = $fontName . ':ital,wght@';
+                    if (empty($weights)) {
+                        $spec .= '1';
+                    } else {
+                        $spec .= '1,' . implode(',', $weights);
+                    }
+                    $fontParams[] = $spec;
+                } else {
+                    $weights = $fontData['weights'];
+                    sort($weights, SORT_NUMERIC);
+                    $spec = $fontName;
+                    if (!empty($weights)) {
+                        $spec .= ':wght@' . implode(';', $weights);
+                    }
+                    $fontParams[] = $spec;
+                }
+            }
+            $fonts = '&family=' . implode('&family=', $fontParams);
         }
 
         //render animations css if they exists on page
