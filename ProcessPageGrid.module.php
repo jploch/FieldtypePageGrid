@@ -23,7 +23,7 @@ class ProcessPageGrid extends Process {
             'icon' => 'th',
             'requires' => array('FieldtypePageGrid'),
             'installs' => array('FieldtypePageGrid', 'InputfieldPageGrid', 'PageFrontEdit', 'ProcessPageClone'),
-            'version' => '0.0.4',
+            'version' => '0.0.5',
             'useNavJSON' => true,
             'permission' => 'pagegrid-process',
             'page' => [

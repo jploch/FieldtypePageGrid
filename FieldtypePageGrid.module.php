@@ -21,7 +21,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID Page Builder'),
       'summary' => __('PAGEGRID is a visual page builder for ProcessWire that gives developers full control while enabling designers and editors to create responsive layouts without coding.', __FILE__),
-      'version' => '2.3.33',
+      'version' => '2.3.39',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -1691,6 +1691,9 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
   }
 
   public function ___exportValue(Page $page, Field $field, $value, array $options = array()) {
+    if (!empty($page->_importOriginalID) && $page->_importOriginalID != $page->id) {
+      return parent::___exportValue($page, $field, $value, $options);
+    }
     $fc = $this->modules->get('InputfieldPageGrid')->getFieldContainer($page, $field);
     if (!$fc || !$fc->id) return parent::___exportValue($page, $field, $value, $options);
 
@@ -1776,6 +1779,23 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
       }
     }
     unset($value['_pgPageContainer'], $value['_pgFieldContainer']);
+
+    // Strip multi-language value wrappers when target field is not a Language variant,
+    // e.g. {"default":"x","en":"y"} → "x" for plain FieldtypeTextarea on the target
+    $sanitize = function (&$pages) {
+      foreach ($pages as &$pageData) {
+        foreach ($pageData['data'] as $fieldName => &$fieldValue) {
+          if (!is_array($fieldValue) || !array_key_exists('default', $fieldValue)) continue;
+          $field = $this->fields->get($fieldName);
+          if (!$field || !$field->type) continue;
+          if ($field->type instanceof FieldtypeLanguageInterface) continue;
+          $fieldValue = $fieldValue['default'];
+        }
+      }
+    };
+    $sanitize($value['pages']);
+    if (!empty($value['_pgClasses']['pages'])) $sanitize($value['_pgClasses']['pages']);
+    if (!empty($value['_pgSymbolPages']['pages'])) $sanitize($value['_pgSymbolPages']['pages']);
 
     if (!empty($value['_pgClasses'])) {
       $this->wire(new PagesExportImport())->arrayToPages($value['_pgClasses'], $options);
