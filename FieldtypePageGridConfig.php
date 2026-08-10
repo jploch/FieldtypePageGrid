@@ -842,7 +842,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 	 */
 	public function getBlockSettings($field) {
 		// $defaultBlocks = ['pg_text', 'pg_editor', 'pg_image', 'pg_video', 'pg_gallery', 'pg_gallery_video', 'pg_iframe', 'pg_group', 'pg_navigation', 'pg_slider', 'pg_accordion', 'pg_datalist', 'pg_prev_next', 'pg_spacer', 'pg_code'];
-		$defaultBlocks = ['pg_text', 'pg_editor', 'pg_image', 'pg_video', 'pg_gallery', 'pg_gallery_video', 'pg_iframe', 'pg_group', 'pg_slider', 'pg_accordion', 'pg_datalist', 'pg_prev_next', 'pg_spacer', 'pg_code'];
+		$defaultBlocks = ['pg_text', 'pg_editor', 'pg_image', 'pg_video', 'pg_gallery', 'pg_iframe', 'pg_group', 'pg_slider', 'pg_accordion', 'pg_datalist', 'pg_prev_next', 'pg_spacer', 'pg_code'];
 		$info = $this->modules->getModuleInfoVerbose('PageGridBlocks');
 		$downloaded = $this->modules->get('PageGridBlocks') ? 1 : 0;
 		$installed = $this->modules->isInstalled('PageGridBlocks');

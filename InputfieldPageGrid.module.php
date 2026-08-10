@@ -2726,6 +2726,7 @@ class InputfieldPageGrid extends Inputfield {
       foreach ($dom->getElementsByTagName('*') as $tag) {
           if ($tag->tagName === 'div') continue;
           $class = $prefix . '-' . strtolower($tag->tagName);
+          if (strpos(' ' . $tag->getAttribute('class') . ' ', ' ' . $class . ' ') !== false) continue;
           $space = $tag->getAttribute('class') ? ' ' : '';
           $tag->setAttribute('class', $tag->getAttribute('class') . $space . $class);
           $tag->setAttribute('data-class', $class);
