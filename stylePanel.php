@@ -1540,6 +1540,7 @@ function createUnitField($name, $label = '', $width = 100, $icon = '', $lastUnit
   $field->addOption("cqw");
   $field->addOption("cqh");
   $field->addOption("rem");
+  $field->addOption("em");
   if ($name == "letter-spacing") {
     $field->removeOption("rem");
     $field->removeOption("%");

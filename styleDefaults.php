@@ -70,6 +70,11 @@ $defaultCss .= '
   padding: 0;
 } ';
 
+$defaultCss .= '
+:where(h1, h2, h3, h4, h5, h6, p, ul, ol, blockquote):has(+ :where(h1, h2, h3, h4, h5, h6, p, ul, ol, blockquote)) {
+  margin-bottom: 1em;
+} ';
+
 $defaultCss .= 'html, body {width:100%; font-weight: normal;} ';
 
 $defaultCss .= '

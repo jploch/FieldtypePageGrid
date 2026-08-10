@@ -2708,5 +2708,31 @@ class InputfieldPageGrid extends Inputfield {
         } else {
             return parent::set($key, $value);
         }
-    }
+  }
+
+  /**
+   * Adds CSS classes and data-class attributes to all elements (except div) in rich text markup.
+   * This allows the style panel to target individual HTML elements inside captions and other
+   * rich text fields — e.g. a <p> gets class="caption-text-p" data-class="caption-text-p".
+   *
+   * @param string $markup The HTML markup to process.
+   * @param string $prefix The class prefix (default: 'caption-text').
+   * @return string The modified markup.
+   */
+  public function addRichTextClasses($markup, $prefix = 'rt') {
+      if (!$markup) return $markup;
+      $dom = new \DOMDocument;
+      @$dom->loadHTML('<?xml encoding="utf-8" ?><html>' . $markup . '</html>', LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+      foreach ($dom->getElementsByTagName('*') as $tag) {
+          if ($tag->tagName === 'div') continue;
+          $class = $prefix . '-' . strtolower($tag->tagName);
+          $space = $tag->getAttribute('class') ? ' ' : '';
+          $tag->setAttribute('class', $tag->getAttribute('class') . $space . $class);
+          $tag->setAttribute('data-class', $class);
+      }
+      $markup = $dom->saveHTML();
+      $markup = str_replace(array('</html>', '<html>', '<?xml encoding="utf-8" ?>'), '', $markup);
+      return $markup;
+  }
+
 }
