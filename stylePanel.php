@@ -1537,8 +1537,6 @@ function createUnitField($name, $label = '', $width = 100, $icon = '', $lastUnit
   $field->addOption("%");
   $field->addOption("vh");
   $field->addOption("vw");
-  $field->addOption("cqw");
-  $field->addOption("cqh");
   $field->addOption("rem");
   $field->addOption("em");
   if ($name == "letter-spacing") {
@@ -1546,8 +1544,6 @@ function createUnitField($name, $label = '', $width = 100, $icon = '', $lastUnit
     $field->removeOption("%");
     $field->removeOption("vw");
     $field->removeOption("vh");
-    $field->removeOption("cqw");
-    $field->removeOption("cqh");
     $field->addOption("em");
   }
   if ($lastUnit) $field->addOption($lastUnit);
