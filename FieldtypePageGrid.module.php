@@ -21,7 +21,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID Page Builder'),
       'summary' => __('PAGEGRID is a visual page builder for ProcessWire that gives developers full control while enabling designers and editors to create responsive layouts without coding.', __FILE__),
-      'version' => '2.3.49',
+      'version' => '2.3.50',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -231,6 +231,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     $drole->addPermission("page-edit");
     $drole->addPermission("profile-edit");
     $drole->addPermission("page-sort");
+    $drole->addPermission("page-move");
     if ($this->permissions->get('pagegrid-drag')->id) $drole->addPermission("pagegrid-drag");
     if ($this->permissions->get('pagegrid-resize')->id) $drole->addPermission("pagegrid-resize");
     if ($this->permissions->get('pagegrid-add')->id) $drole->addPermission("pagegrid-add");
