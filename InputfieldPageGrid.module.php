@@ -1308,6 +1308,7 @@ class InputfieldPageGrid extends Inputfield {
         $statusClass = $this->getStatusClasses($p);
         $isPgPage = count($p->parents('template=pg_container'));
         $addButton = (isset($options['children']) && $options['children']) || $this->ft->templateHasChildren($p->template) || $p->template->childTemplates ? 1 : 0;
+        if (isset($options['children']) && $options['children'] === false) $addButton = 0;
 
         //disbale inline edit on title field
         $p->edit(false);
