@@ -2,7 +2,7 @@
 
 [<img src="https://pg.uber.space/github-assets/pagegrid-logo-icon.png" width="100"/>](https://page-grid.com)
 
-### PAGEGRID is a visual drag & drop page builder for ProcessWire CMS.
+### PAGEGRID is a visual layout builder for ProcessWire
 
 PAGEGRID is a ProcessWire field that gives you a live visual layout editor right inside the admin. Use it to let users design specific sections of a custom site, or as a complete no-code page builder.
 
