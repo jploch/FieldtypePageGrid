@@ -4,7 +4,7 @@
 
 ### PAGEGRID is a visual page builder for ProcessWire CMS.
 
-PAGEGRID is a ProcessWire field that gives you a live visual layout editor right inside the admin. Use it to let users design specific sections of a page, or as a complete no-code page builder.
+PAGEGRID is a ProcessWire field that gives you a live visual layout editor right inside the admin. Use it for specific sections of a page, or as a complete no-code page builder.
 
 <img src="https://pg.uber.space/github-assets/pagegrid-screen-new.jpg" />
 
