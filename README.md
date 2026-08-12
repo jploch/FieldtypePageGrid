@@ -4,22 +4,15 @@
 
 ### PAGEGRID is a visual drag & drop page builder for ProcessWire CMS.
 
-PAGEGRID lets you design responsive, visually rich websites without writing a single line of code. It works seamlessly with ProcessWire’s native templates and fields, giving developers full control over the underlying code and structure while designers and editors can build and update layouts visually. 
+PAGEGRID is a ProcessWire field that gives you a live visual layout editor right inside the admin. Use it to let users design specific sections of a custom site, or as a complete no-code page builder.
 
 <img src="https://pg.uber.space/github-assets/pagegrid-screen-new.jpg" />
 
 
 ### Core Concepts
 
-PAGEGRID builds on ProcessWire’s flexibility without adding abstraction.
-Everything stays native, and developers maintain full control. 
-
-* **PAGEGRID is a Field:**
-  PAGEGRID is a visual field for ProcessWire that lets you build and manage layouts right inside the CMS. You can use it it to design specific sections of a custom-coded site, or as a full site builder that works without any coding. 
-
 * **Everything Is a Page:**
-  Every item in PAGEGRID is a ProcessWire page, defined through native templates and fields.
-  Your layouts are built with real ProcessWire data — fully queryable, reusable, and compatible with your existing API and templates.
+Every block item in PAGEGRID is a ProcessWire page, defined through native templates and fields. Your layouts are built with real ProcessWire data — fully queryable, reusable, and compatible with your existing API and templates.
 
 * **Your Markup:**
   Unlike many other site builders, PAGEGRID gives you complete control over your markup and frontend structure. It adapts to your workflow — not the other way around.
@@ -30,7 +23,7 @@ Everything stays native, and developers maintain full control.
   Give them creative freedom while keeping the structure safe.
 
 * **Your CSS:**
-  PAGEGRID works with your existing CSS — no assumptions or frameworks required. Write styles in your code editor or bring your own framework. Beyond CSS grid, it supports Flexbox, Block, and Inline-block layouts.
+PAGEGRID respects your CSS workflow. Write styles in your code editor, bring your favorite framework, or use the visual style panel for quick adjustments. Drag-and-drop editing works natively across any CSS display mode.
 
 * **Nesting:**
   PAGEGRID supports nested blocks — a powerful but optional feature.
@@ -49,7 +42,7 @@ Get up and running fast! Use and customise our [ready-made blocks](https://githu
 PAGEGRID is not free software. However, you can try PAGEGRID on your local machine or on a test server as long as you need to make sure it is the right tool for your next project. … and when you’re convinced, [buy your license](https://pagegrid.gumroad.com/l/pagegrid?wanted=true&amp;variant=1%20License&amp;referrer=https://page-grid.com/buy).
 
 ### Requirements
-- Process Wire 3.0.229 or greater
+- ProcessWire 3.0.229 or greater
 
 ### Installation
 - [Install guide](https://page-grid.com/docs/developer/installation/)
