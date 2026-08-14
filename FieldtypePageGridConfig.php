@@ -212,6 +212,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 			),
 			'customStyles' => '',
 			'customScript' => '',
+			'scopeCssDefaults' => 1,
 			'fontColor' => '',
 			'bgColor' => '',
 			'deleteFonts' => '',
@@ -753,6 +754,19 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		$f->value .= ".pg .pg-item{\n grid-row-start: auto;\n}\n";
 		$f->value .= "</code></pre><style>.height-auto {height:auto!important;}</style>";
 		$f->notes = 'To change the defaults copy these styles to the CSS code field above or load them inside your template file. [Learn more](https://page-grid.com/docs/developer/styles/)';
+		$wrapper->append($f);
+
+		//scope css defaults
+		$f = $this('modules')->get('InputfieldCheckbox');
+		$f->attr('name', 'scopeCssDefaults');
+		$f->label = 'CSS Reset';
+		$f->icon = 'paint-brush';
+		$f->checkboxLabel = 'Enable Global Site Reset';
+		$f->description = "Loads a light, zero-specificity CSS reset covering box-sizing and normalizing typography margins.";
+		$f->attr('value', $this->scopeCssDefaults);
+		// $f->appendMarkup('<style>#wrap_Inputfield_scopeCssDefaults .InputfieldHeader{display:none;}#wrap_Inputfield_scopeCssDefaults .InputfieldContent{padding-top:23px;}</style>');
+		if ($this->scopeCssDefaults) $f->attr('checked', 'checked');
+		$f->collapsed($this->scopeCssDefaults ? 1 : 0);
 		$wrapper->append($f);
 
 		//custom js

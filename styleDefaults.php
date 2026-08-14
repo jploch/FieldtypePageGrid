@@ -12,6 +12,8 @@ $inlineEdit = 1;
 if (!$backend && $this->modules->get('FieldtypePageGrid')->inlineEditorFrontDisable) $inlineEdit = 0;
 $defaultCss = '<style class="pg-style-defaults">';
 
+$scope = $this->modules->get('FieldtypePageGrid')->scopeCssDefaults ? '' : ':where(.pg) ';
+
 //inline editor fix
 if ($this->user->isLoggedin() && $inlineEdit) {
   $defaultCss .= '.tox.tox-tinymce-inline {z-index:99999!important;}';
@@ -63,7 +65,7 @@ if ($this->modules->get('FieldtypePageGrid')->plugins && $this->modules->get('Fi
 }
 
 $defaultCss .= '
-*, *::before, *::after {
+' . $scope . '*, ' . $scope . '*::before, ' . $scope . '*::after {
   box-sizing: border-box;
   -webkit-font-smoothing: antialiased;
   margin: 0;
@@ -71,26 +73,26 @@ $defaultCss .= '
 } ';
 
 $defaultCss .= '
-:where(h1, h2, h3, h4, h5, h6, p, ul, ol, blockquote):has(+ :where(h1, h2, h3, h4, h5, h6, p, ul, ol, blockquote)) {
+' . $scope . ':where(h1, h2, h3, h4, h5, h6, p, ul, ol, blockquote):has(+ :where(h1, h2, h3, h4, h5, h6, p, ul, ol, blockquote, a)) {
   margin-bottom: 1em;
 } ';
 
 $defaultCss .= 'html, body {width:100%; font-weight: normal;} ';
 
 $defaultCss .= '
-p, h1, h2, h3, h4, h5, h6 {
+' . $scope . 'p, ' . $scope . 'h1, ' . $scope . 'h2, ' . $scope . 'h3, ' . $scope . 'h4, ' . $scope . 'h5, ' . $scope . 'h6 {
   overflow-wrap: break-word;
   word-break: break-word;
   font-weight: inherit; 
 } ';
 
-$defaultCss .= 'a {color: inherit;} ';
+$defaultCss .= $scope . 'a {color: inherit;} ';
 
 //    $defaultCss .= 'html, body {
 //    height: 100%;
 //    } ';
 
-$defaultCss .= 'input, button, textarea, select {font: inherit;} ';
+$defaultCss .= $scope . 'input, ' . $scope . 'button, ' . $scope . 'textarea, ' . $scope . 'select {font: inherit;} ';
 
 $defaultCss .= '
 .pg-main, .pg-group {
