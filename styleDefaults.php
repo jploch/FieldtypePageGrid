@@ -74,8 +74,12 @@ $defaultCss .= '
 
 $defaultCss .= '
 ' . $scope . ':where(h1, h2, h3, h4, h5, h6, p, ul, ol, blockquote):has(+ :where(h1, h2, h3, h4, h5, h6, p, ul, ol, blockquote, a)) {
-  margin-bottom: 1em;
+  margin-bottom: 1.25rem;
 } ';
+
+$defaultCss .= ':where(p, ul, ol, blockquote, a):has(+ :where(h1, h2, h3, h4, h5, h6)) {
+  margin-bottom: 2.5rem;
+}';
 
 $defaultCss .= 'html, body {width:100%; font-weight: normal;} ';
 
