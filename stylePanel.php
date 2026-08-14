@@ -102,6 +102,22 @@ $field->addClass('label-left', 'wrapClass');
 //$field->columnWidth = 100;
 $fieldset->append($field);
 
+// vertical-align
+$field = $this->modules->get('InputfieldSelect');
+$field->name = "vertical-align";
+$field->label = $this->_("Vertical Align");
+$field->addOption("baseline");
+$field->addOption("sub");
+$field->addOption("super");
+$field->addOption("text-top");
+$field->addOption("text-bottom");
+$field->addOption("middle");
+$field->addOption("top");
+$field->addOption("bottom");
+$field->addClass('label-left', 'wrapClass');
+$field->columnWidth = 100;
+$fieldset->append($field);
+
 // GRID PARENT
 $fieldsetsub = $this->modules->get('InputfieldFieldset');
 $fieldsetsub->label = ' ';

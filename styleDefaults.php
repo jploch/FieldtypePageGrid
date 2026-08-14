@@ -98,6 +98,8 @@ $defaultCss .= $scope . 'a {color: inherit;} ';
 
 $defaultCss .= $scope . 'input, ' . $scope . 'button, ' . $scope . 'textarea, ' . $scope . 'select {font: inherit;} ';
 
+$defaultCss .= $scope . ':where(td, th) { vertical-align: top; } ';
+
 $defaultCss .= '
 .pg-main, .pg-group {
   display: grid;
