@@ -13,6 +13,7 @@ if (!$backend && $this->modules->get('FieldtypePageGrid')->inlineEditorFrontDisa
 $defaultCss = '<style class="pg-style-defaults">';
 
 $scope = $this->modules->get('FieldtypePageGrid')->scopeCssDefaults ? '' : ':where(.pg) ';
+$legacy = $this->modules->get('FieldtypePageGrid')->legacyCssDefaults;
 
 //inline editor fix
 if ($this->user->isLoggedin() && $inlineEdit) {
@@ -60,45 +61,47 @@ if ($this->modules->get('FieldtypePageGrid')->plugins && $this->modules->get('Fi
   
 .lazyloaded {
   opacity: 1;
-  transition: opacity 600ms;
+  transition: opacity 400ms;
 }';
 }
 
-$defaultCss .= '
-' . $scope . '*, ' . $scope . '*::before, ' . $scope . '*::after {
+$defaultCss .= $scope . '*, ' . $scope . '*::before, ' . $scope . '*::after {
   box-sizing: border-box;
   -webkit-font-smoothing: antialiased;
   margin: 0;
   padding: 0;
 } ';
 
-$defaultCss .= '
-' . $scope . ':where(h1, h2, h3, h4, h5, h6, p, ul, ol, blockquote):has(+ :where(h1, h2, h3, h4, h5, h6, p, ul, ol, blockquote, a)) {
-  margin-bottom: 1.25rem;
-} ';
+$defaultCss .= $legacy ? 'html, body {width:100%;} ' : 'html, body {width:100%; font-weight: normal;} ';
 
-$defaultCss .= ':where(p, ul, ol, blockquote, a):has(+ :where(h1, h2, h3, h4, h5, h6)) {
-  margin-bottom: 2.5rem;
-}';
-
-$defaultCss .= 'html, body {width:100%; font-weight: normal;} ';
-
-$defaultCss .= '
-' . $scope . 'p, ' . $scope . 'h1, ' . $scope . 'h2, ' . $scope . 'h3, ' . $scope . 'h4, ' . $scope . 'h5, ' . $scope . 'h6 {
+$defaultCss .= $scope . 'p, ' . $scope . 'h1, ' . $scope . 'h2, ' . $scope . 'h3, ' . $scope . 'h4, ' . $scope . 'h5, ' . $scope . 'h6 {
   overflow-wrap: break-word;
   word-break: break-word;
-  font-weight: inherit; 
+  font-weight: ' . ($legacy ? 'normal' : 'inherit') . ';
 } ';
 
 $defaultCss .= $scope . 'a {color: inherit;} ';
 
-//    $defaultCss .= 'html, body {
-//    height: 100%;
-//    } ';
-
 $defaultCss .= $scope . 'input, ' . $scope . 'button, ' . $scope . 'textarea, ' . $scope . 'select {font: inherit;} ';
 
-$defaultCss .= $scope . ':where(td, th) { vertical-align: top; } ';
+// reset improvements (not part of the legacy reset)
+if (!$legacy) {
+
+  // typographic margins
+  $defaultCss .= $scope . ':where(h1, h2, h3, h4, h5, h6, p, ul, ol, blockquote):has(+ :where(h1, h2, h3, h4, h5, h6, p, ul, ol, blockquote, a)) {
+  margin-bottom: 1.25rem;
+} ';
+
+  $defaultCss .= $scope . ':where(p, ul, ol, blockquote, a):has(+ :where(h1, h2, h3, h4, h5, h6)) {
+  margin-bottom: 2.5rem;
+}';
+
+  // list indentation (reset removes browser default padding)
+  $defaultCss .= ':where(.pg-editor) ul, :where(.pg-editor) ol { padding-left: 1.25em; } ';
+
+  // table cell alignment
+  $defaultCss .= $scope . ':where(td, th) { vertical-align: top; } ';
+}
 
 $defaultCss .= '
 .pg-main, .pg-group {

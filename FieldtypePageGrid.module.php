@@ -21,7 +21,7 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     return array(
       'title' => __('PAGEGRID Page Builder'),
       'summary' => __('PAGEGRID is a visual page builder for ProcessWire that gives developers full control while enabling designers and editors to create responsive layouts without coding.', __FILE__),
-      'version' => '2.3.54',
+      'version' => '2.3.56',
       'author' => 'Jan Ploch',
       'icon' => 'th',
       'href' => "https://page-grid.com",
@@ -50,10 +50,22 @@ class FieldtypePageGrid extends FieldtypeMulti implements Module, ConfigurableMo
     $this->createModule();
   }
 
-  //upgrade needs work
-  // public function ___upgrade($fromVersion, $toVersion) {
-  //   $this->createModule();
-  // }
+  /**
+   * Runs when the module version changes.
+   *
+   * Sites upgrading from versions older than 2.3.45 are switched to the legacy
+   * CSS reset so their existing frontend styling is not affected.
+   *
+   * @param int|string $fromVersion
+   * @param int|string $toVersion
+   * @return void
+   */
+  public function ___upgrade($fromVersion, $toVersion) {
+    if (!$fromVersion) return;
+    if (version_compare((string) $fromVersion, '2.3.45', '<')) {
+      $this->modules->saveConfig('FieldtypePageGrid', 'legacyCssDefaults', 1);
+    }
+  }
 
   /**
    * Creates all required templates, fieldgroups, pages, roles, and permissions for PAGEGRID.

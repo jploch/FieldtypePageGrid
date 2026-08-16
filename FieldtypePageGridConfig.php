@@ -213,6 +213,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 			'customStyles' => '',
 			'customScript' => '',
 			'scopeCssDefaults' => 1,
+			'legacyCssDefaults' => 0,
 			'fontColor' => '',
 			'bgColor' => '',
 			'deleteFonts' => '',
@@ -294,7 +295,7 @@ class FieldtypePageGridConfig extends ModuleConfig {
 
 		//-------------------------------------------------------
 		//hidden field to store collapsed states as comma seperated string
-		$collapsedString = $this->collapsedState ? $this->collapsedState : 'plugins,interface,stylePanelSettings,inlineSettings,customStyles';
+		$collapsedString = $this->collapsedState ? $this->collapsedState : 'plugins,interface,stylePanelSettings,inlineSettings,customStyles,cssReset';
 		$collapsed = explode(',', $collapsedString);
 
 		$f = $this('modules')->get('InputfieldHidden');
@@ -756,18 +757,36 @@ class FieldtypePageGridConfig extends ModuleConfig {
 		$f->notes = 'To change the defaults copy these styles to the CSS code field above or load them inside your template file. [Learn more](https://page-grid.com/docs/developer/styles/)';
 		$wrapper->append($f);
 
+		//css reset
+		$fieldset = $this->modules->get('InputfieldFieldset');
+		$fieldset->attr('id+name', 'cssReset');
+		$fieldset->label = $this->_('CSS Reset');
+		$fieldset->collapsed(in_array($fieldset->name, $collapsed) ? 1 : 0);
+		$fieldset->icon = 'paint-brush';
+		$wrapper->append($fieldset);
+
 		//scope css defaults
 		$f = $this('modules')->get('InputfieldCheckbox');
 		$f->attr('name', 'scopeCssDefaults');
-		$f->label = 'CSS Reset';
-		$f->icon = 'paint-brush';
+		$f->label = ' ';
 		$f->checkboxLabel = 'Enable Global Site Reset';
 		$f->description = "Loads a light, zero-specificity CSS reset covering box-sizing and normalizing typography margins.";
 		$f->attr('value', $this->scopeCssDefaults);
-		// $f->appendMarkup('<style>#wrap_Inputfield_scopeCssDefaults .InputfieldHeader{display:none;}#wrap_Inputfield_scopeCssDefaults .InputfieldContent{padding-top:23px;}</style>');
 		if ($this->scopeCssDefaults) $f->attr('checked', 'checked');
-		$f->collapsed($this->scopeCssDefaults ? 1 : 0);
-		$wrapper->append($f);
+		$f->appendMarkup('<style>#wrap_Inputfield_scopeCssDefaults .InputfieldHeader{display:none;}#wrap_Inputfield_scopeCssDefaults .InputfieldContent{padding-top:23px;}</style>');
+		$fieldset->append($f);
+
+		//legacy css defaults
+		$f = $this('modules')->get('InputfieldCheckbox');
+		$f->attr('name', 'legacyCssDefaults');
+		$f->label = ' ';
+		$f->checkboxLabel = 'Load legacy CSS reset';
+		$f->description = 'Only recommended for sites upgraded from older PAGEGRID versions that want to keep their previous default CSS. New sites should keep this disabled.';
+		$f->notes = 'This is enabled automatically when upgrading from PAGEGRID versions older than 2.3.45.';
+		$f->attr('value', $this->legacyCssDefaults);
+		if ($this->legacyCssDefaults) $f->attr('checked', 'checked');
+		$f->appendMarkup('<style>#wrap_Inputfield_legacyCssDefaults .InputfieldHeader{display:none;}#wrap_Inputfield_legacyCssDefaults .InputfieldContent{padding-top:23px;}</style>');
+		$fieldset->append($f);
 
 		//custom js
 		$f = $this('modules')->get('InputfieldTextArea');

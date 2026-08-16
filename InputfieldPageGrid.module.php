@@ -132,7 +132,8 @@ class InputfieldPageGrid extends Inputfield {
             if (isset($itemData)) {
                 foreach ($itemData as $childData) {
                     if (isset($childData['id'])) {
-                        $globalPageData[$globalPage->id][$child->name] = $childData;
+                        $key = isset($childData['cssClass']) && $childData['cssClass'] !== '' ? $childData['cssClass'] : $child->name;
+                        $globalPageData[$globalPage->id][$key] = $childData;
                     }
                 }
             }
@@ -2072,7 +2073,12 @@ class InputfieldPageGrid extends Inputfield {
                             $cssSelector = 'pg-ptag, ';
                         }
 
-                        $cssSelector .= strtolower($item['tagName']);
+                        $tagName = strtolower($item['tagName']);
+                        if (in_array($tagName, ['ul', 'ol', 'li'])) {
+                            $cssSelector .= ':where(.pg-editor) ' . $tagName;
+                        } else {
+                            $cssSelector .= $tagName;
+                        }
                     } else {
                         $cssSelector = '.' . $item['cssClass'];
                     }
