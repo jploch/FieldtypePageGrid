@@ -366,7 +366,7 @@ class ProcessPageGrid extends Process {
                 }
 
                 // debug parent change
-                $this->log->save('pagegrid', 'move.done type=' . $type . ' ' . $p->name . ' parent=' . $p->parent->name . ' newParent=' . $newParent->name);
+                if ($this->user->isSuperuser()) $this->log->save('pagegrid', 'move.done type=' . $type . ' ' . $p->name . ' parent=' . $p->parent->name . ' newParent=' . $newParent->name);
             }
             return;
         }
@@ -595,7 +595,7 @@ class ProcessPageGrid extends Process {
             if (!$p) return;
 
             // debug parent change
-            $this->log->save('pagegrid', 'add.created type=' . $type . ' ' . $p->name . ' parent=' . $p->parent->name);
+            if ($this->user->isSuperuser()) $this->log->save('pagegrid', 'add.created type=' . $type . ' ' . $p->name . ' parent=' . $p->parent->name);
 
             $insertAfter = $this->sanitizer->int($_POST['insertAfter']);
             $replaceParentId = $this->sanitizer->int($_POST['replaceParentId']);
@@ -606,7 +606,7 @@ class ProcessPageGrid extends Process {
             }
 
             // debug parent change
-            $this->log->save('pagegrid', 'add.afterInsert type=' . $type . ' ' . $p->name . ' parent=' . $p->parent->name);
+            if ($this->user->isSuperuser()) $this->log->save('pagegrid', 'add.afterInsert type=' . $type . ' ' . $p->name . ' parent=' . $p->parent->name);
 
             // parent sometimes wrong after insertBefore — re-assert it
             if ($parent && $parent->id && $p->parent()->id != $parent->id) {
@@ -616,7 +616,7 @@ class ProcessPageGrid extends Process {
             }
 
             // debug parent change
-            $this->log->save('pagegrid', 'add.done type=' . $type . ' ' . $p->name . ' parent=' . $p->parent->name . ' reqParent=' . $parent->name . ($p->parent->id != $parent->id ? ' ERROR' : ''));
+            if ($this->user->isSuperuser()) $this->log->save('pagegrid', 'add.done type=' . $type . ' ' . $p->name . ' parent=' . $p->parent->name . ' reqParent=' . $parent->name . ($p->parent->id != $parent->id ? ' ERROR' : ''));
 
             //set the page that will be replaced by the returned markup
             //refactor note: it might make sense to allways just replace parent if not root in the future
@@ -728,7 +728,7 @@ class ProcessPageGrid extends Process {
             }
 
             // debug parent change
-            $this->log->save('pagegrid', 'upload.entry type=' . $type . ' ' . $p->name . ' parent=' . $p->parent->name . ' pRender=' . $pRender->name);
+            if ($this->user->isSuperuser()) $this->log->save('pagegrid', 'upload.entry type=' . $type . ' ' . $p->name . ' parent=' . $p->parent->name . ' pRender=' . $pRender->name);
 
             if ($p->hasField($field_name)) {
                 $fileField = $p->$field_name;
@@ -775,7 +775,7 @@ class ProcessPageGrid extends Process {
             // $p->save();
 
             // debug parent change
-            $this->log->save('pagegrid', 'upload.afterSaveField type=' . $type . ' ' . $p->name . ' parent=' . $p->parent->name);
+            if ($this->user->isSuperuser()) $this->log->save('pagegrid', 'upload.afterSaveField type=' . $type . ' ' . $p->name . ' parent=' . $p->parent->name);
 
             // if (!count($p->parents('pg-items'))) {
             //     $p = $p->parent();
