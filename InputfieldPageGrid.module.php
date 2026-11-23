@@ -469,10 +469,12 @@ class InputfieldPageGrid extends Inputfield {
         if ($this->templates->get('language') && $this->templates->get('language')->id && $this->modules->isInstalled('LanguageSupport') && $this->modules->isInstalled('LanguageSupportPageNames') && count($this->languages) > 1) {
             $languageTabs = '<div class="pg-langTabs"><ul class="uk-tab">';
             $activeLang = isset($_GET['pglang']) ? $_GET['pglang'] : $this->user->language->name;
+            // keep the draft view when switching languages
+            $langDraftParam = ($showDraft && $draftExists) ? '&showDraft=1' : '';
             foreach ($this->languages as $l) {
                 $activeClass = $activeLang == $l->name ? 'uk-active' : '';
                 if ($activeLang == $l->name) $iframeUrl = $mainPage->localUrl($l);
-                $languageTabs .= '<li class="' . $activeClass . '"><a class="" href="' . $mainPage->editUrl() . '&pglang=' . $l->name . '" >' . $l->title . '</a></li>';
+                $languageTabs .= '<li class="' . $activeClass . '"><a class="" href="' . $mainPage->editUrl() . '&pglang=' . $l->name . $langDraftParam . '" >' . $l->title . '</a></li>';
             }
             $languageTabs .= '</ul></div>';
         }
